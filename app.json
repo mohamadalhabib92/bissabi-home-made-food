@@ -15,7 +15,7 @@
     },
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "ch.bissabi.bissabihomemadefood",
+      "bundleIdentifier": "com.vibecode.bissabihomemadefood.gjtply",
       "buildNumber": "1",
       "config": {
         "usesNonExemptEncryption": false
