@@ -6,7 +6,7 @@
 |---|---|
 | Nom (≤ 30) | Bissabi Home Made Food (22 car.) |
 | Sous-titre (≤ 30) | Cuisine maison entre voisins (28 car.) |
-| Bundle ID | `ch.bissabi.bissabihomemadefood` |
+| Bundle ID | `com.vibecode.bissabihomemadefood.gjtply` |
 | SKU proposé | `bissabi-home-made-food-ios-001` |
 | Projet EAS | `cc63133a-c4ff-4607-9d31-5a531f19b69e` (compte habib548) |
 | Version / build | 1.0.0 / numéro de build géré par EAS (remote, autoIncrement) |
