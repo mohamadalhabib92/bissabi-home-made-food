@@ -1,0 +1,47 @@
+{
+  "expo": {
+    "name": "Bissabi Home Made Food",
+    "slug": "bissabi-home-made-food",
+    "scheme": "bissabihomemadefood",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "light",
+    "description": "La saveur du partage — cuisine de quartier authentique par Bissabi",
+    "splash": {
+      "image": "./assets/splash-icon.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#FAF8F2"
+    },
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "ch.bissabi.bissabihomemadefood"
+    },
+    "android": {
+      "package": "ch.bissabi.bissabihomemadefood",
+      "adaptiveIcon": {
+        "backgroundColor": "#1A4D2E",
+        "foregroundImage": "./assets/android-icon-foreground.png",
+        "backgroundImage": "./assets/android-icon-background.png",
+        "monochromeImage": "./assets/android-icon-monochrome.png"
+      },
+      "predictiveBackGestureEnabled": false
+    },
+    "web": {
+      "favicon": "./assets/favicon.png",
+      "output": "single",
+      "bundler": "metro",
+      "name": "Bissabi Home Made Food",
+      "shortName": "Home Made",
+      "themeColor": "#1A4D2E",
+      "backgroundColor": "#FAF8F2",
+      "lang": "fr"
+    },
+    "plugins": [
+      "expo-router"
+    ],
+    "experiments": {
+      "baseUrl": "/bissabi-home-made-food"
+    }
+  }
+}

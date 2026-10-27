@@ -1,0 +1,31 @@
+{
+  "name": "Bissabi Home Made Food",
+  "short_name": "Home Made",
+  "description": "La saveur du partage — cuisine de quartier authentique par Bissabi",
+  "lang": "fr",
+  "id": "/bissabi-home-made-food/",
+  "start_url": "/bissabi-home-made-food/",
+  "scope": "/bissabi-home-made-food/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "theme_color": "#1A4D2E",
+  "background_color": "#FAF8F2",
+  "icons": [
+    {
+      "src": "/bissabi-home-made-food/icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "/bissabi-home-made-food/icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    },
+    {
+      "src": "/bissabi-home-made-food/icons/maskable-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ]
+}
