@@ -3,6 +3,7 @@ import { km } from './geo';
 import type { Cook, Dish, FulfilMode, Lang, Order, OrderStatus, Report, Review, Slot } from './model';
 import { quote } from './pricing';
 import { demoKitchenOrders, demoMarket } from './seed';
+import { STORAGE_KEY } from './persistGuard';
 import { clearAll, uid, usePersistentState } from './storage';
 
 type Setter<T> = (v: T | ((p: T) => T)) => void;
@@ -30,15 +31,15 @@ const C = createContext<Ctx | null>(null);
 export const useData = () => { const c = useContext(C); if (!c) throw new Error('DataProvider manquant'); return c; };
 
 export function DataProvider({ children }: { children: ReactNode }) {
-  const [prefs, setPrefs, r1] = usePersistentState<Prefs>('prefs', DEFAULT_PREFS);
-  const [cooks, setCooks, r2] = usePersistentState<Cook[]>('cooks', () => demoMarket().cooks);
-  const [dishes, setDishes, r3] = usePersistentState<Dish[]>('dishes', () => demoMarket().dishes);
-  const [slots, setSlots, r4] = usePersistentState<Slot[]>('slots', () => demoMarket().slots);
-  const [orders, setOrders, r5] = usePersistentState<Order[]>('orders', () => demoMarket().orders);
-  const [reviews, setReviews, r6] = usePersistentState<Review[]>('reviews', () => demoMarket().reviews);
-  const [reports, setReports, r7] = usePersistentState<Report[]>('reports', []);
-  const [favorites, setFavorites, r8] = usePersistentState<{ dishes: string[]; cooks: string[] }>('favorites', { dishes: [], cooks: [] });
-  const [cart, setCart, r9] = usePersistentState<Cart>('cart', { cookId: null, lines: [] });
+  const [prefs, setPrefs, r1] = usePersistentState<Prefs>(STORAGE_KEY.prefs, DEFAULT_PREFS);
+  const [cooks, setCooks, r2] = usePersistentState<Cook[]>(STORAGE_KEY.cooks, () => demoMarket().cooks);
+  const [dishes, setDishes, r3] = usePersistentState<Dish[]>(STORAGE_KEY.dishes, () => demoMarket().dishes);
+  const [slots, setSlots, r4] = usePersistentState<Slot[]>(STORAGE_KEY.slots, () => demoMarket().slots);
+  const [orders, setOrders, r5] = usePersistentState<Order[]>(STORAGE_KEY.orders, () => demoMarket().orders);
+  const [reviews, setReviews, r6] = usePersistentState<Review[]>(STORAGE_KEY.reviews, () => demoMarket().reviews);
+  const [reports, setReports, r7] = usePersistentState<Report[]>(STORAGE_KEY.reports, []);
+  const [favorites, setFavorites, r8] = usePersistentState<{ dishes: string[]; cooks: string[] }>(STORAGE_KEY.favorites, { dishes: [], cooks: [] });
+  const [cart, setCart, r9] = usePersistentState<Cart>(STORAGE_KEY.cart, { cookId: null, lines: [] });
   const storageReady = r1 && r2 && r3 && r4 && r5 && r6 && r7 && r8 && r9;
   const [bootFallback, setBootFallback] = useState(false);
   const forceReady = useCallback(() => setBootFallback(true), []);
@@ -89,7 +90,8 @@ export function DataProvider({ children }: { children: ReactNode }) {
       setOrders((l) => [...l.filter((o) => !(o.demo && o.side === 'cook')), ...demoKitchenOrders(myCook.id, mine)]);
     };
     const wipe = async () => {
-      await clearAll();
+      const cleared = await clearAll();
+      if (!cleared) return;
       setPrefs(DEFAULT_PREFS); setCooks([]); setDishes([]); setSlots([]); setOrders([]); setReviews([]); setReports([]);
       setFavorites({ dishes: [], cooks: [] }); setCart({ cookId: null, lines: [] });
     };

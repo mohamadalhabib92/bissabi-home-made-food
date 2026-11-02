@@ -43,6 +43,14 @@ export const findCommune = (q: string) => {
 
 export const LAUNCH_CANTON = 'VD';
 
+/** Fiche déjà enregistrée hors Vaud (canton stocké, ou commune / NPA de la liste). */
+export function cookIsOutsideVaud(cook: { canton?: string; npa?: string; commune?: string } | null | undefined): boolean {
+  if (!cook) return false;
+  if (cook.canton && cook.canton !== LAUNCH_CANTON) return true;
+  const place = COMMUNES.find((c) => (cook.npa && c.npa === cook.npa) || (cook.commune && c.name === cook.commune));
+  return !!place && place.canton !== LAUNCH_CANTON;
+}
+
 export function nearestCommune(p: { lat: number; lng: number }): Place {
   return [...COMMUNES].sort((a, b) => km(p, a) - km(p, b))[0];
 }

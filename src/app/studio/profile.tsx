@@ -3,7 +3,7 @@ import { useState } from 'react';
 import { useI18n } from '@/i18n';
 import { AVATAR_COLORS } from '@/lib/cookutil';
 import { useData, useL } from '@/lib/data';
-import { COMMUNES, LAUNCH_CANTON, findCommune } from '@/lib/geo';
+import { COMMUNES, LAUNCH_CANTON, cookIsOutsideVaud, findCommune } from '@/lib/geo';
 import type { Cook } from '@/lib/model';
 import { uid } from '@/lib/storage';
 import { Button, Card, Chip, Field, Muted, Notice, Row, Screen, Spacer, Toggle } from '@/ui/kit';
@@ -32,8 +32,10 @@ export default function CookProfile() {
     setPrefs((p) => ({ ...p, mode: 'cook' }));
     if (myCook) router.back(); else router.replace('/studio/checklist');
   };
+  const savedOutside = cookIsOutsideVaud(myCook);
   return (
     <Screen>
+      {savedOutside ? <Notice tone="warning" title={t('cookOutside')} text={t('cookOutsideSelf')} /> : null}
       <Field label={L('Nom affiché', 'Display name')} value={name} onChangeText={setName} placeholder={L('Prénom + initiale, ex. Awa D.', 'First name + initial, e.g. Awa D.')} hint={L('Évitez votre nom complet : protégez votre vie privée.', 'Avoid your full name: protect your privacy.')} />
       <Field label={L('Commune', 'Town')} value={commune} onChangeText={setCommune} placeholder="Prilly" hint={place && inZone ? `${place.npa} ${place.name} · ${L('adresse exacte partagée seulement après acceptation', 'exact address only shared after acceptance')}` : undefined} error={place && !inZone ? t('cookOutside') : commune && !place && !sugg.length ? L('Commune non couverte pour l’instant', 'Town not covered yet') : undefined} />
       {sugg.length ? <Row wrap>{sugg.map((s) => <Chip key={s.npa + s.name} label={s.name} onPress={() => setCommune(s.name)} />)}</Row> : null}

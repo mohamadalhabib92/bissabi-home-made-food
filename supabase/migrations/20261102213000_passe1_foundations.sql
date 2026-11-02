@@ -175,6 +175,125 @@ $$;
 revoke all on function private.is_admin() from public, anon;
 grant execute on function private.is_admin() to authenticated;
 
+-- ~200 m. 0,0018° de latitude ≈ 200 m. La longitude est élargie selon la latitude
+-- pour ne pas être plus précise que ça. Les coordonnées exactes ne sont pas exposées à anon.
+create or replace function private.round_lat_200m(lat double precision)
+returns double precision
+language sql
+immutable
+set search_path = ''
+as $$
+  select case
+    when lat is null then null
+    else (round((lat / 0.0018)::numeric) * 0.0018)::double precision
+  end;
+$$;
+
+create or replace function private.round_lng_200m(lat double precision, lng double precision)
+returns double precision
+language sql
+immutable
+set search_path = ''
+as $$
+  select case
+    when lng is null or lat is null then null
+    else (
+      round((lng / (0.0018 / greatest(cos(radians(lat)), 0.2)))::numeric)
+      * (0.0018 / greatest(cos(radians(lat)), 0.2))
+    )::double precision
+  end;
+$$;
+
+revoke all on function private.round_lat_200m(double precision) from public, anon, authenticated;
+revoke all on function private.round_lng_200m(double precision, double precision) from public, anon, authenticated;
+
+-- ofco_status : un cuisinier ne peut pas se l'attribuer.
+-- INSERT non admin → forcé à 'none'. UPDATE du statut → admin seulement.
+create or replace function private.protect_ofco_status()
+returns trigger
+language plpgsql
+security definer
+set search_path = ''
+as $$
+begin
+  if tg_op = 'INSERT' then
+    if not (select private.is_admin()) then
+      new.ofco_status := 'none';
+    elsif new.ofco_status is null then
+      new.ofco_status := 'none';
+    end if;
+    return new;
+  end if;
+  if new.ofco_status is distinct from old.ofco_status and not (select private.is_admin()) then
+    raise exception 'ofco_status is reserved to admin';
+  end if;
+  return new;
+end;
+$$;
+
+revoke all on function private.protect_ofco_status() from public, anon, authenticated;
+
+create trigger cooks_protect_ofco_status
+  before insert or update on public.cooks
+  for each row execute function private.protect_ofco_status();
+
+-- Admin : seul chemin pour poser le statut (le grant colonne ne l'inclut pas).
+create or replace function private.set_ofco_status(target uuid, next_status text)
+returns void
+language plpgsql
+security definer
+set search_path = ''
+as $$
+begin
+  if not (select private.is_admin()) then
+    raise exception 'admin only';
+  end if;
+  if next_status not in ('none', 'pending', 'identity_verified', 'ofco_verified') then
+    raise exception 'invalid ofco_status';
+  end if;
+  update public.cooks set ofco_status = next_status where id = target;
+end;
+$$;
+
+revoke all on function private.set_ofco_status(uuid, text) from public, anon;
+grant execute on function private.set_ofco_status(uuid, text) to authenticated;
+
+create or replace function private.cook_public_positions()
+returns table (
+  id uuid,
+  display_name text,
+  commune text,
+  npa text,
+  lat double precision,
+  lng double precision,
+  canton text,
+  ofco_status text,
+  delivers boolean,
+  created_at timestamptz
+)
+language sql
+stable
+security definer
+set search_path = ''
+as $$
+  select
+    c.id,
+    c.display_name,
+    c.commune,
+    c.npa,
+    private.round_lat_200m(c.lat) as lat,
+    private.round_lng_200m(c.lat, c.lng) as lng,
+    c.canton,
+    c.ofco_status,
+    c.delivers,
+    c.created_at
+  from public.cooks c;
+$$;
+
+revoke all on function private.cook_public_positions() from public;
+grant usage on schema private to anon;
+grant execute on function private.cook_public_positions() to anon, authenticated;
+
 -- Publication : le plat est d'abord inséré inactif, puis les 14 allergènes et
 -- les ingrédients, puis active = true. Le déclencheur refuse une fiche incomplète.
 create or replace function private.assert_dish_publishable()
@@ -258,8 +377,15 @@ revoke all on public.authorities, public.launch_zones, public.user_roles, public
 
 grant select on public.authorities, public.launch_zones, public.app_settings, public.feature_flags to anon, authenticated;
 grant select, insert, update on public.profiles to authenticated;
-grant select (id, display_name, commune, npa, lat, lng, canton, ofco_status, delivers, created_at) on public.cooks to anon;
-grant select, insert, update on public.cooks to authenticated;
+-- anon : pas de lat/lng bruts. La vue cooks_public les renvoie arrondis (~200 m).
+grant select (id, display_name, commune, npa, canton, ofco_status, delivers, created_at) on public.cooks to anon;
+grant select on public.cooks to authenticated;
+grant insert (
+  user_id, display_name, commune, npa, lat, lng, canton, delivers
+) on public.cooks to authenticated;
+grant update (
+  display_name, commune, npa, lat, lng, canton, delivers
+) on public.cooks to authenticated;
 grant select, insert, update on public.cook_private to authenticated;
 grant select on public.dishes, public.dish_allergens, public.dish_ingredients to anon, authenticated;
 grant insert, update, delete on public.dishes, public.dish_allergens, public.dish_ingredients to authenticated;
@@ -311,9 +437,11 @@ create policy profiles_update_own on public.profiles
   using (id = (select auth.uid()) or (select private.is_admin()))
   with check (id = (select auth.uid()) or (select private.is_admin()));
 
-create policy cooks_public_select on public.cooks
-  for select to anon, authenticated
-  using (true);
+-- Ligne complète (coordonnées non arrondies) : le cuisinier lui-même, ou un admin.
+-- Le public passe par cooks_public.
+create policy cooks_select_own_or_admin on public.cooks
+  for select to authenticated
+  using (user_id = (select auth.uid()) or (select private.is_admin()));
 
 create policy cooks_insert_own on public.cooks
   for insert to authenticated
@@ -324,10 +452,12 @@ create policy cooks_update_own on public.cooks
   using (user_id = (select auth.uid()) or (select private.is_admin()))
   with check (user_id = (select auth.uid()) or (select private.is_admin()));
 
+-- security_invoker : la vue ne lit pas cooks directement (anon n'a pas lat/lng).
+-- Elle appelle une fonction private security definer qui ne renvoie que des colonnes publiques,
+-- avec lat/lng arrondis. user_id et l'adresse exacte n'y sont pas.
 create view public.cooks_public
 with (security_invoker = true) as
-select id, display_name, commune, npa, lat, lng, canton, ofco_status, delivers, created_at
-from public.cooks;
+select * from private.cook_public_positions();
 
 grant select on public.cooks_public to anon, authenticated;
 

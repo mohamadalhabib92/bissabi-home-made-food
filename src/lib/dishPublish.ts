@@ -13,16 +13,16 @@ export type PublishIssue =
 
 export type AllergenDraft = Partial<Record<Allergen, AllergenLevel>>;
 
-/** Statut explicite des 14 allergènes, ou reprise additive d'une fiche déjà confirmée. */
+/**
+ * Reprise d'une fiche. Rien n'est pré-coché « Absent ».
+ * Un statut déjà enregistré est recopié tel quel. Une fiche ancienne ne reporte que les allergènes « Présent ».
+ */
 export function statusFromDish(dish: Pick<Dish, 'allergens' | 'allergensConfirmed' | 'allergenStatus'> | undefined): AllergenDraft {
   if (!dish) return {};
-  if (dish.allergenStatus && ALLERGENS.every((a) => dish.allergenStatus?.[a.key])) return { ...dish.allergenStatus };
-  if (dish.allergensConfirmed) {
-    const next: AllergenDraft = {};
-    for (const a of ALLERGENS) next[a.key] = dish.allergens.includes(a.key) ? 'present' : 'absent';
-    return next;
-  }
-  return dish.allergenStatus ? { ...dish.allergenStatus } : {};
+  if (dish.allergenStatus && Object.keys(dish.allergenStatus).length > 0) return { ...dish.allergenStatus };
+  const next: AllergenDraft = {};
+  for (const key of dish.allergens) next[key] = 'present';
+  return next;
 }
 
 export function allergensFromStatus(status: AllergenDraft): Allergen[] {

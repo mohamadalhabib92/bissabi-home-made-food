@@ -6,7 +6,7 @@ import { usePay } from '@/lib/checkout';
 import { useI18n } from '@/i18n';
 import { splitAllergens } from '@/lib/dishPublish';
 import { useData, useL } from '@/lib/data';
-import { COMMUNES, deliveryZone, zoneOf } from '@/lib/geo';
+import { cookIsOutsideVaud, deliveryZone, zoneOf } from '@/lib/geo';
 import { dayLabel, hoursUntil } from '@/lib/dates';
 import { slotUsed } from '@/lib/market';
 import type { FulfilMode } from '@/lib/model';
@@ -44,10 +44,10 @@ export default function Checkout() {
   const q = quote(lines.map((l) => ({ qty: l.qty, unitPrice: l.dish.price })), mode);
   const slot = options.find((o) => o.s.id === slotId);
   const allergenKeys = [...new Set(lines.flatMap((l) => { const s = splitAllergens(l.dish); return [...s.present, ...s.traces]; }))];
-  const cookPlace = COMMUNES.find((c) => c.npa === cook.npa || c.name === cook.commune);
+  const cookOutside = cookIsOutsideVaud(cook);
   const problems = [
     zoneOf(prefs.location) === 'outside' && tr('zoneOutsideTitle'),
-    cookPlace && cookPlace.canton !== 'VD' && tr('cookOutside'),
+    cookOutside && tr('cookOutsideOrder'),
     !slot && L('Choisissez un créneau', 'Choose a slot'),
     slot && slot.left < portions && L('Capacité insuffisante sur ce créneau', 'Not enough capacity on this slot'),
     mode === 'delivery' && deliveryZone(address) !== 'vaud' && (address.trim().length < 8 ? L('Adresse de livraison complète requise', 'Full delivery address required') : tr('deliveryOutside')),
@@ -68,6 +68,7 @@ export default function Checkout() {
   return (
     <Screen>
       {!paymentsLive ? <DemoBanner text={L('Paiement non configuré : paiement SIMULÉ, aucun débit réel.', 'Payments not configured: SIMULATED payment, no real charge.')} /> : null}
+      {cookOutside ? <Notice tone="warning" title={tr('cookOutside')} text={tr('cookOutsideOrder')} /> : null}
       {cook.delivers ? <Segmented label={L('Mode', 'Mode')} options={[{ label: L('Retrait chez le cuisinier', 'Pickup at cook’s'), value: 'pickup' as const }, { label: L('Livraison', 'Delivery'), value: 'delivery' as const }]} value={mode} onChange={(v) => { setMode(v); setSlotId(null); }} /> : null}
       <H2>{L('Créneau', 'Slot')}</H2>
       <Muted style={{ marginBottom: 8 }}>{L(`Commandes au moins ${lead} h à l’avance — pas de livraison express.`, `Orders at least ${lead} h ahead — no express delivery.`)}</Muted>
