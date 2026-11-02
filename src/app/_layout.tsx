@@ -1,8 +1,12 @@
 import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
+import { useState } from 'react';
 import { View } from 'react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { DataProvider, useL } from '@/lib/data';
+import { RebootProvider } from '@/lib/reboot';
+import { AppErrorBoundary } from '@/ui/error-boundary';
+import { FontProvider } from '@/ui/fonts';
 import { theme as t } from '@/ui/theme';
 
 function Nav() {
@@ -35,14 +39,22 @@ function Nav() {
 }
 
 export default function Layout() {
+  const [boot, setBoot] = useState(0);
+  const reboot = () => setBoot((n) => n + 1);
   return (
     <SafeAreaProvider>
-      <DataProvider>
-        <View style={{ flex: 1, backgroundColor: t.bg }}>
-          <StatusBar style="dark" />
-          <Nav />
-        </View>
-      </DataProvider>
+      <AppErrorBoundary onReset={reboot}>
+        <FontProvider>
+          <RebootProvider reboot={reboot}>
+            <DataProvider key={boot}>
+              <View style={{ flex: 1, backgroundColor: t.bg }}>
+                <StatusBar style="dark" />
+                <Nav />
+              </View>
+            </DataProvider>
+          </RebootProvider>
+        </FontProvider>
+      </AppErrorBoundary>
     </SafeAreaProvider>
   );
 }

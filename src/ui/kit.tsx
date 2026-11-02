@@ -15,6 +15,7 @@ import {
   type ViewStyle,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useAppFonts } from './fonts';
 import { theme as t } from './theme';
 
 export type IconName = ComponentProps<typeof Ionicons>['name'];
@@ -40,28 +41,32 @@ export function Screen({ children, scroll = true, padded = true }: { children: R
 }
 
 export function H1({ children, style }: { children: ReactNode; style?: StyleProp<TextStyle> }) {
+  const f = useAppFonts();
   return (
-    <Text accessibilityRole="header" style={[styles.h1, style]}>
+    <Text accessibilityRole="header" style={[styles.h1, f.display ? { fontFamily: f.display } : null, style]}>
       {children}
     </Text>
   );
 }
 export function H2({ children, style }: { children: ReactNode; style?: StyleProp<TextStyle> }) {
+  const f = useAppFonts();
   return (
-    <Text accessibilityRole="header" style={[styles.h2, style]}>
+    <Text accessibilityRole="header" style={[styles.h2, f.display ? { fontFamily: f.display } : null, style]}>
       {children}
     </Text>
   );
 }
 export function Body({ children, style, numberOfLines }: { children: ReactNode; style?: StyleProp<TextStyle>; numberOfLines?: number }) {
+  const f = useAppFonts();
   return (
-    <Text style={[styles.body, style]} numberOfLines={numberOfLines}>
+    <Text style={[styles.body, f.ui ? { fontFamily: f.ui } : null, style]} numberOfLines={numberOfLines}>
       {children}
     </Text>
   );
 }
 export function Muted({ children, style }: { children: ReactNode; style?: StyleProp<TextStyle> }) {
-  return <Text style={[styles.muted, style]}>{children}</Text>;
+  const f = useAppFonts();
+  return <Text style={[styles.muted, f.ui ? { fontFamily: f.ui } : null, style]}>{children}</Text>;
 }
 export function Eyebrow({ children, style }: { children: ReactNode; style?: StyleProp<TextStyle> }) {
   return <Text style={[styles.eyebrow, style]}>{children}</Text>;
@@ -114,8 +119,9 @@ export function Button({
   small?: boolean;
   accessibilityLabel?: string;
 }) {
+  const fonts = useAppFonts();
   const bg = { primary: t.primary, secondary: t.surfaceAlt, ghost: 'transparent', danger: t.danger }[variant];
-  const fg = { primary: t.onPrimary, secondary: t.text, ghost: t.primary, danger: '#fff' }[variant];
+  const fg = { primary: t.onPrimary, secondary: t.text, ghost: t.primary, danger: t.onPrimary }[variant];
   const off = disabled || loading;
   return (
     <Pressable
@@ -139,7 +145,7 @@ export function Button({
       ) : (
         <>
           {icon ? <Ionicons name={icon} size={small ? 16 : 18} color={fg} /> : null}
-          <Text style={[styles.btnText, small && { fontSize: 14 }, { color: fg }]}>{title}</Text>
+          <Text style={[styles.btnText, small && { fontSize: 14 }, { color: fg }, fonts.uiStrong ? { fontFamily: fonts.uiStrong } : null]}>{title}</Text>
         </>
       )}
     </Pressable>
@@ -172,7 +178,7 @@ export function Chip({ label, active, onPress, color }: { label: string; active?
         pressed && { opacity: 0.8 },
       ]}
     >
-      <Text style={{ color: active ? (color ? '#fff' : t.onPrimary) : t.text, fontWeight: '600', fontSize: 14 }}>{label}</Text>
+      <Text style={{ color: active ? t.onPrimary : t.text, fontWeight: '600', fontSize: 14 }}>{label}</Text>
     </Pressable>
   );
 }
@@ -194,13 +200,14 @@ export function Badge({ label, tone = 'neutral' }: { label: string; tone?: 'neut
 }
 
 export function Field({ label, hint, error, style, ...props }: TextInputProps & { label: string; hint?: string; error?: string | null }) {
+  const fonts = useAppFonts();
   return (
     <View style={{ marginBottom: 14 }}>
       <Text style={styles.label}>{label}</Text>
       <TextInput
         placeholderTextColor={t.muted}
         accessibilityLabel={label}
-        style={[styles.input, props.multiline && { minHeight: 88, textAlignVertical: 'top', paddingTop: 12 }, error ? { borderColor: t.danger } : null, style]}
+        style={[styles.input, fonts.ui ? { fontFamily: fonts.ui } : null, props.multiline && { minHeight: 88, textAlignVertical: 'top', paddingTop: 12 }, error ? { borderColor: t.danger } : null, style]}
         {...props}
       />
       {error ? <Text style={{ color: t.danger, marginTop: 4, fontSize: 13 }}>{error}</Text> : hint ? <Muted style={{ marginTop: 4, fontSize: 13 }}>{hint}</Muted> : null}
@@ -315,10 +322,11 @@ export function Divider() {
 }
 
 export function Stat({ label, value, sub }: { label: string; value: string; sub?: string }) {
+  const fonts = useAppFonts();
   return (
     <View style={[styles.card, { flex: 1, minWidth: 140, marginBottom: 0 }]}>
       <Muted style={{ fontSize: 12, textTransform: 'uppercase', letterSpacing: 0.8 }}>{label}</Muted>
-      <Text style={{ color: t.text, fontSize: 22, fontWeight: '700', marginTop: 4 }}>{value}</Text>
+      <Text style={{ color: t.text, fontSize: t.type.price, fontWeight: '500', marginTop: 4, fontFamily: fonts.price }}>{value}</Text>
       {sub ? <Muted style={{ fontSize: 12, marginTop: 2 }}>{sub}</Muted> : null}
     </View>
   );
@@ -337,7 +345,7 @@ export function DemoBanner({ text }: { text: string }) {
 export function shadow(level = 1): ViewStyle {
   if (Platform.OS === 'android') return { elevation: level * 2 };
   return {
-    shadowColor: '#000',
+    shadowColor: t.shadow,
     shadowOpacity: 0.06 * level,
     shadowRadius: 8 * level,
     shadowOffset: { width: 0, height: 2 * level },
@@ -347,9 +355,9 @@ export function shadow(level = 1): ViewStyle {
 export const styles = StyleSheet.create({
   screen: { flex: 1, backgroundColor: t.bg },
   inner: { width: '100%', maxWidth: 860, alignSelf: 'center' },
-  h1: { color: t.text, fontSize: 28, fontWeight: '700', letterSpacing: -0.5, marginBottom: 4, fontFamily: t.displayFont },
-  h2: { color: t.text, fontSize: 18, fontWeight: '700', letterSpacing: -0.2, marginBottom: 8 },
-  body: { color: t.text, fontSize: 16, lineHeight: 23 },
+  h1: { color: t.text, fontSize: t.type.h1, fontWeight: '600', letterSpacing: -0.5, marginBottom: 4 },
+  h2: { color: t.text, fontSize: t.type.h2, fontWeight: '600', letterSpacing: -0.2, marginBottom: 8 },
+  body: { color: t.text, fontSize: t.type.body, lineHeight: 23 },
   muted: { color: t.muted, fontSize: 15, lineHeight: 21 },
   eyebrow: { color: t.accent, fontSize: 12, fontWeight: '700', letterSpacing: 1.6, textTransform: 'uppercase', marginBottom: 6 },
   card: {
@@ -374,7 +382,7 @@ export const styles = StyleSheet.create({
   btnSmall: { minHeight: 44, paddingHorizontal: 14 },
   btnText: { fontSize: 16, fontWeight: '700', letterSpacing: 0.2 },
   iconBtn: { width: 44, height: 44, borderRadius: 22, alignItems: 'center', justifyContent: 'center' },
-  chip: { minHeight: 44, paddingHorizontal: 14, borderRadius: 22, borderWidth: 1, alignItems: 'center', justifyContent: 'center' },
+  chip: { minHeight: 44, paddingHorizontal: 14, borderRadius: t.radiusChip, borderWidth: 1, alignItems: 'center', justifyContent: 'center' },
   badge: { paddingHorizontal: 8, paddingVertical: 3, borderRadius: 999, alignSelf: 'flex-start' },
   label: { color: t.muted, fontSize: 13, fontWeight: '600', marginBottom: 6, letterSpacing: 0.3 },
   input: {
@@ -390,7 +398,7 @@ export const styles = StyleSheet.create({
   segment: { flexDirection: 'row', backgroundColor: t.surfaceAlt, borderRadius: t.radius - 2, padding: 4, gap: 4 },
   segItem: { flex: 1, minHeight: 44, borderRadius: t.radius - 4, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 8 },
   track: { width: 50, height: 30, borderRadius: 15, padding: 3, justifyContent: 'center' },
-  thumb: { width: 24, height: 24, borderRadius: 12, backgroundColor: '#fff', ...shadow(1) },
+  thumb: { width: 24, height: 24, borderRadius: 12, backgroundColor: t.onPrimary, ...shadow(1) },
   empty: { alignItems: 'center', padding: 28, borderRadius: t.radius, borderWidth: 1, borderStyle: 'dashed', borderColor: t.border, marginBottom: 12 },
   emptyIcon: { width: 56, height: 56, borderRadius: 28, backgroundColor: t.surfaceAlt, alignItems: 'center', justifyContent: 'center', marginBottom: 12 },
   notice: { flexDirection: 'row', gap: 10, padding: 12, borderRadius: t.radius - 4, marginBottom: 12 },

@@ -1,4 +1,4 @@
-import { createContext, useContext, useMemo, type ReactNode } from 'react';
+import { createContext, useCallback, useContext, useMemo, useState, type ReactNode } from 'react';
 import { km } from './geo';
 import type { Cook, Dish, FulfilMode, Lang, Order, OrderStatus, Report, Review, Slot } from './model';
 import { quote } from './pricing';
@@ -6,7 +6,7 @@ import { demoKitchenOrders, demoMarket } from './seed';
 import { clearAll, uid, usePersistentState } from './storage';
 
 type Setter<T> = (v: T | ((p: T) => T)) => void;
-export type Loc = { lat: number; lng: number; label: string; source: 'gps' | 'commune' };
+export type Loc = { lat: number; lng: number; label: string; source: 'gps' | 'commune'; canton?: string };
 export type Prefs = {
   lang: Lang; onboarded: boolean; mode: 'buyer' | 'cook';
   consents: { terms: boolean; location: boolean; marketing: boolean; at?: string };
@@ -16,7 +16,7 @@ const DEFAULT_PREFS: Prefs = { lang: 'fr', onboarded: false, mode: 'buyer', cons
 export type Cart = { cookId: string | null; lines: { dishId: string; qty: number }[] };
 
 type Ctx = {
-  ready: boolean; prefs: Prefs; setPrefs: Setter<Prefs>;
+  ready: boolean; storageReady: boolean; bootFallback: boolean; forceReady: () => void; prefs: Prefs; setPrefs: Setter<Prefs>;
   cooks: Cook[]; setCooks: Setter<Cook[]>; dishes: Dish[]; setDishes: Setter<Dish[]>; slots: Slot[]; setSlots: Setter<Slot[]>;
   orders: Order[]; setOrders: Setter<Order[]>; reviews: Review[]; setReviews: Setter<Review[]>; reports: Report[]; setReports: Setter<Report[]>;
   favorites: { dishes: string[]; cooks: string[] }; toggleFav: (k: 'dishes' | 'cooks', id: string) => void;
@@ -39,7 +39,10 @@ export function DataProvider({ children }: { children: ReactNode }) {
   const [reports, setReports, r7] = usePersistentState<Report[]>('reports', []);
   const [favorites, setFavorites, r8] = usePersistentState<{ dishes: string[]; cooks: string[] }>('favorites', { dishes: [], cooks: [] });
   const [cart, setCart, r9] = usePersistentState<Cart>('cart', { cookId: null, lines: [] });
-  const ready = r1 && r2 && r3 && r4 && r5 && r6 && r7 && r8 && r9;
+  const storageReady = r1 && r2 && r3 && r4 && r5 && r6 && r7 && r8 && r9;
+  const [bootFallback, setBootFallback] = useState(false);
+  const forceReady = useCallback(() => setBootFallback(true), []);
+  const ready = storageReady || bootFallback;
   const myCook = cooks.find((c) => c.isMe) ?? null;
   const loc = prefs.location;
 
@@ -91,11 +94,11 @@ export function DataProvider({ children }: { children: ReactNode }) {
       setFavorites({ dishes: [], cooks: [] }); setCart({ cookId: null, lines: [] });
     };
     return {
-      ready, prefs, setPrefs, cooks, setCooks, dishes, setDishes, slots, setSlots, orders, setOrders, reviews, setReviews, reports, setReports,
+      ready, storageReady, bootFallback, forceReady, prefs, setPrefs, cooks, setCooks, dishes, setDishes, slots, setSlots, orders, setOrders, reviews, setReviews, reports, setReports,
       favorites, toggleFav, cart, setCart, addToCart, clearCart: () => setCart({ cookId: null, lines: [] }), myCook, distanceTo,
       placeOrder, setOrderStatus, loadDemo, hasDemo, removeDemo, addKitchenDemo, wipe,
     };
-  }, [ready, prefs, cooks, dishes, slots, orders, reviews, reports, favorites, cart, myCook, loc, setPrefs, setCooks, setDishes, setSlots, setOrders, setReviews, setReports, setFavorites, setCart]);
+  }, [ready, storageReady, bootFallback, forceReady, prefs, cooks, dishes, slots, orders, reviews, reports, favorites, cart, myCook, loc, setPrefs, setCooks, setDishes, setSlots, setOrders, setReviews, setReports, setFavorites, setCart]);
   return <C.Provider value={value}>{children}</C.Provider>;
 }
 

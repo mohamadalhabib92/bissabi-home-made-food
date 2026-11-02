@@ -30,7 +30,7 @@ Identité : rouge `#C8152A`, vert `#1A4D2E`, or `#C9A84C`, crème `#FAF8F2` ; lo
 - **Gains** : ventes, commission visible, frais de livraison, net, par mois, export CSV.
 
 ### Confiance, droit, données
-- Message de responsabilité : « Les cuisiniers sont responsables de la conformité ; Bissabi prépare les gates SCAV — pas de certification affichée tant que non réelle ». **Aucun faux badge.**
+- Message de responsabilité : les cuisiniers restent responsables de l’autocontrôle. Dans le canton de Vaud l’autorité est l’**OFCO** (libellé « Annonce OFCO (VD) »). Le badge n’apparaît qu’après validation admin. **Aucun faux badge.** Livraisons et commandes : canton de Vaud uniquement.
 - RGPD / LPD : consentements (CGU, position, marketing), export JSON des données, suppression complète.
 - Mentions légales discrètes : Bissabi Drinks - BA, Chemin de la Suettaz 17, 1008 Prilly, IDE CHE-332.255.936.
 - Langues : **français et anglais complets**. DE, IT, ES, de-CH, AR (avec RTL) : affichées « à venir », non sélectionnables.
@@ -65,6 +65,6 @@ Service worker et manifeste générés par `scripts/pwa-postbuild.mjs`.
 - Serveur de paiement **non implémenté** (exemple fourni) ; Stripe Connect pour les versements aux cuisiniers à activer.
 - **À confirmer** (écran « Notes admin ») : qui paie la commission (actuellement le client, +15 %), frais de livraison (CHF 6.00 provisoire), arrondi à 5 centimes.
 - Modération des avis et signalements : locale (pas d’outil d’administration serveur).
-- Gates SCAV / autorité cantonale, vérification d’identité, assurance RC : à venir — rien n’est affiché comme certifié.
+- Annonce OFCO (VD), vérification d’identité, assurance RC : à venir — rien n’est affiché comme certifié. Schéma Supabase additif dans `supabase/migrations/` (non appliqué).
 - Photos de démonstration : emojis ; pas de vraies photos.
 - Traductions DE / IT / ES / de-CH / AR : à faire.

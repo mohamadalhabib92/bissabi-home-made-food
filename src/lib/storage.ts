@@ -50,15 +50,16 @@ export function usePersistentState<T>(key: string, initial: T | (() => T)) {
   const [value, setValue] = useState<T>(initial);
   const [ready, setReady] = useState(false);
   const initialRef = useRef(initial);
+  const dirty = useRef(false);
 
   useEffect(() => {
     let alive = true;
     const fb = typeof initialRef.current === 'function' ? (initialRef.current as () => T)() : initialRef.current;
     loadJSON<T>(key, fb).then((v) => {
-      if (alive) {
-        setValue(v);
-        setReady(true);
-      }
+      if (!alive) return;
+      // Une édition locale pendant le chargement n'est pas écrasée.
+      if (!dirty.current) setValue(v);
+      setReady(true);
     });
     return () => {
       alive = false;
@@ -67,6 +68,7 @@ export function usePersistentState<T>(key: string, initial: T | (() => T)) {
 
   const set = useCallback(
     (next: T | ((prev: T) => T)) => {
+      dirty.current = true;
       setValue((prev) => {
         const v = typeof next === 'function' ? (next as (p: T) => T)(prev) : next;
         void saveJSON(key, v);

@@ -32,7 +32,12 @@ jobs:
         env:
           # Variables de dépôt (Settings > Secrets and variables > Actions > Variables). Valeurs PUBLIQUES uniquement.
           # Absentes → l’app est construite en mode paiement simulé.
+          EXPO_PUBLIC_SUPABASE_URL: ${{ vars.EXPO_PUBLIC_SUPABASE_URL }}
+          EXPO_PUBLIC_SUPABASE_ANON_KEY: ${{ vars.EXPO_PUBLIC_SUPABASE_ANON_KEY }}
           EXPO_PUBLIC_STRIPE_PUBLISHABLE_KEY: ${{ vars.EXPO_PUBLIC_STRIPE_PUBLISHABLE_KEY }}
+          EXPO_PUBLIC_MAPS_KEY: ${{ vars.EXPO_PUBLIC_MAPS_KEY }}
+          EXPO_PUBLIC_SENTRY_DSN: ${{ vars.EXPO_PUBLIC_SENTRY_DSN }}
+          EXPO_PUBLIC_APPLE_MERCHANT_ID: ${{ vars.EXPO_PUBLIC_APPLE_MERCHANT_ID }}
           EXPO_PUBLIC_PAYMENTS_API_URL: ${{ vars.EXPO_PUBLIC_PAYMENTS_API_URL }}
           EXPO_PUBLIC_SUPPORT_EMAIL: ${{ vars.EXPO_PUBLIC_SUPPORT_EMAIL }}
       - uses: actions/configure-pages@v5

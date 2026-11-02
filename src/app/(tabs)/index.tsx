@@ -3,16 +3,19 @@ import { useMemo, useState } from 'react';
 import { Pressable, ScrollView, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Avatar, DishCard, Stars, Wordmark } from '@/components/brand';
+import { useI18n } from '@/i18n';
 import { useData, useL } from '@/lib/data';
-import { fmtKm } from '@/lib/geo';
+import { fmtKm, zoneOf } from '@/lib/geo';
 import { openSlotsFor, rating } from '@/lib/market';
 import { CUISINES, type Cuisine } from '@/lib/model';
-import { Button, Chip, DemoBanner, Empty, Field, H2, Ionicons, Muted, Segmented, Toggle, styles } from '@/ui/kit';
+import { Button, Chip, DemoBanner, Empty, Field, H2, Ionicons, Muted, Notice, Segmented, Toggle, styles } from '@/ui/kit';
 import { theme as t } from '@/ui/theme';
 
 export default function Discover() {
-  const { prefs, setPrefs, cooks, dishes, slots, reviews, distanceTo, favorites, hasDemo, loadDemo } = useData();
+  const { prefs, setPrefs, cooks, dishes, slots, reviews, distanceTo, favorites, hasDemo, loadDemo, bootFallback, storageReady } = useData();
   const { L, lang } = useL();
+  const { t: tr } = useI18n();
+  const zone = zoneOf(prefs.location);
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const [q, setQ] = useState('');
@@ -47,6 +50,7 @@ export default function Discover() {
           <Ionicons name="chevron-down" size={14} color={t.muted} />
         </Pressable>
         <View style={{ height: 14 }} />
+        {bootFallback && !storageReady ? <Notice tone="warning" title={tr('bootFallback')} /> : null}
         {hasDemo ? <DemoBanner text={L('Cuisinier·ères et plats de démonstration (fictifs).', 'Demo cooks and dishes (fictional).')} /> : null}
         <Segmented label={L('Rayon', 'Radius')} options={[1, 2, 3, 4, 5].map((k) => ({ label: `${k} km`, value: k }))} value={prefs.radiusKm} onChange={(v) => setPrefs((p) => ({ ...p, radiusKm: v }))} />
         <Toggle label={L('Halal uniquement', 'Halal only')} value={prefs.halalOnly} onChange={(v) => setPrefs((p) => ({ ...p, halalOnly: v }))} hint={L('Déclaration du cuisinier, non certifiée par Bissabi.', 'Cook’s declaration, not certified by Bissabi.')} />
@@ -56,9 +60,8 @@ export default function Discover() {
           {CUISINES.map((c) => <Chip key={c.key} label={c[lang]} active={cuisine === c.key} onPress={() => setCuisine(cuisine === c.key ? null : c.key)} />)}
         </ScrollView>
 
-        {!prefs.location ? <Muted style={{ marginBottom: 10 }}>{L('Lieu non défini : tous les cuisinier·ères sont affichés, sans distance.', 'No location set: all cooks shown, without distance.')}</Muted> : null}
-
-        {nearCooks.length ? (
+        {!prefs.location ? <Muted style={{ marginBottom: 10 }}>{L('Lieu non défini : tous les cuisinier·ères sont affichés, sans distance.', 'No location set: all cooks shown, without distance.')} {tr('zoneUnsetHint')}</Muted> : null}
+        {zone !== 'outside' && nearCooks.length ? (
           <>
             <H2>{L('Près de chez vous', 'Near you')}</H2>
             <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 10, paddingBottom: 16 }}>
@@ -79,7 +82,9 @@ export default function Discover() {
         ) : null}
 
         <H2>{L('Plats à commander à l’avance', 'Dishes to pre-order')}</H2>
-        {list.length ? list.map(({ d, next, dist }) => (
+        {zone === 'outside' ? (
+          <Empty icon="location-outline" title={tr('zoneOutsideTitle')} text={tr('zoneOutsideBody')} action={<Button variant="secondary" title={L('Choisir une commune', 'Choose a town')} onPress={() => router.push('/location')} />} />
+        ) : list.length ? list.map(({ d, next, dist }) => (
           <DishCard key={d.id} dish={d} cook={cooks.find((c) => c.id === d.cookId)} distance={dist} nextSlot={next} onPress={() => router.push(`/dish/${d.id}`)} />
         )) : (
           <Empty icon="restaurant-outline"

@@ -2,10 +2,12 @@ import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
 import { useState } from 'react';
 import { Text, View } from 'react-native';
 import { Avatar, DishVisual, Pill, Stars, allergenNames } from '@/components/brand';
+import { useI18n } from '@/i18n';
 import { confirmAsk } from '@/lib/confirm';
+import { splitAllergens } from '@/lib/dishPublish';
 import { useData, useL } from '@/lib/data';
 import { dayLabel } from '@/lib/dates';
-import { fmtKm } from '@/lib/geo';
+import { fmtKm, zoneOf } from '@/lib/geo';
 import { openSlotsFor, rating } from '@/lib/market';
 import { CUISINES } from '@/lib/model';
 import { chf, MIN_LEAD_HOURS } from '@/lib/pricing';
@@ -14,8 +16,9 @@ import { theme as t } from '@/ui/theme';
 
 export default function DishScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
-  const { dishes, cooks, slots, reviews, distanceTo, addToCart, clearCart, favorites, toggleFav, cart } = useData();
+  const { dishes, cooks, slots, reviews, distanceTo, addToCart, clearCart, favorites, toggleFav, cart, prefs } = useData();
   const { L, lang } = useL();
+  const { t: tr } = useI18n();
   const router = useRouter();
   const [qty, setQty] = useState(1);
   const [added, setAdded] = useState(false);
@@ -26,6 +29,8 @@ export default function DishScreen() {
   const d = cook ? distanceTo(cook) : null;
   const r = cook ? rating(reviews, cook.id) : { avg: 0, count: 0 };
   const fav = favorites.dishes.includes(dish.id);
+  const outside = zoneOf(prefs.location) === 'outside';
+  const declared = splitAllergens(dish);
   const add = () => {
     const res = addToCart(dish, qty);
     if (res === 'other_cook')
@@ -51,11 +56,23 @@ export default function DishScreen() {
       <Body>{dish.description}</Body>
       <Spacer />
       <Card>
+        <H2>{tr('composition')}</H2>
+        {dish.portionLabel ? <Body>{dish.portionLabel}</Body> : null}
+        {dish.ingredients.length ? (
+          <Body>{dish.ingredients.map((i) => `${i.name} ${i.qty} ${i.unit}`).join(' · ')}</Body>
+        ) : <Muted>{tr('notProvided')}</Muted>}
+        <Spacer h={8} />
         <H2>{L('Allergènes', 'Allergens')}</H2>
-        {dish.allergens.length
-          ? <Body>{allergenNames(dish.allergens, lang).join(' · ')}</Body>
-          : <Body>{L('Aucun des 14 allergènes majeurs, confirmé par le cuisinier.', 'None of the 14 major allergens, confirmed by the cook.')}</Body>}
+        {declared.present.length
+          ? <Body>{allergenNames(declared.present, lang).join(' · ')}</Body>
+          : <Body>{L('Aucun des 14 allergènes majeurs déclaré présent.', 'None of the 14 major allergens declared present.')}</Body>}
+        {declared.traces.length ? <Body style={{ marginTop: 6 }}>{tr('allergenTracesLabel')} : {allergenNames(declared.traces, lang).join(' · ')}</Body> : null}
+        {declared.complete ? <Muted style={{ marginTop: 6 }}>{tr('allergenAbsentSummary')}</Muted> : <Muted style={{ marginTop: 6 }}>{tr('legacyAllergens')}</Muted>}
         <Muted style={{ marginTop: 6 }}>{L('Déclaration du cuisinier. En cas d’allergie sévère, contactez-le via la note de commande avant de commander.', 'Declared by the cook. If you have a severe allergy, mention it in the order note before ordering.')}</Muted>
+        {dish.animalOrigin && dish.animalOrigin !== 'none' ? <Body style={{ marginTop: 8 }}>{tr('provenance')} : {dish.provenance || tr('notProvided')}</Body> : null}
+        {dish.isBakery ? <Body style={{ marginTop: 8 }}>{tr('productionCountry')} : {dish.productionCountry || tr('notProvided')}</Body> : null}
+        <Body style={{ marginTop: 8 }}>{tr('conservation')} : {dish.conservation || tr('notProvided')}</Body>
+        <Body style={{ marginTop: 8 }}>{tr('reheating')} : {dish.reheating || tr('notProvided')}</Body>
       </Card>
       {cook ? (
         <Card onPress={() => router.push(`/cook/${cook.id}`)} accessibilityLabel={cook.name}>
@@ -79,8 +96,9 @@ export default function DishScreen() {
         <IconButton icon="remove" label={L('Moins', 'Less')} onPress={() => setQty((q) => Math.max(1, q - 1))} />
         <Text style={{ fontSize: 18, fontWeight: '700', minWidth: 30, textAlign: 'center' }}>{qty}</Text>
         <IconButton icon="add" label={L('Plus', 'More')} onPress={() => setQty((q) => Math.min(20, q + 1))} />
-        <Button style={{ flex: 1 }} icon="bag-add-outline" title={`${L('Ajouter', 'Add')} · ${chf(dish.price * qty)}`} disabled={!open.length} onPress={add} />
+        <Button style={{ flex: 1 }} icon="bag-add-outline" title={`${L('Ajouter', 'Add')} · ${chf(dish.price * qty)}`} disabled={!open.length || outside} onPress={add} />
       </Row>
+      {outside ? <Notice tone="warning" title={tr('zoneOutsideTitle')} text={tr('zoneOutsideBody')} /> : null}
       {added ? (<><Spacer h={10} /><Notice tone="success" title={L('Ajouté au panier', 'Added to cart')} text={`${cart.lines.reduce((s, l) => s + l.qty, 0)} ${L('portion(s) dans le panier', 'portion(s) in cart')}`} /><Button variant="secondary" title={L('Voir le panier', 'View cart')} onPress={() => router.push('/cart')} /></>) : null}
       <Spacer />
       <Button variant="ghost" small icon="flag-outline" title={L('Signaler ce plat', 'Report this dish')} onPress={() => router.push({ pathname: '/report', params: { target: 'dish', id: dish.id } })} />
