@@ -40,3 +40,47 @@ export const findCommune = (q: string) => {
   if (!s) return COMMUNES;
   return COMMUNES.filter((c) => c.name.toLowerCase().includes(s) || c.npa.startsWith(s));
 };
+
+export const LAUNCH_CANTON = 'VD';
+
+/** Fiche déjà enregistrée hors Vaud (canton stocké, ou commune / NPA de la liste). */
+export function cookIsOutsideVaud(cook: { canton?: string; npa?: string; commune?: string } | null | undefined): boolean {
+  if (!cook) return false;
+  if (cook.canton && cook.canton !== LAUNCH_CANTON) return true;
+  const place = COMMUNES.find((c) => (cook.npa && c.npa === cook.npa) || (cook.commune && c.name === cook.commune));
+  return !!place && place.canton !== LAUNCH_CANTON;
+}
+
+export function nearestCommune(p: { lat: number; lng: number }): Place {
+  return [...COMMUNES].sort((a, b) => km(p, a) - km(p, b))[0];
+}
+
+export type ZoneKind = 'vd' | 'outside' | 'unset';
+
+/** Zone de commande à partir d'un lieu déjà choisi. Sans lieu : inchangé (l'app demande une commune). */
+export function zoneOf(loc: { lat: number; lng: number; label: string; canton?: string } | null): ZoneKind {
+  if (!loc) return 'unset';
+  if (loc.canton) return loc.canton === LAUNCH_CANTON ? 'vd' : 'outside';
+  const label = loc.label.toLowerCase();
+  const byName = COMMUNES.find((c) => label.includes(c.name.toLowerCase()));
+  if (byName) return byName.canton === LAUNCH_CANTON ? 'vd' : 'outside';
+  const near = nearestCommune(loc);
+  if (km(loc, near) <= 25) return near.canton === LAUNCH_CANTON ? 'vd' : 'outside';
+  return 'outside';
+}
+
+/**
+ * Livraison : uniquement si l'adresse cite une commune ou un NPA déjà ouverts dans le canton de Vaud.
+ * Un NPA hors liste vaudoise connue est refusé. Aucun NPA n'est inventé.
+ */
+export function deliveryZone(address: string): 'vaud' | 'outside' | 'unknown' {
+  const vd = COMMUNES.filter((c) => c.canton === LAUNCH_CANTON);
+  const other = COMMUNES.filter((c) => c.canton !== LAUNCH_CANTON);
+  const npas = address.match(/\b(\d{4})\b/g) ?? [];
+  if (npas.some((n) => vd.some((c) => c.npa === n))) return 'vaud';
+  if (npas.some((n) => other.some((c) => c.npa === n))) return 'outside';
+  const low = address.toLowerCase();
+  if (vd.some((c) => low.includes(c.name.toLowerCase()))) return 'vaud';
+  if (other.some((c) => low.includes(c.name.toLowerCase()))) return 'outside';
+  return 'unknown';
+}

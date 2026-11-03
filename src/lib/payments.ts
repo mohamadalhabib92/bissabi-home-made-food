@@ -6,12 +6,12 @@
  */
 import * as Linking from 'expo-linking';
 import { Platform } from 'react-native';
-import { env } from './config';
 import type { Order } from './model';
+import { publicEnv } from './publicEnv';
 
-export const STRIPE_PK = env('EXPO_PUBLIC_STRIPE_PUBLISHABLE_KEY', process.env.EXPO_PUBLIC_STRIPE_PUBLISHABLE_KEY);
-export const PAYMENTS_API = env('EXPO_PUBLIC_PAYMENTS_API_URL', process.env.EXPO_PUBLIC_PAYMENTS_API_URL);
-export const SUPPORT_EMAIL = env('EXPO_PUBLIC_SUPPORT_EMAIL', process.env.EXPO_PUBLIC_SUPPORT_EMAIL);
+export const STRIPE_PK = publicEnv.stripePublishable;
+export const PAYMENTS_API = publicEnv.paymentsApi;
+export const SUPPORT_EMAIL = publicEnv.supportEmail;
 export const paymentsLive = STRIPE_PK.configured && PAYMENTS_API.configured;
 
 export class PaymentError extends Error {}

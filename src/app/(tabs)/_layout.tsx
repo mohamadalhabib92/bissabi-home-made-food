@@ -1,16 +1,36 @@
 import { Redirect, Tabs } from 'expo-router';
-import { ActivityIndicator, View } from 'react-native';
-import { useData, useL } from '@/lib/data';
-import { Ionicons, type IconName } from '@/ui/kit';
+import { useEffect, useState } from 'react';
+import { ActivityIndicator, Text, View } from 'react-native';
+import { useI18n } from '@/i18n';
+import { useData } from '@/lib/data';
+import { useReboot } from '@/lib/reboot';
+import { Button, Ionicons, type IconName } from '@/ui/kit';
 import { theme as t } from '@/ui/theme';
 
 export default function TabsLayout() {
-  const { ready, prefs, cart, orders } = useData();
-  const { L } = useL();
+  const { ready, storageReady, forceReady, prefs, cart, orders } = useData();
+  const { L, t: tr } = useI18n();
+  const reboot = useReboot();
+  const [slow, setSlow] = useState(false);
+  useEffect(() => {
+    if (storageReady) return;
+    const id = setTimeout(() => setSlow(true), 8000);
+    return () => clearTimeout(id);
+  }, [storageReady]);
   if (!ready)
     return (
-      <View style={{ flex: 1, backgroundColor: t.bg, alignItems: 'center', justifyContent: 'center' }}>
-        <ActivityIndicator color={t.primary} accessibilityLabel="Chargement" />
+      <View style={{ flex: 1, backgroundColor: t.bg, alignItems: 'center', justifyContent: 'center', padding: 24 }}>
+        {slow ? (
+          <>
+            <Text accessibilityRole="header" style={{ color: t.text, fontSize: t.type.h2, fontWeight: '600', textAlign: 'center', marginBottom: 8 }}>{tr('bootTitle')}</Text>
+            <Text style={{ color: t.muted, fontSize: t.type.body, textAlign: 'center', marginBottom: 16 }}>{tr('bootBody')}</Text>
+            <Button title={tr('bootRetry')} onPress={reboot} />
+            <View style={{ height: 8 }} />
+            <Button variant="secondary" title={tr('bootContinue')} onPress={forceReady} />
+          </>
+        ) : (
+          <ActivityIndicator color={t.primary} accessibilityLabel={L('Chargement', 'Loading')} />
+        )}
       </View>
     );
   if (!prefs.onboarded || !prefs.consents.terms) return <Redirect href="/welcome" />;

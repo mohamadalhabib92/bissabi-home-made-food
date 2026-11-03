@@ -3,7 +3,10 @@ import { useMemo, useState } from 'react';
 import { Pressable, Text, View } from 'react-native';
 import { TotalsTable } from '@/components/brand';
 import { usePay } from '@/lib/checkout';
+import { useI18n } from '@/i18n';
+import { splitAllergens } from '@/lib/dishPublish';
 import { useData, useL } from '@/lib/data';
+import { cookIsOutsideVaud, deliveryZone, zoneOf } from '@/lib/geo';
 import { dayLabel, hoursUntil } from '@/lib/dates';
 import { slotUsed } from '@/lib/market';
 import type { FulfilMode } from '@/lib/model';
@@ -16,6 +19,7 @@ export default function Checkout() {
   const params = useLocalSearchParams<{ mode?: string }>();
   const { cart, dishes, cooks, slots, orders, placeOrder, clearCart, prefs, setPrefs } = useData();
   const { L, lang } = useL();
+  const { t: tr } = useI18n();
   const router = useRouter();
   const pay = usePay();
   const cook = cooks.find((c) => c.id === cart.cookId);
@@ -39,11 +43,14 @@ export default function Checkout() {
   if (!cook || !lines.length) return <Screen><Empty icon="bag-handle-outline" title={L('Panier vide', 'Empty cart')} action={<Button title={L('Découvrir', 'Discover')} onPress={() => router.replace('/')} />} /></Screen>;
   const q = quote(lines.map((l) => ({ qty: l.qty, unitPrice: l.dish.price })), mode);
   const slot = options.find((o) => o.s.id === slotId);
-  const allergens = [...new Set(lines.flatMap((l) => l.dish.allergens))];
+  const allergenKeys = [...new Set(lines.flatMap((l) => { const s = splitAllergens(l.dish); return [...s.present, ...s.traces]; }))];
+  const cookOutside = cookIsOutsideVaud(cook);
   const problems = [
+    zoneOf(prefs.location) === 'outside' && tr('zoneOutsideTitle'),
+    cookOutside && tr('cookOutsideOrder'),
     !slot && L('Choisissez un créneau', 'Choose a slot'),
     slot && slot.left < portions && L('Capacité insuffisante sur ce créneau', 'Not enough capacity on this slot'),
-    mode === 'delivery' && address.trim().length < 8 && L('Adresse de livraison complète requise', 'Full delivery address required'),
+    mode === 'delivery' && deliveryZone(address) !== 'vaud' && (address.trim().length < 8 ? L('Adresse de livraison complète requise', 'Full delivery address required') : tr('deliveryOutside')),
     !name.trim() && L('Votre prénom est requis', 'Your first name is required'),
     !ack && L('Confirmez avoir lu les allergènes', 'Confirm you read the allergens'),
   ].filter(Boolean) as string[];
@@ -61,6 +68,7 @@ export default function Checkout() {
   return (
     <Screen>
       {!paymentsLive ? <DemoBanner text={L('Paiement non configuré : paiement SIMULÉ, aucun débit réel.', 'Payments not configured: SIMULATED payment, no real charge.')} /> : null}
+      {cookOutside ? <Notice tone="warning" title={tr('cookOutside')} text={tr('cookOutsideOrder')} /> : null}
       {cook.delivers ? <Segmented label={L('Mode', 'Mode')} options={[{ label: L('Retrait chez le cuisinier', 'Pickup at cook’s'), value: 'pickup' as const }, { label: L('Livraison', 'Delivery'), value: 'delivery' as const }]} value={mode} onChange={(v) => { setMode(v); setSlotId(null); }} /> : null}
       <H2>{L('Créneau', 'Slot')}</H2>
       <Muted style={{ marginBottom: 8 }}>{L(`Commandes au moins ${lead} h à l’avance — pas de livraison express.`, `Orders at least ${lead} h ahead — no express delivery.`)}</Muted>
@@ -76,7 +84,7 @@ export default function Checkout() {
       }) : <Notice tone="warning" title={L('Aucun créneau compatible', 'No matching slot')} text={L('Essayez l’autre mode, ou revenez plus tard.', 'Try the other mode, or come back later.')} />}
       <Spacer />
       <Field label={L('Prénom', 'First name')} value={name} onChangeText={setName} autoComplete="given-name" />
-      {mode === 'delivery' ? <Field label={L('Adresse de livraison', 'Delivery address')} value={address} onChangeText={setAddress} placeholder={L('Rue, n°, NPA, commune', 'Street, no., postcode, town')} autoComplete="street-address" hint={L('Transmise au cuisinier uniquement pour cette commande.', 'Shared with the cook for this order only.')} /> : <Muted style={{ marginBottom: 12 }}>{L('L’adresse exacte de retrait vous est communiquée après acceptation.', 'The exact pickup address is shared after acceptance.')}</Muted>}
+      {mode === 'delivery' ? <Field label={L('Adresse de livraison', 'Delivery address')} value={address} onChangeText={setAddress} placeholder={L('Rue, n°, NPA, commune', 'Street, no., postcode, town')} autoComplete="street-address" hint={tr('deliveryAddressHint')} /> : <Muted style={{ marginBottom: 12 }}>{L('L’adresse exacte de retrait vous est communiquée après acceptation.', 'The exact pickup address is shared after acceptance.')}</Muted>}
       <Field label={L('Note au cuisinier (facultatif)', 'Note to the cook (optional)')} value={note} onChangeText={setNote} multiline placeholder={L('Allergie, interphone…', 'Allergy, buzzer…')} />
       <Card>
         <H2>{L('Récapitulatif', 'Summary')}</H2>
@@ -84,7 +92,7 @@ export default function Checkout() {
         <View style={{ height: 8 }} />
         <TotalsTable {...q} L={L} />
       </Card>
-      <Toggle label={allergens.length ? L(`J’ai lu les allergènes : ${allergens.length} déclaré(s) dans ma commande`, `I read the allergens: ${allergens.length} declared in my order`) : L('J’ai lu les informations allergènes', 'I read the allergen information')} value={ack} onChange={setAck} />
+      <Toggle label={allergenKeys.length ? L(`J’ai lu les allergènes : ${allergenKeys.length} déclaré(s) dans ma commande`, `I read the allergens: ${allergenKeys.length} declared in my order`) : L('J’ai lu les informations allergènes', 'I read the allergen information')} value={ack} onChange={setAck} />
       {!paymentsLive ? <Toggle label={L('Démo : simuler un refus de carte', 'Demo: simulate a card decline')} value={demoFail} onChange={setDemoFail} hint={L('Pour tester la gestion d’échec de paiement.', 'To test payment-failure handling.')} /> : null}
       {problems.length ? <Muted style={{ marginBottom: 8 }}>{problems.join(' · ')}</Muted> : null}
       {error ? <Notice tone="danger" title={error} /> : null}

@@ -1,5 +1,6 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useCallback, useEffect, useRef, useState } from 'react';
+import { hydrationGate, memoryAfterLoad, persistDecision, settleLoad } from './persistGuard';
 
 /**
  * Stockage local (AsyncStorage sur mobile, localStorage sur le web).
@@ -9,16 +10,23 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 // Préfixe propre à l'app : plusieurs PWA partagent la même origine sur GitHub Pages.
 const PREFIX = '@bissabi-home-made-food/';
 
-export async function loadJSON<T>(key: string, fallback: T): Promise<T> {
+/** ok: false = lecture échouée (ne pas traiter comme un stockage vide). */
+export async function loadJSON<T>(key: string, fallback: T): Promise<{ ok: true; value: T } | { ok: false }> {
   try {
     const raw = await AsyncStorage.getItem(PREFIX + key);
-    return raw == null ? fallback : (JSON.parse(raw) as T);
+    if (raw == null) return { ok: true, value: fallback };
+    try {
+      return { ok: true, value: JSON.parse(raw) as T };
+    } catch {
+      return { ok: false };
+    }
   } catch {
-    return fallback;
+    return { ok: false };
   }
 }
 
 export async function saveJSON<T>(key: string, value: T): Promise<void> {
+  if (!hydrationGate.canWrite(key)) return;
   try {
     await AsyncStorage.setItem(PREFIX + key, JSON.stringify(value));
   } catch {
@@ -26,9 +34,11 @@ export async function saveJSON<T>(key: string, value: T): Promise<void> {
   }
 }
 
-export async function clearAll(): Promise<void> {
+export async function clearAll(): Promise<boolean> {
+  if (!hydrationGate.canClear()) return false;
   const keys = await AsyncStorage.getAllKeys();
   await AsyncStorage.multiRemove(keys.filter((k) => k.startsWith(PREFIX)));
+  return true;
 }
 
 export async function exportAll(): Promise<Record<string, unknown>> {
@@ -45,33 +55,39 @@ export async function exportAll(): Promise<Record<string, unknown>> {
   return out;
 }
 
-/** État React persistant (écriture immédiate à chaque changement). */
+/** État React persistant. Aucune écriture tant que la lecture de cette clé n'a pas réussi. */
 export function usePersistentState<T>(key: string, initial: T | (() => T)) {
   const [value, setValue] = useState<T>(initial);
   const [ready, setReady] = useState(false);
   const initialRef = useRef(initial);
+  const valueRef = useRef(value);
 
   useEffect(() => {
     let alive = true;
+    let marked = false;
     const fb = typeof initialRef.current === 'function' ? (initialRef.current as () => T)() : initialRef.current;
-    loadJSON<T>(key, fb).then((v) => {
-      if (alive) {
-        setValue(v);
-        setReady(true);
-      }
+    loadJSON<T>(key, fb).then((result) => {
+      if (!alive) return;
+      const adopted = memoryAfterLoad(result.ok, result.ok ? result.value : fb, valueRef.current);
+      if (!settleLoad(hydrationGate, key, adopted.hydrated)) return;
+      marked = true;
+      valueRef.current = adopted.memory;
+      setValue(adopted.memory);
+      setReady(true);
     });
     return () => {
       alive = false;
+      if (marked) hydrationGate.unmark(key);
     };
   }, [key]);
 
   const set = useCallback(
     (next: T | ((prev: T) => T)) => {
-      setValue((prev) => {
-        const v = typeof next === 'function' ? (next as (p: T) => T)(prev) : next;
-        void saveJSON(key, v);
-        return v;
-      });
+      const decision = persistDecision(hydrationGate, key, valueRef.current, next);
+      if (!decision.write) return;
+      valueRef.current = decision.value;
+      setValue(decision.value);
+      void saveJSON(key, decision.value);
     },
     [key],
   );

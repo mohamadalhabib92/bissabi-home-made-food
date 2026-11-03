@@ -19,6 +19,11 @@ export const ALLERGENS = [
   { key: 'molluscs', fr: 'Mollusques', en: 'Molluscs' },
 ] as const;
 export type Allergen = (typeof ALLERGENS)[number]['key'];
+/** Présent, traces possibles, ou absent — les trois doivent être renseignés pour publier. */
+export type AllergenLevel = 'present' | 'traces' | 'absent';
+export type AnimalOrigin = 'none' | 'meat' | 'fish' | 'both';
+/** Badge OFCO uniquement si un admin a posé `ofco_verified`. Jamais pré-coché. */
+export type OfcoStatus = 'none' | 'pending' | 'identity_verified' | 'ofco_verified';
 
 export const CUISINES = [
   { key: 'sahel', fr: 'Sahel & Afrique de l’Ouest', en: 'Sahel & West Africa' },
@@ -40,6 +45,10 @@ export type Cook = {
   checklist: Record<string, boolean>; checklistAt?: string;
   delivers: boolean; // le cuisinier livre-t-il lui-même (sinon retrait uniquement)
   avatarColor: string; isMe?: boolean; demo?: boolean; createdAt: string;
+  /** Canton du cuisinier. Les inscriptions nouvelles sont limitées à VD. */
+  canton?: string;
+  /** Absent sur les fiches existantes : aucun badge n'est affiché. */
+  ofcoStatus?: OfcoStatus;
 };
 
 export type Dish = {
@@ -50,6 +59,15 @@ export type Dish = {
   ingredients: Ingredient[]; leadHours: number; // délai minimum de commande
   photo?: string; // uri / dataURL ; sinon visuel de marque
   emoji: string; active: boolean; demo?: boolean;
+  /** Champs additifs (Passe 1). Les plats déjà enregistrés restent lisibles sans eux. */
+  allergenStatus?: Partial<Record<Allergen, AllergenLevel>>;
+  animalOrigin?: AnimalOrigin;
+  provenance?: string;
+  isBakery?: boolean;
+  productionCountry?: string;
+  conservation?: string;
+  reheating?: string;
+  portionLabel?: string;
 };
 
 export type Slot = {

@@ -60,3 +60,9 @@ app.listen(8787);
 ```
 
 Phase 2 : Apple Pay / Google Pay (activables dans Stripe Checkout), Stripe Connect pour reverser automatiquement les cuisiniers.
+
+## Variables serveur (placeholders uniquement)
+
+Ne jamais les préfixer par `EXPO_PUBLIC_` et ne jamais les committer :
+
+`SUPABASE_SERVICE_ROLE_KEY=YOUR_SUPABASE_SERVICE_ROLE_KEY` · `STRIPE_SECRET_KEY=YOUR_STRIPE_SECRET_KEY` · `STRIPE_WEBHOOK_SECRET=YOUR_STRIPE_WEBHOOK_SECRET` · `STRIPE_CONNECT_CLIENT_ID=YOUR_STRIPE_CONNECT_CLIENT_ID` · `TWINT_MERCHANT_ID=YOUR_TWINT_MERCHANT_ID` · `EXPO_PUSH_ACCESS_TOKEN=YOUR_EXPO_PUSH_TOKEN` · `RESEND_API_KEY=YOUR_EMAIL_API_KEY` · `ADMIN_EMAILS=YOUR_ADMIN_EMAILS`

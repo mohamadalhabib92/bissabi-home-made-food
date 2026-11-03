@@ -1,7 +1,9 @@
 import { useRouter } from 'expo-router';
 import { View } from 'react-native';
 import { Avatar, DishVisual } from '@/components/brand';
+import { useI18n } from '@/i18n';
 import { checklistDone } from '@/lib/cookutil';
+import { activeDishesMissingPublish } from '@/lib/dishPublish';
 import { useData, useL } from '@/lib/data';
 import { dayLabel, todayISO } from '@/lib/dates';
 import { chf } from '@/lib/pricing';
@@ -11,6 +13,7 @@ import { Badge, Body, Button, Card, DemoBanner, Empty, H1, H2, ListItem, Muted, 
 export default function Kitchen() {
   const { myCook, dishes, slots, orders, addKitchenDemo } = useData();
   const { L, lang } = useL();
+  const { t } = useI18n();
   const router = useRouter();
   if (!myCook)
     return (
@@ -42,6 +45,7 @@ export default function Kitchen() {
       <Spacer />
       {inc.some((o) => o.demo) ? <DemoBanner text={L('Commandes reçues de démonstration (fictives).', 'Demo incoming orders (fictional).')} /> : null}
       {!ready ? <Notice tone="warning" title={L('Checklist hygiène incomplète', 'Hygiene checklist incomplete')} text={L('Vos plats ne sont pas visibles tant que la checklist n’est pas complétée.', 'Your dishes are hidden until the checklist is complete.')} /> : null}
+      {activeDishesMissingPublish(mine).length ? <Notice tone="warning" title={t('publishBlocked')} text={activeDishesMissingPublish(mine).map((d) => d.title).join(' · ')} /> : null}
       {!ready ? <Button variant="secondary" title={L('Compléter la checklist', 'Complete checklist')} onPress={() => router.push('/studio/checklist')} /> : null}
       <Spacer />
       <Row wrap>
