@@ -1,6 +1,6 @@
 import { Redirect, Tabs } from 'expo-router';
 import { useEffect, useState } from 'react';
-import { Text, View } from 'react-native';
+import { Text, View, useWindowDimensions } from 'react-native';
 import { useI18n } from '@/i18n';
 import { useData } from '@/lib/data';
 import { useReboot } from '@/lib/reboot';
@@ -8,6 +8,9 @@ import { Breathing, haptic, Button, Ionicons, type IconName } from '@/ui/kit';
 import { theme as t } from '@/ui/theme';
 
 export default function TabsLayout() {
+  // Libellés d'onglets : suivent la taille de texte du système jusqu'à ×1,4, au-delà la barre déborderait.
+  const { fontScale } = useWindowDimensions();
+  const tabFs = (n: number) => Math.round(n * Math.min(fontScale, 1.4));
   const { ready, storageReady, forceReady, prefs, cart, orders } = useData();
   const { L, t: tr } = useI18n();
   const reboot = useReboot();
@@ -52,7 +55,8 @@ export default function TabsLayout() {
       screenOptions={{
         headerStyle: { backgroundColor: t.bg }, headerTintColor: t.text, headerShadowVisible: false,
         tabBarStyle: { backgroundColor: t.surface, borderTopColor: t.border, minHeight: 60 },
-        tabBarActiveTintColor: t.primary, tabBarInactiveTintColor: t.muted, tabBarLabelStyle: { fontSize: 12, fontWeight: '600' },
+        tabBarActiveTintColor: t.primary, tabBarInactiveTintColor: t.muted, tabBarAllowFontScaling: false,
+        tabBarLabelStyle: { fontSize: tabFs(12), fontWeight: '600' },
         sceneStyle: { backgroundColor: t.bg },
       }}
     >

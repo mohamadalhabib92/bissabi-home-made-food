@@ -82,7 +82,7 @@ export function DishCard({ dish, cook, distance, nextSlot, onPress }: { dish: Di
   return (
     <Pressable onPress={onPress} accessibilityRole="button" accessibilityLabel={`${dish.title}, ${chf(dish.price)}`} style={[{ backgroundColor: t.surface, borderRadius: 18, marginBottom: 16, borderWidth: 1, borderColor: t.border, overflow: 'hidden' }, shadow(1)]}>
       <DishVisual dish={dish} height={160} radius={0} />
-      <Pressable onPress={() => toggleFav('dishes', dish.id)} accessibilityLabel={fav ? L('Retirer des favoris', 'Remove from favourites') : L('Ajouter aux favoris', 'Add to favourites')}
+      <Pressable onPress={() => toggleFav('dishes', dish.id)} accessibilityRole="button" accessibilityState={{ selected: fav }} accessibilityLabel={fav ? L('Retirer des favoris', 'Remove from favourites') : L('Ajouter aux favoris', 'Add to favourites')}
         style={{ position: 'absolute', top: 10, right: 10, width: 44, height: 44, borderRadius: 22, backgroundColor: t.scrim, alignItems: 'center', justifyContent: 'center' }}>
         <Ionicons name={fav ? 'heart' : 'heart-outline'} size={22} color={t.primary} />
       </Pressable>
