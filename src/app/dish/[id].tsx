@@ -11,7 +11,7 @@ import { fmtKm, zoneOf } from '@/lib/geo';
 import { openSlotsFor, rating } from '@/lib/market';
 import { CUISINES } from '@/lib/model';
 import { chf, MIN_LEAD_HOURS } from '@/lib/pricing';
-import { Body, Button, Card, Empty, H1, H2, IconButton, ListItem, Muted, Notice, Row, Screen, Spacer } from '@/ui/kit';
+import { Body, Button, Card, Empty, H1, H2, IconButton, ListItem, Muted, Notice, Row, Screen, Spacer, haptic, useFeedback } from '@/ui/kit';
 import { theme as t } from '@/ui/theme';
 
 export default function DishScreen() {
@@ -22,6 +22,7 @@ export default function DishScreen() {
   const router = useRouter();
   const [qty, setQty] = useState(1);
   const [added, setAdded] = useState(false);
+  const fb = useFeedback();
   const dish = dishes.find((d) => d.id === id);
   if (!dish) return <Screen><Empty icon="help-circle-outline" title={L('Plat introuvable', 'Dish not found')} text={L('Il a peut-être été retiré par son cuisinier.', 'It may have been removed by its cook.')} /></Screen>;
   const cook = cooks.find((c) => c.id === dish.cookId);
@@ -31,15 +32,19 @@ export default function DishScreen() {
   const fav = favorites.dishes.includes(dish.id);
   const outside = zoneOf(prefs.location) === 'outside';
   const declared = splitAllergens(dish);
+  const added_ = () => {
+    setAdded(true);
+    fb.toast({ text: L('Ajouté au panier', 'Added to cart'), icon: 'bag-check-outline' });
+  };
   const add = () => {
     const res = addToCart(dish, qty);
     if (res === 'other_cook')
-      return confirmAsk(L('Votre panier contient les plats d’un·e autre cuisinier·ère. Une commande = un·e cuisinier·ère. Vider le panier et ajouter ce plat ?', 'Your cart has dishes from another cook. One order = one cook. Empty the cart and add this dish?'), () => { clearCart(); setTimeout(() => { addToCart(dish, qty); setAdded(true); }, 0); }, L('Vider et ajouter', 'Empty & add'));
-    setAdded(true);
+      return confirmAsk(L('Votre panier contient les plats d’un·e autre cuisinier·ère. Une commande = un·e cuisinier·ère. Vider le panier et ajouter ce plat ?', 'Your cart has dishes from another cook. One order = one cook. Empty the cart and add this dish?'), () => { clearCart(); setTimeout(() => { addToCart(dish, qty); added_(); }, 0); }, L('Vider et ajouter', 'Empty & add'));
+    added_();
   };
   return (
     <Screen>
-      <Stack.Screen options={{ title: dish.title, headerRight: () => <IconButton icon={fav ? 'heart' : 'heart-outline'} label={L('Favori', 'Favourite')} onPress={() => toggleFav('dishes', dish.id)} /> }} />
+      <Stack.Screen options={{ title: dish.title, headerRight: () => <IconButton icon={fav ? 'heart' : 'heart-outline'} label={L('Favori', 'Favourite')} onPress={() => { haptic(fav ? 'tap' : 'success'); toggleFav('dishes', dish.id); }} /> }} />
       <DishVisual dish={dish} height={220} />
       <Spacer />
       <H1>{dish.title}</H1>
@@ -93,9 +98,9 @@ export default function DishScreen() {
       ) : <Notice tone="warning" title={L('Aucun créneau ouvert', 'No open slot')} text={L('Ajoutez-le en favori : vous le retrouverez dès que le cuisinier ouvre un créneau.', 'Save it as a favourite to find it when the cook opens a slot.')} />}
       <Spacer />
       <Row>
-        <IconButton icon="remove" label={L('Moins', 'Less')} onPress={() => setQty((q) => Math.max(1, q - 1))} />
+        <IconButton icon="remove" label={L('Moins', 'Less')} onPress={() => { haptic('select'); setQty((q) => Math.max(1, q - 1)); }} />
         <Text style={{ fontSize: 18, fontWeight: '700', minWidth: 30, textAlign: 'center' }}>{qty}</Text>
-        <IconButton icon="add" label={L('Plus', 'More')} onPress={() => setQty((q) => Math.min(20, q + 1))} />
+        <IconButton icon="add" label={L('Plus', 'More')} onPress={() => { haptic('select'); setQty((q) => Math.min(20, q + 1)); }} />
         <Button style={{ flex: 1 }} icon="bag-add-outline" title={`${L('Ajouter', 'Add')} · ${chf(dish.price * qty)}`} disabled={!open.length || outside} onPress={add} />
       </Row>
       {outside ? <Notice tone="warning" title={tr('zoneOutsideTitle')} text={tr('zoneOutsideBody')} /> : null}

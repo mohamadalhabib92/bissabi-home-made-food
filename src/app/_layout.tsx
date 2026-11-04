@@ -1,13 +1,14 @@
 import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { useState } from 'react';
-import { View } from 'react-native';
+import { useColorScheme, View } from 'react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { DataProvider, useL } from '@/lib/data';
 import { RebootProvider } from '@/lib/reboot';
 import { AppErrorBoundary } from '@/ui/error-boundary';
 import { FontProvider } from '@/ui/fonts';
-import { theme as t } from '@/ui/theme';
+import { FeedbackProvider } from '@/ui/motion';
+import { applyScheme, theme as t } from '@/ui/theme';
 
 function Nav() {
   const { L } = useL();
@@ -39,6 +40,9 @@ function Nav() {
 }
 
 export default function Layout() {
+  // Apparence système : appliquée avant le rendu des enfants. Le remontage se fait
+  // sous DataProvider (clé = schéma), donc les données et le panier ne bougent pas.
+  const scheme = applyScheme(useColorScheme());
   const [boot, setBoot] = useState(0);
   const reboot = () => setBoot((n) => n + 1);
   return (
@@ -47,9 +51,11 @@ export default function Layout() {
         <FontProvider>
           <RebootProvider reboot={reboot}>
             <DataProvider key={boot}>
-              <View style={{ flex: 1, backgroundColor: t.bg }}>
-                <StatusBar style="dark" />
-                <Nav />
+              <View key={scheme} style={{ flex: 1, backgroundColor: t.bg }}>
+                <FeedbackProvider>
+                  <StatusBar style={scheme === 'dark' ? 'light' : 'dark'} />
+                  <Nav />
+                </FeedbackProvider>
               </View>
             </DataProvider>
           </RebootProvider>

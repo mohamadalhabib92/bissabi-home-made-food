@@ -10,7 +10,7 @@ import { allergensFromStatus, publishIssues, statusFromDish, type AllergenDraft,
 import { ALLERGENS, CUISINES, type Allergen, type AllergenLevel, type AnimalOrigin, type Cuisine, type Dish, type Ingredient } from '@/lib/model';
 import { MIN_LEAD_HOURS } from '@/lib/pricing';
 import { uid } from '@/lib/storage';
-import { Button, Card, Chip, Empty, Field, H2, IconButton, Muted, Notice, Row, Screen, Segmented, Spacer, Toggle } from '@/ui/kit';
+import { Button, Card, Chip, Empty, Field, H2, IconButton, Muted, Notice, Row, Screen, Segmented, Spacer, Toggle, useFeedback } from '@/ui/kit';
 import { theme as ui } from '@/ui/theme';
 
 const EMOJIS = ['🍲', '🍛', '🥘', '🍗', '🥙', '🥗', '🍝', '🥟', '🍰', '🧆', '🫓', '🍚'];
@@ -33,6 +33,7 @@ export default function DishEditor() {
   const { L, lang } = useL();
   const { t } = useI18n();
   const router = useRouter();
+  const fb = useFeedback();
   const ex = dishes.find((d) => d.id === id && d.cookId === myCook?.id);
   const [title, setTitle] = useState(ex?.title ?? '');
   const [description, setDescription] = useState(ex?.description ?? '');
@@ -95,6 +96,7 @@ export default function DishEditor() {
       portionLabel: portion.trim() || undefined,
     };
     setDishes((l) => (ex ? l.map((x) => (x.id === d.id ? d : x)) : [...l, d]));
+    fb.toast({ text: ex ? L('Plat mis à jour', 'Dish updated') : L('Plat ajouté à votre carte', 'Dish added to your menu'), icon: 'checkmark-circle' });
     router.back();
   };
   const preview: Dish = {
