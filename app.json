@@ -6,7 +6,7 @@
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
-    "userInterfaceStyle": "light",
+    "userInterfaceStyle": "automatic",
     "description": "La saveur du partage — cuisine de quartier authentique par Bissabi",
     "splash": {
       "image": "./assets/splash-icon.png",

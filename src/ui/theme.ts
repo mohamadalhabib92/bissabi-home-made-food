@@ -91,3 +91,64 @@ export const theme = {
 };
 
 export type Theme = typeof theme;
+
+/* ------------------------------------------------------------------ */
+/* Mode sombre — « dîner aux chandelles » : brun chaud, crème, or doux. */
+/* Le thème clair reste la référence ; ces valeurs ne servent que si    */
+/* l'appareil est en apparence sombre. Contraste AA vérifié en test.    */
+/* ------------------------------------------------------------------ */
+export type Scheme = 'light' | 'dark';
+
+type ColorKey =
+  | 'bg' | 'surface' | 'surfaceAlt' | 'text' | 'muted' | 'primary' | 'onPrimary' | 'secondary'
+  | 'accent' | 'accentBg' | 'accentInk' | 'border' | 'danger' | 'dangerBg' | 'success' | 'successBg'
+  | 'warning' | 'warningBg' | 'info' | 'infoBg' | 'shadow' | 'scrim';
+
+const pick = (): Record<ColorKey, string> & { dishTints: readonly string[] } => ({
+  bg: theme.bg, surface: theme.surface, surfaceAlt: theme.surfaceAlt, text: theme.text, muted: theme.muted,
+  primary: theme.primary, onPrimary: theme.onPrimary, secondary: theme.secondary, accent: theme.accent,
+  accentBg: theme.accentBg, accentInk: theme.accentInk, border: theme.border, danger: theme.danger,
+  dangerBg: theme.dangerBg, success: theme.success, successBg: theme.successBg, warning: theme.warning,
+  warningBg: theme.warningBg, info: theme.info, infoBg: theme.infoBg, shadow: theme.shadow, scrim: theme.scrim,
+  dishTints: theme.dishTints,
+});
+
+/** Instantané des valeurs claires d'origine (inchangées). */
+export const LIGHT = pick();
+
+export const DARK: Record<ColorKey, string> & { dishTints: readonly string[] } = {
+  bg: '#12100D',
+  surface: '#1B1814',
+  surfaceAlt: '#25211B',
+  text: '#F2EDE3',
+  muted: '#B3AA9B',
+  primary: '#EF5A63',
+  onPrimary: '#1F0609',
+  secondary: '#8CC7A1',
+  accent: '#D9B964',
+  accentBg: '#2E2714',
+  accentInk: '#E3C878',
+  border: '#332D25',
+  danger: '#F2897E',
+  dangerBg: '#3A1D19',
+  success: '#8CC7A1',
+  successBg: '#16291D',
+  warning: '#E9C46A',
+  warningBg: '#2E2512',
+  info: '#8DB9E6',
+  infoBg: '#13243A',
+  shadow: '#000000',
+  scrim: 'rgba(18,16,13,0.92)',
+  dishTints: ['#2E2618', '#1E2A1F', '#2F1D1E', '#2A251B', '#1D242C'],
+};
+
+let scheme: Scheme = 'light';
+export const currentScheme = (): Scheme => scheme;
+export const isDark = () => scheme === 'dark';
+
+/** Applique la palette du schéma au thème partagé (lecture au rendu suivant). */
+export function applyScheme(next: Scheme | null | undefined): Scheme {
+  scheme = next === 'dark' ? 'dark' : 'light';
+  Object.assign(theme, scheme === 'dark' ? DARK : LIGHT);
+  return scheme;
+}
