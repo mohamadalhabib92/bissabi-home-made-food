@@ -45,7 +45,8 @@ export default function DishScreen() {
   return (
     <Screen>
       <Stack.Screen options={{ title: dish.title, headerRight: () => <IconButton icon={fav ? 'heart' : 'heart-outline'} label={L('Favori', 'Favourite')} onPress={() => { haptic(fav ? 'tap' : 'success'); toggleFav('dishes', dish.id); }} /> }} />
-      <DishVisual dish={dish} height={220} />
+      <DishVisual dish={dish} height={240} />
+      {dish.demo ? <Muted style={{ marginTop: 6 }}>{L('Photo d’illustration libre de droits (démo). Voir docs/ATTRIBUTION.md.', 'Royalty-free illustration photo (demo). See docs/ATTRIBUTION.md.')}</Muted> : null}
       <Spacer />
       <H1>{dish.title}</H1>
       <Text style={{ color: t.text, fontSize: 20, fontWeight: '800' }}>{chf(dish.price)} <Text style={{ color: t.muted, fontSize: 14, fontWeight: '500' }}>/ {L('portion', 'portion')}</Text></Text>
@@ -54,7 +55,10 @@ export default function DishScreen() {
         <Pill label={CUISINES.find((c) => c.key === dish.cuisine)?.[lang] ?? ''} tone="gold" />
         {dish.halal ? <Pill label={L('Halal (déclaré)', 'Halal (declared)')} tone="green" /> : null}
         {dish.vegetarian ? <Pill label={L('Végétarien', 'Vegetarian')} tone="green" /> : null}
-        {dish.spicy ? <Pill label={L('Épicé', 'Spicy')} tone="red" /> : null}
+        {dish.vegan ? <Pill label="Vegan" tone="green" /> : null}
+        {dish.glutenFree ? <Pill label={L('Sans gluten', 'Gluten-free')} /> : null}
+        {dish.familySize ? <Pill label={L('Familial', 'Family-size')} tone="gold" /> : null}
+        {(dish.spiceLevel ?? (dish.spicy ? 2 : 0)) > 0 ? <Pill label={`${L('Épicé', 'Spicy')} ${'🌶'.repeat(dish.spiceLevel ?? 1)}`} tone="red" /> : null}
         {dish.demo ? <Pill label="démo" /> : null}
       </Row>
       <Spacer />

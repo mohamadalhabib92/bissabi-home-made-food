@@ -13,7 +13,7 @@ export type Prefs = {
   consents: { terms: boolean; location: boolean; marketing: boolean; at?: string };
   location: Loc | null; radiusKm: number; halalOnly: boolean; buyerName: string;
 };
-const DEFAULT_PREFS: Prefs = { lang: 'fr', onboarded: false, mode: 'buyer', consents: { terms: false, location: false, marketing: false }, location: null, radiusKm: 3, halalOnly: false, buyerName: '' };
+const DEFAULT_PREFS: Prefs = { lang: 'fr', onboarded: false, mode: 'buyer', consents: { terms: false, location: false, marketing: false }, location: null, radiusKm: 50, halalOnly: false, buyerName: '' };
 export type Cart = { cookId: string | null; lines: { dishId: string; qty: number }[] };
 
 type Ctx = {

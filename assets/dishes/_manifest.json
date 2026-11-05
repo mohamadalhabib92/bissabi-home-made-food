@@ -1,0 +1,305 @@
+{
+  "ok": [
+    {
+      "slug": "mafe",
+      "file": "assets/dishes/mafe.webp",
+      "bytes": 61494,
+      "author": "Henry & Co.",
+      "page": "https://unsplash.com/photos/bowl-of-soup-with-green-leaf-on-top-0hKzq2sY8aY",
+      "label": "stew bowl",
+      "source_url": "https://images.unsplash.com/photo-1547592166-23ac45744acd?auto=format&fit=crop&w=1200&q=80"
+    },
+    {
+      "slug": "couscous",
+      "file": "assets/dishes/couscous.webp",
+      "bytes": 87484,
+      "author": "Farhad Ibrahimzade",
+      "page": "https://unsplash.com/photos/plate-of-food-with-vegetables-and-meat-FpPcoG6tJxE",
+      "label": "couscous plate",
+      "source_url": "https://images.unsplash.com/photo-1585937421612-70a008356fbe?auto=format&fit=crop&w=1200&q=80"
+    },
+    {
+      "slug": "rosti",
+      "file": "assets/dishes/rosti.webp",
+      "bytes": 50732,
+      "author": "Eiliv Aceron",
+      "page": "https://unsplash.com/photos/fried-food-on-white-ceramic-plate-mBQIfKlvowM",
+      "label": "potato hash",
+      "source_url": "https://images.unsplash.com/photo-1582878826629-29b7ad1cdc43?auto=format&fit=crop&w=1200&q=80"
+    },
+    {
+      "slug": "fondue",
+      "file": "assets/dishes/fondue.webp",
+      "bytes": 57988,
+      "author": "Alex Haney",
+      "page": "https://unsplash.com/photos/grilled-meat-and-vegetable-on-the-table-CApHLxac2yA",
+      "label": "shared table meal",
+      "source_url": "https://images.unsplash.com/photo-1544025162-d76694265947?auto=format&fit=crop&w=1200&q=80"
+    },
+    {
+      "slug": "papet",
+      "file": "assets/dishes/papet.webp",
+      "bytes": 14476,
+      "author": "Brooke Lark",
+      "page": "https://unsplash.com/photos/cooked-food-on-white-ceramic-plate-jUPOXXRNdcA",
+      "label": "creamy veg dish",
+      "source_url": "https://images.unsplash.com/photo-1476124369491-e7addf5db371?auto=format&fit=crop&w=1200&q=80"
+    },
+    {
+      "slug": "gyoza",
+      "file": "assets/dishes/gyoza.webp",
+      "bytes": 21508,
+      "author": "Charles Deluvio",
+      "page": "https://unsplash.com/photos/cooked-dumplings-on-black-bowl-oYDFJQZM95I",
+      "label": "dumplings",
+      "source_url": "https://images.unsplash.com/photo-1496116218417-1a781b1c416c?auto=format&fit=crop&w=1200&q=80"
+    },
+    {
+      "slug": "noodles",
+      "file": "assets/dishes/noodles.webp",
+      "bytes": 92852,
+      "author": "Bon Vivant",
+      "page": "https://unsplash.com/photos/ramen-in-black-bowl-Qb0YyGBaR1U",
+      "label": "noodles bowl",
+      "source_url": "https://images.unsplash.com/photo-1569718212165-3a8278d5f624?auto=format&fit=crop&w=1200&q=80"
+    },
+    {
+      "slug": "mezze",
+      "file": "assets/dishes/mezze.webp",
+      "bytes": 28270,
+      "author": "Brooke Lark",
+      "page": "https://unsplash.com/photos/assorted-foods-on-table-jE6JrLU2zXc",
+      "label": "mezze spread",
+      "source_url": "https://images.unsplash.com/photo-1541519227354-08fa5d50c44d?auto=format&fit=crop&w=1200&q=80"
+    },
+    {
+      "slug": "maamoul",
+      "file": "assets/dishes/maamoul.webp",
+      "bytes": 89194,
+      "author": "Mae Mu",
+      "page": "https://unsplash.com/photos/chocolate-cookies-on-white-ceramic-plate-bpPTlXWTOvg",
+      "label": "cookies",
+      "source_url": "https://images.unsplash.com/photo-1499636136210-6f4ee915583e?auto=format&fit=crop&w=1200&q=80"
+    },
+    {
+      "slug": "injera",
+      "file": "assets/dishes/injera.webp",
+      "bytes": 113416,
+      "author": "Chad Montano",
+      "page": "https://unsplash.com/photos/pizza-on-brown-wooden-table-MqT0as8SsFE",
+      "label": "shared platter",
+      "source_url": "https://images.unsplash.com/photo-1565299624946-b28f40a0ae38?auto=format&fit=crop&w=1200&q=80"
+    },
+    {
+      "slug": "biryani",
+      "file": "assets/dishes/biryani.webp",
+      "bytes": 71362,
+      "author": "Shreyak Singh",
+      "page": "https://unsplash.com/photos/cooked-food-on-white-ceramic-plate-xOmP-9J5fAo",
+      "label": "biryani rice",
+      "source_url": "https://images.unsplash.com/photo-1563379091339-03b21ab4a4f8?auto=format&fit=crop&w=1200&q=80"
+    },
+    {
+      "slug": "curry",
+      "file": "assets/dishes/curry.webp",
+      "bytes": 87484,
+      "author": "Farhad Ibrahimzade",
+      "page": "https://unsplash.com/photos/plate-of-food-with-vegetables-and-meat-FpPcoG6tJxE",
+      "label": "curry",
+      "source_url": "https://images.unsplash.com/photo-1585937421612-70a008356fbe?auto=format&fit=crop&w=1200&q=80"
+    },
+    {
+      "slug": "pho",
+      "file": "assets/dishes/pho.webp",
+      "bytes": 50732,
+      "author": "Eiliv Aceron",
+      "page": "https://unsplash.com/photos/soup-on-black-bowl-mBQIfKlvowM",
+      "label": "soup bowl",
+      "source_url": "https://images.unsplash.com/photo-1582878826629-29b7ad1cdc43?auto=format&fit=crop&w=1200&q=80"
+    },
+    {
+      "slug": "padthai",
+      "file": "assets/dishes/padthai.webp",
+      "bytes": 30724,
+      "author": "Chad Montano",
+      "page": "https://unsplash.com/photos/cooked-noodles-with-green-and-red-sauce-eeqbbemH9-c",
+      "label": "stir fried noodles",
+      "source_url": "https://images.unsplash.com/photo-1559314809-0d155014e29e?auto=format&fit=crop&w=1200&q=80"
+    },
+    {
+      "slug": "tacos",
+      "file": "assets/dishes/tacos.webp",
+      "bytes": 49344,
+      "author": "Chad Montano",
+      "page": "https://unsplash.com/photos/tacos-on-wooden-surface-MqT0as8SsFE",
+      "label": "tacos",
+      "source_url": "https://images.unsplash.com/photo-1565299585323-38d6b0865b47?auto=format&fit=crop&w=1200&q=80"
+    },
+    {
+      "slug": "bacalhau",
+      "file": "assets/dishes/bacalhau.webp",
+      "bytes": 25080,
+      "author": "Caroline Attwood",
+      "page": "https://unsplash.com/photos/cooked-salmon-with-vegetables-on-white-ceramic-plate-bpPTlXWTOvg",
+      "label": "baked fish",
+      "source_url": "https://images.unsplash.com/photo-1519708227418-c8fd9a32b7a2?auto=format&fit=crop&w=1200&q=80"
+    },
+    {
+      "slug": "lasagna",
+      "file": "assets/dishes/lasagna.webp",
+      "bytes": 88894,
+      "author": "Eiliv Aceron",
+      "page": "https://unsplash.com/photos/lasagna-on-white-ceramic-plate-ZuIDLMCYwu4",
+      "label": "lasagna",
+      "source_url": "https://images.unsplash.com/photo-1574894709920-11b28e7367e3?auto=format&fit=crop&w=1200&q=80"
+    },
+    {
+      "slug": "pizza",
+      "file": "assets/dishes/pizza.webp",
+      "bytes": 85732,
+      "author": "Ivan Torres",
+      "page": "https://unsplash.com/photos/pizza-with-yellow-and-red-toppings-MQUqbUANlEA",
+      "label": "pizza",
+      "source_url": "https://images.unsplash.com/photo-1513104890138-7c749659a591?auto=format&fit=crop&w=1200&q=80"
+    },
+    {
+      "slug": "falafel",
+      "file": "assets/dishes/falafel.webp",
+      "bytes": 37250,
+      "author": "Chad Montano",
+      "page": "https://unsplash.com/photos/fried-food-on-white-paper-eeqbbemH9-c",
+      "label": "falafel",
+      "source_url": "https://images.unsplash.com/photo-1593504049359-74330189a345?auto=format&fit=crop&w=1200&q=80"
+    },
+    {
+      "slug": "kebab",
+      "file": "assets/dishes/kebab.webp",
+      "bytes": 46128,
+      "author": "Amirali Mirhashemian",
+      "page": "https://unsplash.com/photos/cooked-meat-on-skewers-sc5sTP4VVew",
+      "label": "kebab",
+      "source_url": "https://images.unsplash.com/photo-1529006557810-274b9b2fc783?auto=format&fit=crop&w=1200&q=80"
+    },
+    {
+      "slug": "dolma",
+      "file": "assets/dishes/dolma.webp",
+      "bytes": 89844,
+      "author": "Brooke Lark",
+      "page": "https://unsplash.com/photos/vegetable-salad-on-white-ceramic-plate-HlNcigvUi4Q",
+      "label": "stuffed veg",
+      "source_url": "https://images.unsplash.com/photo-1540189549336-e6e99c3679fe?auto=format&fit=crop&w=1200&q=80"
+    },
+    {
+      "slug": "empanada",
+      "file": "assets/dishes/empanada.webp",
+      "bytes": 20458,
+      "author": "Chad Montano",
+      "page": "https://unsplash.com/photos/fried-food-on-white-ceramic-plate-eeqbbemH9-c",
+      "label": "fried pastry",
+      "source_url": "https://images.unsplash.com/photo-1601050690597-df0568f70950?auto=format&fit=crop&w=1200&q=80"
+    },
+    {
+      "slug": "samosa",
+      "file": "assets/dishes/samosa.webp",
+      "bytes": 20458,
+      "author": "Chad Montano",
+      "page": "https://unsplash.com/photos/fried-food-eeqbbemH9-c",
+      "label": "samosa",
+      "source_url": "https://images.unsplash.com/photo-1601050690597-df0568f70950?auto=format&fit=crop&w=1200&q=80"
+    },
+    {
+      "slug": "baklava",
+      "file": "assets/dishes/baklava.webp",
+      "bytes": 68676,
+      "author": "Mae Mu",
+      "page": "https://unsplash.com/photos/sliced-pastries-on-white-ceramic-plate-bpPTlXWTOvg",
+      "label": "baklava",
+      "source_url": "https://images.unsplash.com/photo-1519676867240-f03562e64548?auto=format&fit=crop&w=1200&q=80"
+    },
+    {
+      "slug": "moussaka",
+      "file": "assets/dishes/moussaka.webp",
+      "bytes": 95168,
+      "author": "Eiliv Aceron",
+      "page": "https://unsplash.com/photos/cooked-food-on-white-plate-ZuIDLMCYwu4",
+      "label": "baked casserole",
+      "source_url": "https://images.unsplash.com/photo-1574484284002-952d92456975?auto=format&fit=crop&w=1200&q=80"
+    },
+    {
+      "slug": "family_stew",
+      "file": "assets/dishes/family_stew.webp",
+      "bytes": 61494,
+      "author": "Henry & Co.",
+      "page": "https://unsplash.com/photos/bowl-of-soup-0hKzq2sY8aY",
+      "label": "large stew",
+      "source_url": "https://images.unsplash.com/photo-1547592166-23ac45744acd?auto=format&fit=crop&w=1200&q=80"
+    },
+    {
+      "slug": "salad",
+      "file": "assets/dishes/salad.webp",
+      "bytes": 72558,
+      "author": "Anna Pelzer",
+      "page": "https://unsplash.com/photos/vegetable-dish-on-white-ceramic-plate-IGfIGP5ONV0",
+      "label": "salad",
+      "source_url": "https://images.unsplash.com/photo-1512621776951-a57141f2eefd?auto=format&fit=crop&w=1200&q=80"
+    },
+    {
+      "slug": "ricebowl",
+      "file": "assets/dishes/ricebowl.webp",
+      "bytes": 56012,
+      "author": "Chad Montano",
+      "page": "https://unsplash.com/photos/rice-and-meat-on-black-ceramic-bowl-eeqbbemH9-c",
+      "label": "rice bowl",
+      "source_url": "https://images.unsplash.com/photo-1512058564366-18510be2db19?auto=format&fit=crop&w=1200&q=80"
+    },
+    {
+      "slug": "soup",
+      "file": "assets/dishes/soup.webp",
+      "bytes": 61494,
+      "author": "Henry & Co.",
+      "page": "https://unsplash.com/photos/bowl-of-soup-0hKzq2sY8aY",
+      "label": "soup",
+      "source_url": "https://images.unsplash.com/photo-1547592166-23ac45744acd?auto=format&fit=crop&w=1200&q=80"
+    },
+    {
+      "slug": "grilled_fish",
+      "file": "assets/dishes/grilled_fish.webp",
+      "bytes": 25080,
+      "author": "Caroline Attwood",
+      "page": "https://unsplash.com/photos/cooked-salmon-bpPTlXWTOvg",
+      "label": "grilled fish",
+      "source_url": "https://images.unsplash.com/photo-1519708227418-c8fd9a32b7a2?auto=format&fit=crop&w=1200&q=80"
+    },
+    {
+      "slug": "chicken",
+      "file": "assets/dishes/chicken.webp",
+      "bytes": 97996,
+      "author": "Chad Montano",
+      "page": "https://unsplash.com/photos/cooked-chicken-eeqbbemH9-c",
+      "label": "roast chicken",
+      "source_url": "https://images.unsplash.com/photo-1598103442097-8b74394b95c6?auto=format&fit=crop&w=1200&q=80"
+    }
+  ],
+  "errors": [
+    {
+      "slug": "thieboudienne",
+      "error": "HTTP Error 404: Not Found"
+    },
+    {
+      "slug": "tajine",
+      "error": "HTTP Error 404: Not Found"
+    },
+    {
+      "slug": "pastel",
+      "error": "HTTP Error 404: Not Found"
+    },
+    {
+      "slug": "tarte",
+      "error": "HTTP Error 404: Not Found"
+    },
+    {
+      "slug": "veg_curry",
+      "error": "HTTP Error 404: Not Found"
+    }
+  ]
+}
