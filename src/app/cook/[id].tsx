@@ -1,3 +1,4 @@
+import { isBadgeValid, BADGE_LABEL_FR, BADGE_LABEL_EN } from '@/lib/cookQualification';
 import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
 import { View } from 'react-native';
 import { Avatar, DishCard, Pill, Stars } from '@/components/brand';
@@ -37,7 +38,9 @@ export default function CookScreen() {
         {cook.originFlag ? <Pill label={`${cook.originFlag} ${cook.originCountry ?? ''}`} tone="gold" /> : null}
         {cook.ofcoStatus === 'ofco_verified' ? <Pill label={L('Annonce OFCO vérifiée (démo)', 'OFCO notice verified (demo)')} tone="green" /> : null}
         {cook.hygieneBadge ? <Pill label={L('Checklist hygiène OK (auto)', 'Hygiene checklist OK (self)')} /> : null}
-        {cook.halalKitchen ? <Pill label={L('Cuisine halal (déclarée)', 'Halal kitchen (declared)')} tone="green" /> : null}
+        {cook.halalKitchen ? <Pill label={L('Cuisine halal (déclarée)', 'Halal kitchen (declared)')} tone="green" /> : <Pill label={L('Cuisine non déclarée halal', 'Kitchen not declared halal')} />}
+        {isBadgeValid(cook.qualification) ? <Pill label={L(BADGE_LABEL_FR, BADGE_LABEL_EN)} tone="green" /> : null}
+        {(cook.deliveryModes ?? (cook.delivers ? ['pickup', 'delivery'] : ['pickup'])).includes('partner') ? <Pill label={L('Livre via partenaire', 'Delivers via partner')} tone="gold" /> : null}
         <Pill label={cook.delivers ? L('Retrait & livraison', 'Pickup & delivery') : L('Retrait', 'Pickup')} tone="gold" />
         <Pill label={`${L('Checklist hygiène', 'Hygiene checklist')} ${checked}/${HYGIENE_CHECKLIST.length} (${L('auto-déclarée', 'self-declared')})`} />
         {cook.languages.map((x) => <Pill key={x} label={x.toUpperCase()} />)}

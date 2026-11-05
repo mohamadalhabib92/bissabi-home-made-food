@@ -1,10 +1,23 @@
 /** Données de DÉMONSTRATION — toutes marquées `demo: true` et « (démo) ». Aucune personne réelle. */
 import { addDays, todayISO } from './dates';
 import type { Cook, Dish, Order, Review, Slot } from './model';
+import type { CookQualification } from './cookQualification';
 import { quote } from './pricing';
 
 const now = () => new Date().toISOString();
 const DONE = { hands: true, cold: true, cooking: true, separation: true, allergens: true, packaging: true, traceability: true, health: true };
+
+const DEMO_QUAL: CookQualification = {
+  passedAt: {
+    hygiene: '2026-10-01T10:00:00.000Z',
+    allergens: '2026-10-01T10:20:00.000Z',
+    safety: '2026-10-01T10:40:00.000Z',
+  },
+  attempts: [],
+  badgeEarnedAt: '2026-10-01T10:40:00.000Z',
+  badgeExpiresAt: '2027-10-01T10:40:00.000Z',
+};
+
 
 function ck(p: Omit<Cook, 'demo' | 'createdAt' | 'checklist' | 'checklistAt' | 'name'> & { name: string; ofco?: Cook['ofcoStatus'] }): Cook {
   return {
@@ -16,6 +29,11 @@ function ck(p: Omit<Cook, 'demo' | 'createdAt' | 'checklist' | 'checklistAt' | '
     checklistAt: now(),
     ofcoStatus: p.ofco ?? 'ofco_verified',
     hygieneBadge: true,
+    liabilityAcceptedAt: now(),
+    deliveryModes: p.delivers ? ['pickup', 'delivery', 'partner'] : ['pickup'],
+    preferredPartnerId: 'partner_bike_a',
+    qualification: DEMO_QUAL,
+    halalCertificationNote: p.halalKitchen ? 'Déclaration cook (démo) — pas de certificat audité par Bissabi.' : undefined,
   };
 }
 
@@ -112,7 +130,7 @@ export function demoMarket() {
         date: addDays(t, k),
         from: lunch ? '11:30' : '18:30',
         to: lunch ? '13:00' : '20:00',
-        modes: c.delivers ? ['pickup', 'delivery'] : ['pickup'],
+        modes: c.delivers ? ['pickup', 'delivery', 'partner'] : ['pickup'],
         capacity: 12,
         dishIds: [],
         demo: true,

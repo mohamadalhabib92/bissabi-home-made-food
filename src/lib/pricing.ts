@@ -12,10 +12,11 @@ export const MIN_LEAD_HOURS = 24; // commandes à l’avance uniquement
 export const r05 = (n: number) => Math.round(n * 20) / 20; // arrondi CHF 0.05
 export const chf = (n: number) => `CHF ${n.toFixed(2)}`;
 
-export function quote(lines: { qty: number; unitPrice: number }[], mode: 'pickup' | 'delivery') {
+export function quote(lines: { qty: number; unitPrice: number }[], mode: 'pickup' | 'delivery' | 'partner') {
   const subtotal = r05(lines.reduce((s, l) => s + l.qty * l.unitPrice, 0));
   const commission = r05(subtotal * COMMISSION_RATE);
-  const deliveryFee = mode === 'delivery' ? DELIVERY_FEE_CHF : 0;
+  // partner : frais mock séparés via DeliveryQuote ; ici forfait placeholder aligné delivery.
+  const deliveryFee = mode === 'delivery' || mode === 'partner' ? DELIVERY_FEE_CHF : 0;
   const total = r05(subtotal + (COMMISSION_PAID_BY === 'buyer' ? commission : 0) + deliveryFee);
   const cookNet = r05(COMMISSION_PAID_BY === 'buyer' ? subtotal : subtotal - commission);
   return { subtotal, commission, deliveryFee, total, cookNet };

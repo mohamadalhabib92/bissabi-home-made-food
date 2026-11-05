@@ -45,7 +45,7 @@ export type Cuisine = (typeof CUISINES)[number]['key'];
 
 export type SpiceLevel = 0 | 1 | 2 | 3;
 export type Ingredient = { name: string; qty: number; unit: string }; // par portion
-export type FulfilMode = 'pickup' | 'delivery';
+export type FulfilMode = 'pickup' | 'delivery' | 'partner';
 
 export type Cook = {
   id: string; name: string; commune: string; npa: string; lat: number; lng: number;
@@ -63,6 +63,16 @@ export type Cook = {
   story?: string;
   specialties?: string[];
   hygieneBadge?: boolean;
+  /** Note optionnelle de certification halal tierce (déclaration cook, non auditée par Bissabi). */
+  halalCertificationNote?: string;
+  /** Acceptation responsabilité / intermédiaire — horodatée. */
+  liabilityAcceptedAt?: string;
+  /** Modes de remise proposés par le cook (défaut: pickup + delivery si delivers). */
+  deliveryModes?: FulfilMode[];
+  /** Partenaire placeholder préféré (id générique). */
+  preferredPartnerId?: string;
+  /** Badge formation hygiène / allergènes / sécurité (interne Bissabi). */
+  qualification?: import('./cookQualification').CookQualification;
 };
 
 export type Dish = {
@@ -92,6 +102,8 @@ export type Dish = {
   galleryKeys?: string[];
   availableToday?: boolean;
   tags?: string[];
+  /** Modes de remise pour ce plat (sinon hérite du cook). */
+  deliveryModes?: FulfilMode[];
 };
 
 export type Slot = {
@@ -112,6 +124,10 @@ export type Order = {
   status: OrderStatus; timeline: { status: OrderStatus; at: string; note?: string }[];
   payment: { method: 'stripe' | 'demo'; ref?: string; error?: string };
   refuseReason?: string; createdAt: string; demo?: boolean;
+  /** Job livraison partenaire (mock). */
+  deliveryJobId?: string;
+  deliveryPartnerId?: string;
+  deliveryTracking?: import('./deliveryPartners').DeliveryTrackingState;
 };
 
 export type Review = { id: string; orderId: string; cookId: string; dishId?: string; rating: number; text: string; author: string; status: 'pending' | 'published' | 'rejected'; at: string; demo?: boolean };

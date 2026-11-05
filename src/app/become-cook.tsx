@@ -1,7 +1,8 @@
 import { Stack, useRouter } from 'expo-router';
+import { useState } from 'react';
 import { Linking, Text, View } from 'react-native';
-import { useL } from '@/lib/data';
-import { Body, Button, Card, H1, H2, ListItem, Muted, Notice, Screen, Spacer } from '@/ui/kit';
+import { useData, useL } from '@/lib/data';
+import { Body, Button, Card, H1, H2, ListItem, Muted, Notice, Screen, Spacer, Toggle } from '@/ui/kit';
 import { theme as t } from '@/ui/theme';
 
 const LINKS = {
@@ -15,8 +16,16 @@ const LINKS = {
 
 export default function BecomeCook() {
   const { L } = useL();
+  const { myCook, setCooks } = useData();
   const router = useRouter();
+  const [liability, setLiability] = useState(!!myCook?.liabilityAcceptedAt);
   const open = (url: string) => Linking.openURL(url);
+  const acceptLiability = (v: boolean) => {
+    setLiability(v);
+    if (!myCook) return;
+    const at = v ? new Date().toISOString() : undefined;
+    setCooks((list) => list.map((c) => (c.id === myCook.id ? { ...c, liabilityAcceptedAt: at } : c)));
+  };
 
   return (
     <Screen>
@@ -89,6 +98,30 @@ export default function BecomeCook() {
           )}
         </Body>
       </Card>
+      <H2>{L('6. Responsabilité — Bissabi = intermédiaire', '6. Liability — Bissabi = intermediary')}</H2>
+      <Card>
+        <Body>
+          {L(
+            'Bissabi met en relation des cuisinier·ères et des acheteur·euses. Les plats sont préparés sous la responsabilité de chaque cook (autocontrôle, LDAl). Bissabi n’est pas le fabricant des denrées. Une clause d’intermédiaire ne supprime pas toute obligation légale possible — textes à faire valider par un avocat suisse avant lancement public.',
+            'Bissabi matches cooks and buyers. Dishes are prepared under each cook’s responsibility (self-checks, FDA). Bissabi is not the food manufacturer. An intermediary clause does not remove every possible legal duty — texts must be reviewed by a Swiss lawyer before public launch.',
+          )}
+        </Body>
+        <Spacer h={8} />
+        <Toggle
+          label={L('J’ai lu et j’accepte : je reste responsable de mes plats ; Bissabi est un intermédiaire.', 'I have read and accept: I remain responsible for my dishes; Bissabi is an intermediary.')}
+          value={liability}
+          onChange={acceptLiability}
+          hint={myCook?.liabilityAcceptedAt ? L(`Accepté le ${myCook.liabilityAcceptedAt.slice(0, 16).replace('T', ' ')}`, `Accepted at ${myCook.liabilityAcceptedAt.slice(0, 16).replace('T', ' ')}`) : L('Horodatage enregistré sur votre profil cook.', 'Timestamp stored on your cook profile.')}
+        />
+      </Card>
+      <H2>{L('7. Formation obligatoire avant publication', '7. Mandatory training before publishing')}</H2>
+      <Card>
+        <ListItem icon="school-outline" title={L('Quiz hygiène / allergènes / sécurité', 'Hygiene / allergens / safety quiz')} subtitle={L('Badge annuel — gate de publication', 'Yearly badge — publish gate')} onPress={() => router.push('/studio/qualification')} />
+      </Card>
+      <H2>{L('8. Livraison partenaire', '8. Partner delivery')}</H2>
+      <Card>
+        <ListItem icon="bicycle-outline" title={L('Devenir partenaire livraison', 'Become a delivery partner')} subtitle={L('Coursier / coop / plateforme', 'Courier / coop / platform')} onPress={() => router.push('/become-delivery-partner')} />
+      </Card>
       <H2>{L('5. Prochaines étapes dans l’app', '5. Next steps in the app')}</H2>
       <Card>
         <ListItem icon="person-outline" title={L('Créer mon profil cuisinier', 'Create my cook profile')} subtitle={L('Studio → profil', 'Studio → profile')} onPress={() => router.push('/studio/profile')} />
@@ -104,7 +137,8 @@ export default function BecomeCook() {
         )}
       </Muted>
       <Spacer />
-      <Button title={L('Ouvrir ma cuisine', 'Open my kitchen')} onPress={() => router.push('/(tabs)/kitchen')} />
+      <Button title={L('Ouvrir ma cuisine', 'Open my kitchen')} disabled={!liability && !!myCook} onPress={() => router.push('/(tabs)/kitchen')} />
+      {!liability && myCook ? <Muted style={{ marginTop: 8 }}>{L('Cochez l’acceptation de responsabilité ci-dessus.', 'Tick the liability acceptance above.')}</Muted> : null}
       <Spacer h={24} />
       <Text style={{ color: t.muted, fontSize: 12 }}>
         {L('Textes légaux : liens Fedlex / VD.ch ci-dessus.', 'Legal texts: Fedlex / VD.ch links above.')}

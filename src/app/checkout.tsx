@@ -24,7 +24,12 @@ export default function Checkout() {
   const pay = usePay();
   const fb = useFeedback();
   const cook = cooks.find((c) => c.id === cart.cookId);
-  const [mode, setMode] = useState<FulfilMode>(params.mode === 'delivery' && cook?.delivers ? 'delivery' : 'pickup');
+  const cookModes: FulfilMode[] = cook?.deliveryModes ?? (cook?.delivers ? ['pickup', 'delivery', 'partner'] : ['pickup']);
+  const initialMode: FulfilMode = (params.mode === 'delivery' || params.mode === 'partner') && cookModes.includes(params.mode as FulfilMode)
+    ? (params.mode as FulfilMode)
+    : 'pickup';
+  const [mode, setMode] = useState<FulfilMode>(initialMode);
+  const [partnerAck, setPartnerAck] = useState(false);
   const [slotId, setSlotId] = useState<string | null>(null);
   const [address, setAddress] = useState('');
   const [name, setName] = useState(prefs.buyerName);
@@ -51,7 +56,8 @@ export default function Checkout() {
     cookOutside && tr('cookOutsideOrder'),
     !slot && L('Choisissez un créneau', 'Choose a slot'),
     slot && slot.left < portions && L('Capacité insuffisante sur ce créneau', 'Not enough capacity on this slot'),
-    mode === 'delivery' && deliveryZone(address) !== 'vaud' && (address.trim().length < 8 ? L('Adresse de livraison complète requise', 'Full delivery address required') : tr('deliveryOutside')),
+    (mode === 'delivery' || mode === 'partner') && deliveryZone(address) !== 'vaud' && (address.trim().length < 8 ? L('Adresse de livraison complète requise', 'Full delivery address required') : tr('deliveryOutside')),
+    mode === 'partner' && !partnerAck && L('Confirmez le rôle du coursier partenaire', 'Confirm the partner courier role'),
     !name.trim() && L('Votre prénom est requis', 'Your first name is required'),
     !ack && L('Confirmez avoir lu les allergènes', 'Confirm you read the allergens'),
   ].filter(Boolean) as string[];
@@ -59,7 +65,7 @@ export default function Checkout() {
     if (problems.length || !slot) return;
     setBusy(true); setError(null);
     setPrefs((p) => ({ ...p, buyerName: name.trim() }));
-    const o = placeOrder({ slot: slot.s, mode, address: mode === 'delivery' ? address.trim() : undefined, note: note.trim() || undefined, buyerName: name.trim() });
+    const o = placeOrder({ slot: slot.s, mode, address: mode === 'delivery' || mode === 'partner' ? address.trim() : undefined, note: note.trim() || undefined, buyerName: name.trim() });
     const r = await pay(o, demoFail ? 'failure' : 'success');
     setBusy(false);
     clearCart();
@@ -76,7 +82,18 @@ export default function Checkout() {
     <Screen>
       {!paymentsLive ? <DemoBanner text={L('Paiement non configuré : paiement SIMULÉ, aucun débit réel.', 'Payments not configured: SIMULATED payment, no real charge.')} /> : null}
       {cookOutside ? <Notice tone="warning" title={tr('cookOutside')} text={tr('cookOutsideOrder')} /> : null}
-      {cook.delivers ? <Segmented label={L('Mode', 'Mode')} options={[{ label: L('Retrait chez le cuisinier', 'Pickup at cook’s'), value: 'pickup' as const }, { label: L('Livraison', 'Delivery'), value: 'delivery' as const }]} value={mode} onChange={(v) => { setMode(v); setSlotId(null); }} /> : null}
+      {cookModes.length > 1 ? (
+        <Segmented
+          label={L('Mode', 'Mode')}
+          options={[
+            cookModes.includes('pickup') ? { label: L('Retrait', 'Pickup'), value: 'pickup' as const } : null,
+            cookModes.includes('delivery') ? { label: L('Cook livre', 'Cook delivers'), value: 'delivery' as const } : null,
+            cookModes.includes('partner') ? { label: L('Coursier partenaire', 'Partner courier'), value: 'partner' as const } : null,
+          ].filter(Boolean) as { label: string; value: FulfilMode }[]}
+          value={mode}
+          onChange={(v) => { setMode(v); setSlotId(null); }}
+        />
+      ) : null}
       <H2>{L('Créneau', 'Slot')}</H2>
       <Muted style={{ marginBottom: 8 }}>{L(`Commandes au moins ${lead} h à l’avance — pas de livraison express.`, `Orders at least ${lead} h ahead — no express delivery.`)}</Muted>
       {options.length ? options.map(({ s, left }) => {
@@ -91,14 +108,29 @@ export default function Checkout() {
       }) : <Notice tone="warning" title={L('Aucun créneau compatible', 'No matching slot')} text={L('Essayez l’autre mode, ou revenez plus tard.', 'Try the other mode, or come back later.')} />}
       <Spacer />
       <Field label={L('Prénom', 'First name')} value={name} onChangeText={setName} autoComplete="given-name" />
-      {mode === 'delivery' ? <Field label={L('Adresse de livraison', 'Delivery address')} value={address} onChangeText={setAddress} placeholder={L('Rue, n°, NPA, commune', 'Street, no., postcode, town')} autoComplete="street-address" hint={tr('deliveryAddressHint')} /> : <Muted style={{ marginBottom: 12 }}>{L('L’adresse exacte de retrait vous est communiquée après acceptation.', 'The exact pickup address is shared after acceptance.')}</Muted>}
+      {mode === 'delivery' || mode === 'partner' ? <Field label={L('Adresse de livraison', 'Delivery address')} value={address} onChangeText={setAddress} placeholder={L('Rue, n°, NPA, commune', 'Street, no., postcode, town')} autoComplete="street-address" hint={tr('deliveryAddressHint')} /> : <Muted style={{ marginBottom: 12 }}>{L('L’adresse exacte de retrait vous est communiquée après acceptation.', 'The exact pickup address is shared after acceptance.')}</Muted>}
       <Field label={L('Note au cuisinier (facultatif)', 'Note to the cook (optional)')} value={note} onChangeText={setNote} multiline placeholder={L('Allergie, interphone…', 'Allergy, buzzer…')} />
+      <Notice
+        tone="warning"
+        title={L('Bissabi = intermédiaire', 'Bissabi = intermediary')}
+        text={L(
+          'Le cook reste responsable du plat. En mode partenaire, le coursier est responsable du transport et de la chaîne du froid pendant la course. Projet CGU : écran Mentions légales — à faire valider par un avocat CH.',
+          'The cook remains responsible for the dish. In partner mode, the courier is responsible for transport and the cold chain during the run. Draft terms: Legal screen — to be reviewed by a CH lawyer.',
+        )}
+      />
       <Card>
         <H2>{L('Récapitulatif', 'Summary')}</H2>
         {lines.map((l) => <View key={l.dishId} style={{ flexDirection: 'row', justifyContent: 'space-between', paddingVertical: 3 }}><Text style={{ color: t.text }}>{l.qty} × {l.dish.title}</Text></View>)}
         <View style={{ height: 8 }} />
         <TotalsTable {...q} L={L} />
       </Card>
+      {mode === 'partner' ? (
+        <Toggle
+          label={L('Je comprends : le cook prépare le plat ; le coursier partenaire transporte et maintient la chaîne pendant la course (placeholder partenaire).', 'I understand: the cook prepares the dish; the partner courier transports and maintains the chain during the run (partner placeholder).')}
+          value={partnerAck}
+          onChange={setPartnerAck}
+        />
+      ) : null}
       <Toggle label={allergenKeys.length ? L(`J’ai lu les allergènes : ${allergenKeys.length} déclaré(s) dans ma commande`, `I read the allergens: ${allergenKeys.length} declared in my order`) : L('J’ai lu les informations allergènes', 'I read the allergen information')} value={ack} onChange={setAck} />
       {!paymentsLive ? <Toggle label={L('Démo : simuler un refus de carte', 'Demo: simulate a card decline')} value={demoFail} onChange={setDemoFail} hint={L('Pour tester la gestion d’échec de paiement.', 'To test payment-failure handling.')} /> : null}
       {problems.length ? <Muted style={{ marginBottom: 8 }}>{problems.join(' · ')}</Muted> : null}

@@ -41,6 +41,7 @@ export const en: Record<MsgKey, string> = {
   publishProvenance: 'Origin of the meat or fish.',
   publishBakery: 'Say whether this is bread or pastry.',
   publishCountry: 'Country of production for bread or pastry.',
+  publishQualification: 'Valid hygiene / allergens / safety training badge required.',
   publishBlocked: 'Publishing is blocked until these are filled in. You can still save the dish as hidden.',
   allergenPresent: 'Present',
   allergenTraces: 'Traces',

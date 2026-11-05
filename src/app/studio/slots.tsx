@@ -40,7 +40,8 @@ export default function Slots() {
         </Row>
         <Row wrap>
           <Chip label={L('Retrait', 'Pickup')} active={modes.includes('pickup')} onPress={() => toggleMode('pickup')} />
-          {myCook.delivers ? <Chip label={L('Livraison', 'Delivery')} active={modes.includes('delivery')} onPress={() => toggleMode('delivery')} /> : null}
+          {myCook.delivers ? <Chip label={L('Livraison cook', 'Cook delivery')} active={modes.includes('delivery')} onPress={() => toggleMode('delivery')} /> : null}
+          <Chip label={L('Coursier partenaire', 'Partner courier')} active={modes.includes('partner')} onPress={() => toggleMode('partner')} />
           {[1, 2, 4].map((w) => <Chip key={w} label={w === 1 ? L('Une fois', 'Once') : L(`${w} semaines`, `${w} weeks`)} active={weeks === w} onPress={() => setWeeks(w)} />)}
         </Row>
         {err ? <Muted>{err}</Muted> : null}
@@ -51,7 +52,7 @@ export default function Slots() {
       <H2>{L('Créneaux à venir', 'Upcoming slots')}</H2>
       {mine.length ? <Card>{mine.map((s) => {
         const used = slotUsed(s.id, orders);
-        return <ListItem key={s.id} icon="time-outline" title={`${dayLabel(s.date, lang)} · ${s.from}–${s.to}`} subtitle={`${used}/${s.capacity} ${L('portions', 'portions')} · ${s.modes.map((m) => (m === 'pickup' ? L('retrait', 'pickup') : L('livraison', 'delivery'))).join(' + ')}`}
+        return <ListItem key={s.id} icon="time-outline" title={`${dayLabel(s.date, lang)} · ${s.from}–${s.to}`} subtitle={`${used}/${s.capacity} ${L('portions', 'portions')} · ${s.modes.map((m) => (m === 'pickup' ? L('retrait', 'pickup') : m === 'partner' ? L('partenaire', 'partner') : L('livraison', 'delivery'))).join(' + ')}`}
           right={<IconButton icon="trash-outline" label={L('Supprimer', 'Delete')} onPress={() => (used ? confirmAsk(L('Des commandes existent sur ce créneau. Le supprimer quand même ? Pensez à prévenir vos clients.', 'Orders exist on this slot. Delete anyway? Remember to tell your customers.'), () => setSlots((l) => l.filter((x) => x.id !== s.id))) : setSlots((l) => l.filter((x) => x.id !== s.id)))} />} />;
       })}</Card> : <Empty icon="calendar-outline" title={L('Aucun créneau', 'No slot')} text={dishes.some((d) => d.cookId === myCook.id) ? L('Ouvrez un créneau pour recevoir des commandes.', 'Open a slot to receive orders.') : L('Ajoutez d’abord un plat, puis ouvrez un créneau.', 'Add a dish first, then open a slot.')} />}
     </Screen>

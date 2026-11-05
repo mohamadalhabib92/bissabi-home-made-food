@@ -2,11 +2,12 @@ import * as ImagePicker from 'expo-image-picker';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useState } from 'react';
 import { Platform, Text, View } from 'react-native';
-import { DishVisual } from '@/components/brand';
+import { DishVisual, Pill } from '@/components/brand';
 import { useI18n } from '@/i18n';
 import { confirmAsk } from '@/lib/confirm';
 import { useData, useL } from '@/lib/data';
 import { allergensFromStatus, publishIssues, statusFromDish, type AllergenDraft, type PublishIssue } from '@/lib/dishPublish';
+import { isBadgeValid, BADGE_LABEL_FR, BADGE_LABEL_EN } from '@/lib/cookQualification';
 import { ALLERGENS, CUISINES, type Allergen, type AllergenLevel, type AnimalOrigin, type Cuisine, type Dish, type Ingredient } from '@/lib/model';
 import { MIN_LEAD_HOURS } from '@/lib/pricing';
 import { uid } from '@/lib/storage';
@@ -15,7 +16,7 @@ import { theme as ui } from '@/ui/theme';
 
 const EMOJIS = ['🍲', '🍛', '🥘', '🍗', '🥙', '🥗', '🍝', '🥟', '🍰', '🧆', '🫓', '🍚'];
 const LEVELS: AllergenLevel[] = ['present', 'traces', 'absent'];
-const ISSUE_KEY: Record<PublishIssue, 'publishAllergens' | 'publishIngredients' | 'publishPhoto' | 'publishConservation' | 'publishReheating' | 'publishAnimal' | 'publishProvenance' | 'publishBakery' | 'publishCountry'> = {
+const ISSUE_KEY: Record<PublishIssue, 'publishAllergens' | 'publishIngredients' | 'publishPhoto' | 'publishConservation' | 'publishReheating' | 'publishAnimal' | 'publishProvenance' | 'publishBakery' | 'publishCountry' | 'publishQualification'> = {
   allergens: 'publishAllergens',
   ingredients: 'publishIngredients',
   photo: 'publishPhoto',
@@ -25,6 +26,7 @@ const ISSUE_KEY: Record<PublishIssue, 'publishAllergens' | 'publishIngredients' 
   provenance: 'publishProvenance',
   bakery: 'publishBakery',
   country: 'publishCountry',
+  qualification: 'publishQualification',
 };
 
 export default function DishEditor() {
@@ -41,6 +43,7 @@ export default function DishEditor() {
   const [price, setPrice] = useState(ex ? ex.price.toFixed(2) : '');
   const [status, setStatus] = useState<AllergenDraft>(() => statusFromDish(ex));
   const [halal, setHalal] = useState(ex?.halal ?? !!myCook?.halalKitchen);
+  const [deliveryModes, setDeliveryModes] = useState<import('@/lib/model').FulfilMode[]>(ex?.deliveryModes ?? myCook?.deliveryModes ?? (myCook?.delivers ? ['pickup', 'delivery'] : ['pickup']));
   const [veg, setVeg] = useState(ex?.vegetarian ?? false);
   const [spicy, setSpicy] = useState(ex?.spicy ?? false);
   const [lead, setLead] = useState(String(ex?.leadHours ?? MIN_LEAD_HOURS));
@@ -60,9 +63,11 @@ export default function DishEditor() {
   const lh = Number(lead);
   const cleanIngs: Ingredient[] = ings.filter((i) => i.name.trim() && Number(i.qty.replace(',', '.')) > 0).map((i) => ({ name: i.name.trim(), qty: Number(i.qty.replace(',', '.')), unit: i.unit.trim() || 'g' }));
   const allergenOk = ALLERGENS.every((a) => status[a.key] === 'present' || status[a.key] === 'traces' || status[a.key] === 'absent');
+  const qualOk = isBadgeValid(myCook.qualification);
   const issues = publishIssues({
     allergenStatus: status, ingredients: cleanIngs, photo, conservation, reheating,
     animalOrigin: animal, provenance, isBakery: bakery, productionCountry: country,
+    qualificationValid: qualOk,
   });
   const errs = {
     title: title.trim().length < 3 ? L('3 caractères minimum', '3 characters minimum') : undefined,
@@ -90,6 +95,7 @@ export default function DishEditor() {
       price: Math.round(p * 20) / 20,
       allergens: allergensFromStatus(status), allergensConfirmed: true, allergenStatus: status,
       halal, vegetarian: veg, spicy, ingredients: cleanIngs, leadHours: lh, photo, emoji, active,
+      deliveryModes: deliveryModes.length ? deliveryModes : ['pickup'],
       animalOrigin: animal ?? undefined, provenance: provenance.trim() || undefined,
       isBakery: bakery ?? undefined, productionCountry: country.trim() || undefined,
       conservation: conservation.trim() || undefined, reheating: reheating.trim() || undefined,
@@ -142,6 +148,24 @@ export default function DishEditor() {
         {!allergenOk ? <Notice tone="warning" title={t('publishAllergens')} /> : null}
       </Card>
       <Toggle label="Halal" value={halal} onChange={setHalal} />
+      <Muted style={{ marginTop: -4 }}>{L('Déclaration cook — Bissabi ne certifie pas le statut halal.', 'Cook declaration — Bissabi does not certify halal status.')}</Muted>
+      {!qualOk ? (
+        <Card style={{ marginTop: 8, borderColor: ui.danger, borderWidth: 1 }}>
+          <Text style={{ fontWeight: '700', color: ui.danger }}>{L('Formation requise avant publication', 'Training required before publishing')}</Text>
+          <Muted style={{ marginTop: 4 }}>{L('Passez le quiz hygiène / allergènes / sécurité pour obtenir le badge « ' + BADGE_LABEL_FR + ' ».', 'Pass the hygiene / allergens / safety quiz to earn the « ' + BADGE_LABEL_EN + ' » badge.')}</Muted>
+          <Button title={L('Ouvrir la formation', 'Open training')} onPress={() => router.push('/studio/qualification')} style={{ marginTop: 8 }} />
+        </Card>
+      ) : (
+        <Pill label={L(BADGE_LABEL_FR, BADGE_LABEL_EN)} tone="green" />
+      )}
+      <Text style={{ fontWeight: '700', marginTop: 12 }}>{L('Modes de remise', 'Fulfilment modes')}</Text>
+      {([
+        ['pickup', L('Retrait chez le cook', 'Pickup at cook')],
+        ['delivery', L('Le cook livre', 'Cook delivers')],
+        ['partner', L('Coursier partenaire', 'Partner courier')],
+      ] as const).map(([k, lab]) => (
+        <Toggle key={k} label={lab} value={deliveryModes.includes(k)} onChange={(v) => setDeliveryModes((m) => v ? [...new Set([...m, k])] : m.filter((x) => x !== k))} />
+      ))}
       <Toggle label={L('Végétarien', 'Vegetarian')} value={veg} onChange={setVeg} />
       <Toggle label={L('Épicé', 'Spicy')} value={spicy} onChange={setSpicy} />
       <Card>
