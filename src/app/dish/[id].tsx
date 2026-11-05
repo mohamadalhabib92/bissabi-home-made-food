@@ -9,6 +9,7 @@ import { useData, useL } from '@/lib/data';
 import { dayLabel } from '@/lib/dates';
 import { fmtKm, zoneOf } from '@/lib/geo';
 import { openSlotsFor, rating } from '@/lib/market';
+import { isBadgeValid } from '@/lib/cookQualification';
 import { CUISINES } from '@/lib/model';
 import { chf, MIN_LEAD_HOURS } from '@/lib/pricing';
 import { Body, Button, Card, Empty, H1, H2, IconButton, ListItem, Muted, Notice, Row, Screen, Spacer, haptic, useFeedback } from '@/ui/kit';
@@ -45,16 +46,22 @@ export default function DishScreen() {
   return (
     <Screen>
       <Stack.Screen options={{ title: dish.title, headerRight: () => <IconButton icon={fav ? 'heart' : 'heart-outline'} label={L('Favori', 'Favourite')} onPress={() => { haptic(fav ? 'tap' : 'success'); toggleFav('dishes', dish.id); }} /> }} />
-      <DishVisual dish={dish} height={220} />
+      <DishVisual dish={dish} height={240} />
+      {dish.demo ? <Muted style={{ marginTop: 6 }}>{L('Photo d’illustration libre de droits (démo). Voir docs/ATTRIBUTION.md.', 'Royalty-free illustration photo (demo). See docs/ATTRIBUTION.md.')}</Muted> : null}
       <Spacer />
       <H1>{dish.title}</H1>
       <Text style={{ color: t.text, fontSize: 20, fontWeight: '800' }}>{chf(dish.price)} <Text style={{ color: t.muted, fontSize: 14, fontWeight: '500' }}>/ {L('portion', 'portion')}</Text></Text>
       <Spacer h={8} />
       <Row wrap gap={6}>
         <Pill label={CUISINES.find((c) => c.key === dish.cuisine)?.[lang] ?? ''} tone="gold" />
-        {dish.halal ? <Pill label={L('Halal (déclaré)', 'Halal (declared)')} tone="green" /> : null}
+        {dish.halal ? <Pill label={L('Halal (déclaré)', 'Halal (declared)')} tone="green" icon="checkmark-circle" /> : <Pill label={L('Non halal (déclaré)', 'Not halal (declared)')} tone="cream" />}
+        {(dish.deliveryModes ?? cook?.deliveryModes ?? (cook?.delivers ? ['pickup', 'delivery'] : ['pickup'])).includes('partner') ? <Pill label={L('Coursier partenaire', 'Partner courier')} tone="gold" /> : null}
+        {cook && isBadgeValid(cook.qualification) ? <Pill label={L('Cook formé (badge Bissabi)', 'Trained cook (Bissabi badge)')} tone="green" /> : null}
         {dish.vegetarian ? <Pill label={L('Végétarien', 'Vegetarian')} tone="green" /> : null}
-        {dish.spicy ? <Pill label={L('Épicé', 'Spicy')} tone="red" /> : null}
+        {dish.vegan ? <Pill label="Vegan" tone="green" /> : null}
+        {dish.glutenFree ? <Pill label={L('Sans gluten', 'Gluten-free')} /> : null}
+        {dish.familySize ? <Pill label={L('Familial', 'Family-size')} tone="gold" /> : null}
+        {(dish.spiceLevel ?? (dish.spicy ? 2 : 0)) > 0 ? <Pill label={`${L('Épicé', 'Spicy')} ${'🌶'.repeat(dish.spiceLevel ?? 1)}`} tone="red" /> : null}
         {dish.demo ? <Pill label="démo" /> : null}
       </Row>
       <Spacer />
@@ -94,8 +101,17 @@ export default function DishScreen() {
       <H2>{L('Créneaux disponibles', 'Available slots')}</H2>
       <Muted style={{ marginBottom: 8 }}>{L(`Commande au moins ${Math.max(MIN_LEAD_HOURS, dish.leadHours)} h à l’avance. Vous choisirez le créneau au paiement.`, `Order at least ${Math.max(MIN_LEAD_HOURS, dish.leadHours)} h ahead. You’ll pick the slot at checkout.`)}</Muted>
       {open.length ? (
-        <Card>{open.slice(0, 5).map((s) => <ListItem key={s.id} icon="time-outline" title={`${dayLabel(s.date, lang)} · ${s.from}–${s.to}`} subtitle={s.modes.map((m) => (m === 'pickup' ? L('Retrait', 'Pickup') : L('Livraison', 'Delivery'))).join(' / ')} />)}</Card>
+        <Card>{open.slice(0, 5).map((s) => <ListItem key={s.id} icon="time-outline" title={`${dayLabel(s.date, lang)} · ${s.from}–${s.to}`} subtitle={s.modes.map((m) => (m === 'pickup' ? L('Retrait', 'Pickup') : m === 'partner' ? L('Partenaire', 'Partner') : L('Livraison cook', 'Cook delivery'))).join(' / ')} />)}</Card>
       ) : <Notice tone="warning" title={L('Aucun créneau ouvert', 'No open slot')} text={L('Ajoutez-le en favori : vous le retrouverez dès que le cuisinier ouvre un créneau.', 'Save it as a favourite to find it when the cook opens a slot.')} />}
+      <Notice
+        tone="warning"
+        title={L('Responsabilité', 'Liability')}
+        text={L(
+          'Bissabi met en relation. Le cook est responsable du plat (préparation, allergènes, hygiène). Un coursier partenaire, le cas échéant, est responsable du transport et de la chaîne pendant la course. Projet CGU sur Mentions légales — à faire valider par un avocat CH.',
+          'Bissabi matches parties. The cook is responsible for the dish (prep, allergens, hygiene). A partner courier, if any, is responsible for transport and the chain during the run. Draft terms on Legal — CH lawyer review required.',
+        )}
+      />
+      {dish.halal && cook?.halalCertificationNote ? <Muted style={{ marginBottom: 8 }}>{L('Note halal cook : ', 'Cook halal note: ')}{cook.halalCertificationNote}</Muted> : null}
       <Spacer />
       <Row>
         <IconButton icon="remove" label={L('Moins', 'Less')} onPress={() => { haptic('select'); setQty((q) => Math.max(1, q - 1)); }} />

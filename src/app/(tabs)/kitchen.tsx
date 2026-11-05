@@ -3,6 +3,7 @@ import { View } from 'react-native';
 import { Avatar, DishVisual } from '@/components/brand';
 import { useI18n } from '@/i18n';
 import { checklistDone } from '@/lib/cookutil';
+import { isBadgeValid } from '@/lib/cookQualification';
 import { activeDishesMissingPublish } from '@/lib/dishPublish';
 import { useData, useL } from '@/lib/data';
 import { dayLabel, todayISO } from '@/lib/dates';
@@ -33,7 +34,7 @@ export default function Kitchen() {
   const net = done.reduce((s, o) => s + o.subtotal + o.deliveryFee, 0);
   const ready = checklistDone(myCook);
   const row = (o: (typeof inc)[number]) => (
-    <ListItem key={o.id} icon="receipt-outline" title={`${o.buyerName} · ${o.lines.reduce((s, l) => s + l.qty, 0)} ${L('portion(s)', 'portion(s)')}`} subtitle={`${dayLabel(o.slotDate, lang)} ${o.slotFrom}–${o.slotTo} · ${o.mode === 'pickup' ? L('Retrait', 'Pickup') : L('Livraison', 'Delivery')}${o.demo ? ' · démo' : ''}`} right={<Badge label={STATUS_LABEL[o.status][lang]} tone={STATUS_LABEL[o.status].tone} />} onPress={() => router.push(`/studio/order/${o.id}`)} />
+    <ListItem key={o.id} icon="receipt-outline" title={`${o.buyerName} · ${o.lines.reduce((s, l) => s + l.qty, 0)} ${L('portion(s)', 'portion(s)')}`} subtitle={`${dayLabel(o.slotDate, lang)} ${o.slotFrom}–${o.slotTo} · ${o.mode === 'pickup' ? L('Retrait', 'Pickup') : o.mode === 'partner' ? L('Partenaire', 'Partner') : L('Livraison', 'Delivery')}${o.demo ? ' · démo' : ''}`} right={<Badge label={STATUS_LABEL[o.status][lang]} tone={STATUS_LABEL[o.status].tone} />} onPress={() => router.push(`/studio/order/${o.id}`)} />
   );
   return (
     <Screen>
@@ -45,7 +46,9 @@ export default function Kitchen() {
       <Spacer />
       {inc.some((o) => o.demo) ? <DemoBanner text={L('Commandes reçues de démonstration (fictives).', 'Demo incoming orders (fictional).')} /> : null}
       {!ready ? <Notice tone="warning" title={L('Checklist hygiène incomplète', 'Hygiene checklist incomplete')} text={L('Vos plats ne sont pas visibles tant que la checklist n’est pas complétée.', 'Your dishes are hidden until the checklist is complete.')} /> : null}
-      {activeDishesMissingPublish(mine).length ? <Notice tone="warning" title={t('publishBlocked')} text={activeDishesMissingPublish(mine).map((d) => d.title).join(' · ')} /> : null}
+      {!isBadgeValid(myCook.qualification) ? <Notice tone="warning" title={L('Formation requise', 'Training required')} text={L('Passez le quiz hygiène / allergènes / sécurité avant de publier un plat.', 'Pass the hygiene / allergens / safety quiz before publishing a dish.')} /> : null}
+      {activeDishesMissingPublish(mine, isBadgeValid(myCook.qualification)).length ? <Notice tone="warning" title={t('publishBlocked')} text={activeDishesMissingPublish(mine, isBadgeValid(myCook.qualification)).map((d) => d.title).join(' · ')} /> : null}
+      <Button small variant="secondary" title={L('Formation & badge', 'Training & badge')} onPress={() => router.push('/studio/qualification')} />
       {!ready ? <Button variant="secondary" title={L('Compléter la checklist', 'Complete checklist')} onPress={() => router.push('/studio/checklist')} /> : null}
       <Spacer />
       <Row wrap>
@@ -74,6 +77,8 @@ export default function Kitchen() {
         <ListItem icon="calendar-outline" title={L('Créneaux de retrait / livraison', 'Pickup / delivery slots')} subtitle={`${mySlots.length} ${L('à venir', 'upcoming')}`} onPress={() => router.push('/studio/slots')} />
         <ListItem icon="cart-outline" title={L('Liste de courses (CSV)', 'Shopping list (CSV)')} subtitle={L('Ingrédients agrégés par période', 'Ingredients aggregated by period')} onPress={() => router.push('/studio/shopping')} />
         <ListItem icon="wallet-outline" title={L('Gains & historique', 'Earnings & history')} subtitle={L('Commission visible, export CSV', 'Visible commission, CSV export')} onPress={() => router.push('/studio/earnings')} />
+        <ListItem icon="school-outline" title={L('Formation hygiène / allergènes / sécurité', 'Hygiene / allergens / safety training')} subtitle={isBadgeValid(myCook.qualification) ? L('Badge valide', 'Valid badge') : L('À passer pour publier', 'Required to publish')} onPress={() => router.push('/studio/qualification')} />
+        <ListItem icon="bicycle-outline" title={L('Partenaires livraison', 'Delivery partners')} onPress={() => router.push('/become-delivery-partner')} />
         <ListItem icon="shield-checkmark-outline" title={L('Checklist hygiène', 'Hygiene checklist')} subtitle={ready ? L('Complétée (auto-déclaration)', 'Completed (self-declared)') : L('À compléter', 'To complete')} onPress={() => router.push('/studio/checklist')} />
         <ListItem icon="document-text-outline" title={L('Conformité & prochaines étapes', 'Compliance & next steps')} onPress={() => router.push('/compliance')} />
       </Card>

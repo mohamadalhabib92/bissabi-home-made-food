@@ -2,6 +2,7 @@ import { Image, Pressable, Text, View } from 'react-native';
 import { useData, useL } from '@/lib/data';
 import { dayLabel } from '@/lib/dates';
 import { fmtKm } from '@/lib/geo';
+import { dishImageSource } from '@/lib/dishImages';
 import { ALLERGENS, type Allergen, type Cook, type Dish, type Slot } from '@/lib/model';
 import { chf } from '@/lib/pricing';
 import { splitAllergens } from '@/lib/dishPublish';
@@ -26,8 +27,10 @@ export function Wordmark({ size = 22, slogan = true }: { size?: number; slogan?:
   );
 }
 
-/** Visuel du plat : photo du cuisinier si fournie, sinon composition de marque (crème + or). */
+/** Visuel du plat : photo locale (photoKey) ou uri cuisinier, sinon composition de marque. */
 export function DishVisual({ dish, height = 150, radius = 14 }: { dish: Dish; height?: number; radius?: number }) {
+  const local = dishImageSource(dish.photoKey);
+  if (local) return <Image source={local} style={{ width: '100%', height, borderRadius: radius }} resizeMode="cover" accessibilityLabel={dish.title} />;
   if (dish.photo) return <Image source={{ uri: dish.photo }} style={{ width: '100%', height, borderRadius: radius }} resizeMode="cover" accessibilityLabel={dish.title} />;
   const tint = t.dishTints[dish.id.split('').reduce((s, c) => s + c.charCodeAt(0), 0) % t.dishTints.length];
   return (
@@ -97,6 +100,9 @@ export function DishCard({ dish, cook, distance, nextSlot, onPress }: { dish: Di
         <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6 }}>
           {dish.halal ? <Pill label="Halal" tone="green" /> : null}
           {dish.vegetarian ? <Pill label={L('Végétarien', 'Vegetarian')} tone="green" icon="leaf-outline" /> : null}
+          {dish.vegan ? <Pill label="Vegan" tone="green" /> : null}
+          {dish.glutenFree ? <Pill label={L('Sans gluten', 'Gluten-free')} tone="cream" /> : null}
+          {dish.familySize ? <Pill label={L('Familial', 'Family')} tone="gold" /> : null}
           {dish.spicy ? <Pill label={L('Épicé', 'Spicy')} tone="red" /> : null}
           <Pill label={allergenLine} />
         </View>

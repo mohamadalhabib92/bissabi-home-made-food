@@ -28,6 +28,7 @@ function Nav() {
       <Stack.Screen name="studio/order/[id]" options={{ title: L('Commande reçue', 'Incoming order') }} />
       <Stack.Screen name="studio/shopping" options={{ title: L('Liste de courses', 'Shopping list') }} />
       <Stack.Screen name="studio/earnings" options={{ title: L('Gains', 'Earnings') }} />
+      <Stack.Screen name="become-cook" options={{ title: L('Devenir cuisinier·ère', 'Become a cook') }} />
       <Stack.Screen name="compliance" options={{ title: L('Conformité & prochaines étapes', 'Compliance & next steps') }} />
       <Stack.Screen name="legal" options={{ title: L('Mentions légales', 'Legal notice') }} />
       <Stack.Screen name="privacy" options={{ title: L('Données personnelles', 'Personal data') }} />

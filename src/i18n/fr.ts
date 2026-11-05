@@ -40,6 +40,7 @@ export const fr = {
   publishProvenance: 'Provenance de la viande ou du poisson.',
   publishBakery: 'Indiquez s’il s’agit de pain ou de pâtisserie.',
   publishCountry: 'Pays de production pour le pain ou la pâtisserie.',
+  publishQualification: 'Badge formation hygiène / allergènes / sécurité requis (et valide).',
   publishBlocked: 'Publication bloquée tant que ces points manquent. Vous pouvez enregistrer le plat masqué.',
   allergenPresent: 'Présent',
   allergenTraces: 'Traces',
