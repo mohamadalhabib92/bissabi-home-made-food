@@ -62,6 +62,7 @@ Service worker et manifeste générés par `scripts/pwa-postbuild.mjs`.
 
 ## Limites connues (à traiter avant production)
 - **Stockage local uniquement** (AsyncStorage / localStorage) : pas encore de serveur partagé. Cuisiniers et clients ne se voient que sur le même appareil — la place de marché réelle nécessite un backend (ex. Supabase) avec authentification.
+- **Audit du 7 novembre 2026** (12 axes, état de `main` `928ac7f`) et fondation de conservation locale : `docs/AUDIT-2026-11-07-preservation.md`. Ce n’est pas un avis juridique. La copie de récupération reste sur l’appareil ; les tests ne remplacent pas un essai sur appareil réel.
 - Serveur de paiement **non implémenté** (exemple fourni) ; Stripe Connect pour les versements aux cuisiniers à activer.
 - **À confirmer** (écran « Notes admin ») : qui paie la commission (actuellement le client, +15 %), frais de livraison (CHF 6.00 provisoire), arrondi à 5 centimes.
 - Modération des avis et signalements : locale (pas d’outil d’administration serveur).

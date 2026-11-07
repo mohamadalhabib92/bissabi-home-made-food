@@ -12,7 +12,7 @@ import { Button, Chip, DemoBanner, Empty, Field, H2, Ionicons, Muted, Notice, Se
 import { theme as t } from '@/ui/theme';
 
 export default function Discover() {
-  const { prefs, setPrefs, cooks, dishes, slots, reviews, distanceTo, favorites, hasDemo, loadDemo, bootFallback, storageReady } = useData();
+  const { prefs, setPrefs, cooks, dishes, slots, reviews, distanceTo, favorites, hasDemo, loadDemo, bootFallback, storageReady, preservation } = useData();
   const { L, lang } = useL();
   const { t: tr } = useI18n();
   const zone = zoneOf(prefs.location);
@@ -51,6 +51,8 @@ export default function Discover() {
         </Pressable>
         <View style={{ height: 14 }} />
         {bootFallback && !storageReady ? <Notice tone="warning" title={tr('bootFallback')} /> : null}
+        {preservation.some((entry) => entry.heldOriginal) ? <Notice tone="warning" title={tr('preserveHeldTitle')} text={tr('preserveHeldBody')} /> : null}
+        {preservation.some((entry) => entry.unknownCount > 0) ? <Notice tone="info" title={tr('preserveUnknownTitle')} text={tr('preserveUnknownBody')} /> : null}
         {hasDemo ? <DemoBanner text={L('Cuisinier·ères et plats de démonstration (fictifs).', 'Demo cooks and dishes (fictional).')} /> : null}
         <Segmented label={L('Rayon', 'Radius')} options={[1, 2, 3, 4, 5].map((k) => ({ label: `${k} km`, value: k }))} value={prefs.radiusKm} onChange={(v) => setPrefs((p) => ({ ...p, radiusKm: v }))} />
         <Toggle label={L('Halal uniquement', 'Halal only')} value={prefs.halalOnly} onChange={(v) => setPrefs((p) => ({ ...p, halalOnly: v }))} hint={L('Déclaration du cuisinier, non certifiée par Bissabi.', 'Cook’s declaration, not certified by Bissabi.')} />
@@ -90,7 +92,7 @@ export default function Discover() {
           <Empty icon="restaurant-outline"
             title={favOnly ? L('Pas encore de favoris', 'No favourites yet') : L('Aucun plat dans ce rayon', 'No dish within this radius')}
             text={favOnly ? L('Touchez ♥ sur un plat pour le retrouver ici.', 'Tap ♥ on a dish to find it here.') : L('Élargissez le rayon, retirez un filtre, ou invitez un·e voisin·e qui cuisine à rejoindre Bissabi Home Made.', 'Widen the radius, remove a filter, or invite a neighbour who cooks to join Bissabi Home Made.')}
-            action={!cooks.some((c) => c.demo) ? <Button variant="secondary" title={L('Charger la démo', 'Load demo')} onPress={loadDemo} /> : prefs.radiusKm < 5 ? <Button variant="secondary" title={L('Passer à 5 km', 'Switch to 5 km')} onPress={() => setPrefs((p) => ({ ...p, radiusKm: 5 }))} /> : undefined} />
+            action={!cooks.some((c) => c.demo) && !preservation.some((entry) => ['cooks', 'dishes', 'slots', 'orders', 'reviews'].includes(entry.key) && !entry.hydrated) ? <Button variant="secondary" title={L('Charger la démo', 'Load demo')} onPress={loadDemo} /> : prefs.radiusKm < 5 ? <Button variant="secondary" title={L('Passer à 5 km', 'Switch to 5 km')} onPress={() => setPrefs((p) => ({ ...p, radiusKm: 5 }))} /> : undefined} />
         )}
       </View>
     </ScrollView>
