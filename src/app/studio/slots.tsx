@@ -40,7 +40,6 @@ export default function Slots() {
         </Row>
         <Row wrap>
           <Chip label={L('Retrait', 'Pickup')} active={modes.includes('pickup')} onPress={() => toggleMode('pickup')} />
-          {myCook.delivers ? <Chip label={L('Livraison', 'Delivery')} active={modes.includes('delivery')} onPress={() => toggleMode('delivery')} /> : null}
           {[1, 2, 4].map((w) => <Chip key={w} label={w === 1 ? L('Une fois', 'Once') : L(`${w} semaines`, `${w} weeks`)} active={weeks === w} onPress={() => setWeeks(w)} />)}
         </Row>
         {err ? <Muted>{err}</Muted> : null}

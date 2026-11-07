@@ -1,4 +1,6 @@
 /** Chaînes de fondation (Passe 1). Le reste de l'app reste bilingue via useL. */
+import { LOCATION_STORED_FR } from '../lib/privacyCopy';
+
 export const fr = {
   ofcoTitle: 'Prochaine étape : Annonce OFCO (VD)',
   ofcoBody:
@@ -55,6 +57,35 @@ export const fr = {
   notProvided: 'Non renseigné par le cuisinier.',
   launchZone: 'Zone de lancement : canton de Vaud. Livraisons uniquement dans ce canton.',
   legalValidate: 'Textes juridiques complets : à valider avant lancement public.',
+  preserveHeldTitle: 'Données de cet appareil conservées, non affichées',
+  preserveHeldBody:
+    'Une copie locale n’a pas pu être lue (JSON illisible, forme inconnue ou version future). Elle n’est pas remplacée par des données de démonstration et n’est pas écrasée. Export et restauration : Mes données.',
+  preserveUnknownTitle: 'Champs enregistrés conservés',
+  preserveUnknownBody: 'Certains champs déjà enregistrés ne sont pas encore affichés. Ils restent dans la copie locale.',
+  preserveRecoveryTitle: 'Copie de récupération sur cet appareil',
+  preserveRecoveryBody: 'Elle reste ici, elle n’est pas envoyée et elle n’est pas écrite dans les journaux. L’effacer est une action séparée.',
+  preserveExportRecovery: 'Exporter la copie de récupération (JSON)',
+  preserveRestore: 'Restaurer si la copie de travail est vide',
+  preserveReplace: 'Remplacer la copie de travail',
+  preserveRelease: 'Repartir à vide en gardant la copie',
+  preservePurge: 'Effacer la copie de récupération',
+  preserveWipeBody:
+    'La copie de travail est effacée seulement après archivage local. La copie de récupération reste sur cet appareil jusqu’à un effacement séparé.',
+  preserveBlocked: 'La copie de travail est différente. Elle n’a pas été remplacée.',
+  preserveRestored: 'Copie de récupération relue. Rechargement de l’écran.',
+  preserveReleased: 'Copie de travail remise à vide. La copie de récupération est intacte.',
+  preserveUnreadable: 'La copie de récupération n’a pas pu être lue. Elle n’a pas été réécrite.',
+  preserveNoCopy: 'Aucune copie de récupération sur cet appareil.',
+  preservePurged: 'Copie de récupération effacée de cet appareil.',
+  pickupOnlyTitle: 'Retrait uniquement pour cette commande',
+  pickupOnlyBody:
+    'La livraison n’est pas proposée au lancement. Choisissez un créneau de retrait. Le panier, les adresses et les commandes déjà enregistrées ne sont pas modifiés.',
+  deliveryKept:
+    'Un réglage « livraison » est déjà enregistré sur cette fiche. Il n’est pas proposé aux nouvelles commandes et il n’est pas effacé.',
+  locationStored: LOCATION_STORED_FR,
+  paymentLaunch: 'Paiement simulé pour ce lancement : aucun débit et aucun serveur de paiement.',
+  paymentLaunchPrivacy:
+    'Le paiement de ce lancement est une simulation sur cet appareil. Aucune carte n’est envoyée. Stripe n’est pas actif.',
 } as const;
 
 export type MsgKey = keyof typeof fr;

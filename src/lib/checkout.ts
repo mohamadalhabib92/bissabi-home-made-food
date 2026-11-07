@@ -1,14 +1,15 @@
 import { useData } from './data';
+import { launchPayment } from './launchCheckout';
 import type { Order } from './model';
 import { paymentsLive, PaymentError, startStripeCheckout } from './payments';
 
-/** Paiement d’une commande : Stripe si configuré, sinon simulation de démo explicite. */
+/** Paiement d’une commande. Au lancement : simulation uniquement, sans Stripe ni serveur. */
 export function usePay() {
   const { setOrderStatus, cooks } = useData();
   return async (o: Order, demoOutcome: 'success' | 'failure' = 'success'): Promise<{ ok: boolean; error?: string }> => {
-    if (paymentsLive) {
+    if (launchPayment().callsStripe && paymentsLive) {
       try {
-        await startStripeCheckout(o); // redirection ; le retour /order/[id]?paid=… met à jour le statut
+        await startStripeCheckout(o);
         return { ok: true };
       } catch (e) {
         const error = e instanceof PaymentError ? e.message : 'Erreur de paiement inconnue.';

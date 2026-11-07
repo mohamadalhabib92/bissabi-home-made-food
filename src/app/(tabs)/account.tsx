@@ -2,19 +2,23 @@ import { useRouter } from 'expo-router';
 import { Wordmark } from '@/components/brand';
 import { COMPANY_LINE } from '@/lib/company';
 import { confirmAsk } from '@/lib/confirm';
+import { useI18n } from '@/i18n';
 import { useData, useL } from '@/lib/data';
 import { paymentsLive } from '@/lib/payments';
-import { Badge, Button, Card, H2, ListItem, Muted, Screen, Segmented, Spacer, Toggle } from '@/ui/kit';
+import { Badge, Button, Card, H2, ListItem, Muted, Notice, Screen, Segmented, Spacer, Toggle } from '@/ui/kit';
 
 export default function Account() {
-  const { prefs, setPrefs, hasDemo, removeDemo, loadDemo, reviews, favorites, dishes, cooks } = useData();
+  const { prefs, setPrefs, hasDemo, removeDemo, loadDemo, reviews, favorites, dishes, cooks, preservation } = useData();
   const { L } = useL();
+  const { t } = useI18n();
   const router = useRouter();
   const pendingReviews = reviews.filter((r) => r.status === 'pending').length;
   return (
     <Screen>
       <Wordmark />
       <Spacer />
+      {preservation.some((entry) => entry.heldOriginal) ? <Notice tone="warning" title={t('preserveHeldTitle')} text={t('preserveHeldBody')} /> : null}
+      {preservation.some((entry) => entry.unknownCount > 0) ? <Notice tone="info" title={t('preserveUnknownTitle')} text={t('preserveUnknownBody')} /> : null}
       <Segmented label={L('Langue', 'Language')} options={[{ label: 'Français', value: 'fr' as const }, { label: 'English', value: 'en' as const }]} value={prefs.lang} onChange={(v) => setPrefs((p) => ({ ...p, lang: v }))} />
       <Card>
         <ListItem icon="language-outline" title={L('Autres langues', 'Other languages')} subtitle="DE · IT · ES · de-CH · AR" right={<Badge label={L('à venir', 'coming')} />} onPress={() => router.push('/languages')} />
@@ -46,7 +50,9 @@ export default function Account() {
         <ListItem icon="chatbubbles-outline" title={L('Modération des avis', 'Review moderation')} right={pendingReviews ? <Badge label={String(pendingReviews)} tone="warning" /> : undefined} onPress={() => router.push('/moderation')} />
         <ListItem icon="construct-outline" title={L('Notes admin & configuration', 'Admin notes & configuration')} right={<Badge label={paymentsLive ? 'Stripe' : L('démo', 'demo')} tone={paymentsLive ? 'success' : 'warning'} />} onPress={() => router.push('/admin-notes')} />
       </Card>
-      {hasDemo
+      {preservation.some((entry) => ['cooks', 'dishes', 'slots', 'orders', 'reviews'].includes(entry.key) && !entry.hydrated)
+        ? null
+        : hasDemo
         ? <Button variant="secondary" icon="flask-outline" title={L('Retirer les données de démo', 'Remove demo data')} onPress={() => confirmAsk(L('Retirer tous les cuisiniers, plats et commandes de démo ?', 'Remove all demo cooks, dishes and orders?'), removeDemo)} />
         : <Button variant="ghost" icon="flask-outline" title={L('Recharger la démo', 'Reload demo')} onPress={loadDemo} />}
       <Spacer />

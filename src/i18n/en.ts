@@ -1,4 +1,5 @@
 import type { MsgKey } from './fr';
+import { LOCATION_STORED_EN } from '../lib/privacyCopy';
 
 export const en: Record<MsgKey, string> = {
   ofcoTitle: 'Next step: OFCO notification (VD)',
@@ -56,4 +57,33 @@ export const en: Record<MsgKey, string> = {
   notProvided: 'Not provided by the cook.',
   launchZone: 'Launch area: canton Vaud. Deliveries only inside this canton.',
   legalValidate: 'Full legal texts: to be validated before public launch.',
+  preserveHeldTitle: 'Data on this device is kept, not shown',
+  preserveHeldBody:
+    'A local copy could not be read (unreadable JSON, unknown shape, or a future version). It is not replaced with demo data and it is not overwritten. Export and restore: My data.',
+  preserveUnknownTitle: 'Saved fields kept',
+  preserveUnknownBody: 'Some fields already saved are not shown yet. They stay in the local copy.',
+  preserveRecoveryTitle: 'Recovery copy on this device',
+  preserveRecoveryBody: 'It stays here. It is not sent and it is not written to logs. Erasing it is a separate action.',
+  preserveExportRecovery: 'Export the recovery copy (JSON)',
+  preserveRestore: 'Restore if the working copy is empty',
+  preserveReplace: 'Replace the working copy',
+  preserveRelease: 'Start empty and keep the copy',
+  preservePurge: 'Erase the recovery copy',
+  preserveWipeBody:
+    'The working copy is erased only after a local archive. The recovery copy stays on this device until a separate erase.',
+  preserveBlocked: 'The working copy is different. It was not replaced.',
+  preserveRestored: 'Recovery copy read back. Reloading this screen.',
+  preserveReleased: 'Working copy reset to empty. The recovery copy is intact.',
+  preserveUnreadable: 'The recovery copy could not be read. It was not rewritten.',
+  preserveNoCopy: 'No recovery copy on this device.',
+  preservePurged: 'Recovery copy erased from this device.',
+  pickupOnlyTitle: 'Pickup only for this order',
+  pickupOnlyBody:
+    'Delivery is not offered at launch. Choose a pickup slot. The cart, addresses and orders already saved are left as they are.',
+  deliveryKept:
+    'A “delivery” setting is already saved on this profile. It is not offered for new orders and it is not erased.',
+  locationStored: LOCATION_STORED_EN,
+  paymentLaunch: 'Simulated payment for this launch: no charge and no payment server.',
+  paymentLaunchPrivacy:
+    'Payment for this launch is a simulation on this device. No card is sent. Stripe is not active.',
 };
