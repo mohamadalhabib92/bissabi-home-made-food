@@ -17,7 +17,7 @@ export default function CookProfile() {
   const [commune, setCommune] = useState(myCook?.commune ?? '');
   const [bio, setBio] = useState(myCook?.bio ?? '');
   const [halal, setHalal] = useState(myCook?.halalKitchen ?? false);
-  const [delivers, setDelivers] = useState(myCook?.delivers ?? false);
+  const [delivers] = useState(myCook?.delivers ?? false);
   const [langs, setLangs] = useState<string[]>(myCook?.languages ?? ['fr']);
   const [color, setColor] = useState(myCook?.avatarColor ?? AVATAR_COLORS[0]);
   const place = COMMUNES.find((c) => c.name.toLowerCase() === commune.trim().toLowerCase());
@@ -41,7 +41,7 @@ export default function CookProfile() {
       {sugg.length ? <Row wrap>{sugg.map((s) => <Chip key={s.npa + s.name} label={s.name} onPress={() => setCommune(s.name)} />)}</Row> : null}
       <Field label={L('Présentation', 'About you')} value={bio} onChangeText={setBio} multiline placeholder={L('Votre histoire, vos spécialités, votre façon de cuisiner… (20 caractères min.)', 'Your story, specialities, how you cook… (20 chars min.)')} />
       <Toggle label={L('Ma cuisine est halal (déclaration)', 'My kitchen is halal (declaration)')} value={halal} onChange={setHalal} hint={L('Engagement personnel, non certifié par Bissabi.', 'Personal commitment, not certified by Bissabi.')} />
-      <Toggle label={L('Je peux livrer moi-même', 'I can deliver myself')} value={delivers} onChange={setDelivers} hint={t('deliveryHint')} />
+      {delivers ? <Muted>{t('deliveryKept')}</Muted> : null}
       <Muted>{L('Langues parlées', 'Languages spoken')}</Muted>
       <Row wrap>{['fr', 'en', 'de', 'it', 'es', 'ar', 'wo'].map((k) => <Chip key={k} label={k.toUpperCase()} active={langs.includes(k)} onPress={() => setLangs((l) => (l.includes(k) ? l.filter((x) => x !== k) : [...l, k]))} />)}</Row>
       <Spacer h={8} />

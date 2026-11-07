@@ -67,9 +67,11 @@ export default function Privacy() {
   return (
     <Screen>
       <H2>{L('Ce que nous stockons', 'What we store')}</H2>
-      <Body>{L('Tout est enregistré sur cet appareil : préférences, panier, commandes, profil cuisinier, plats. La position GPS est arrondie (~100 m) et n’est jamais envoyée. Aucun traceur publicitaire.', 'Everything is stored on this device: preferences, cart, orders, cook profile, dishes. GPS position is rounded (~100 m) and never sent. No ad trackers.')}</Body>
+      <Body>{L('Tout est enregistré sur cet appareil : préférences, panier, commandes, profil cuisinier, plats. Aucun traceur publicitaire.', 'Everything is stored on this device: preferences, cart, orders, cook profile, dishes. No ad trackers.')}</Body>
       <Spacer />
-      <Body>{L('Lorsque le paiement est activé, Stripe traite les données de carte ; Bissabi n’y a jamais accès.', 'When payments are enabled, Stripe processes card data; Bissabi never sees it.')}</Body>
+      <Body>{t('locationStored')}</Body>
+      <Spacer />
+      <Body>{t('paymentLaunchPrivacy')}</Body>
       <Spacer />
       <Card>
         <Muted>{L('Consentements', 'Consents')}{prefs.consents.at ? ` · ${stamp(prefs.consents.at, lang)}` : ''}</Muted>

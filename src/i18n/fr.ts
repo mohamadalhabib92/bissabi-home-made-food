@@ -1,4 +1,6 @@
 /** Chaînes de fondation (Passe 1). Le reste de l'app reste bilingue via useL. */
+import { LOCATION_STORED_FR } from '../lib/privacyCopy';
+
 export const fr = {
   ofcoTitle: 'Prochaine étape : Annonce OFCO (VD)',
   ofcoBody:
@@ -75,6 +77,15 @@ export const fr = {
   preserveUnreadable: 'La copie de récupération n’a pas pu être lue. Elle n’a pas été réécrite.',
   preserveNoCopy: 'Aucune copie de récupération sur cet appareil.',
   preservePurged: 'Copie de récupération effacée de cet appareil.',
+  pickupOnlyTitle: 'Retrait uniquement pour cette commande',
+  pickupOnlyBody:
+    'La livraison n’est pas proposée au lancement. Choisissez un créneau de retrait. Le panier, les adresses et les commandes déjà enregistrées ne sont pas modifiés.',
+  deliveryKept:
+    'Un réglage « livraison » est déjà enregistré sur cette fiche. Il n’est pas proposé aux nouvelles commandes et il n’est pas effacé.',
+  locationStored: LOCATION_STORED_FR,
+  paymentLaunch: 'Paiement simulé pour ce lancement : aucun débit et aucun serveur de paiement.',
+  paymentLaunchPrivacy:
+    'Le paiement de ce lancement est une simulation sur cet appareil. Aucune carte n’est envoyée. Stripe n’est pas actif.',
 } as const;
 
 export type MsgKey = keyof typeof fr;

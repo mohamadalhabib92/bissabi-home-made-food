@@ -3,8 +3,8 @@
 **La saveur du partage — cuisine de quartier authentique par Bissabi**
 
 Place de marché de cuisine maison entre voisins : des cuisinier·ère·s du quartier proposent leurs plats,
-les client·e·s **commandent à l’avance** sur un créneau de retrait ou de livraison. Ce n’est ni un service de livraison
-de restaurants ni de la livraison express (délai minimum de 24 h par défaut). Pas de livraison de boissons.
+les client·e·s **commandent à l’avance** sur un créneau de **retrait**. La livraison n’est pas proposée aux nouvelles commandes (décision de lancement du 6 novembre 2026). Les commandes, paniers et adresses déjà enregistrés restent en l’état. Ce n’est pas un service de livraison
+de restaurants (délai minimum de 24 h par défaut). Pas de livraison de boissons.
 
 Application Expo (iOS / Android) **et** PWA installable (GitHub Pages, `/bissabi-home-made-food/`).
 Identité : rouge `#C8152A`, vert `#1A4D2E`, or `#C9A84C`, crème `#FAF8F2` ; logotype BISSABI (rouge) + HOME MADE (vert).
@@ -12,16 +12,16 @@ Identité : rouge `#C8152A`, vert `#1A4D2E`, or `#C9A84C`, crème `#FAF8F2` ; lo
 ## Fonctionnalités
 
 ### Côté client
-- **Découvrir** : plats et cuisiniers proches, rayon **1 à 5 km** (GPS arrondi à ~100 m, avec repli sur le choix d’une commune), filtre **Halal** (déclaration du cuisinier, non certifiée), recherche, cuisines, favoris.
+- **Découvrir** : plats et cuisiniers proches, rayon **1 à 5 km** (GPS arrondi à ~100 m, enregistré dans les préférences de cet appareil, avec repli sur le choix d’une commune), filtre **Halal** (déclaration du cuisinier, non certifiée), recherche, cuisines, favoris.
 - **Fiche plat** : allergènes (14 allergènes majeurs, obligatoires), portion, prochains créneaux, signalement.
-- **Panier** (un cuisinier par commande), détail ligne par ligne : **plats + commission plateforme 15 % + frais de livraison** = total TTC.
-- **Commande** : choix du créneau (capacité en portions, délai minimum), retrait ou livraison, note, accusé de lecture des allergènes.
-- **Paiement** : Stripe Checkout si configuré, sinon **paiement simulé** clairement indiqué (option démo pour simuler un refus de carte). Gestion d’échec : message clair, nouvelle tentative, annulation.
+- **Panier** (un cuisinier par commande), détail ligne par ligne : **plats + commission plateforme 15 %**. Au lancement le retrait n’ajoute pas de frais de livraison.
+- **Commande** : créneau de retrait seulement, note, accusé de lecture des allergènes. Un panier qui visait la livraison invite à choisir un retrait, sans réécrire l’historique.
+- **Paiement** : **simulation** sur cet appareil (option démo pour simuler un refus). Aucun appel Stripe ni serveur au lancement.
 - **Suivi** : statuts (paiement → en attente du cuisinier → acceptée → en préparation → prête → terminée / refusée / annulée), historique, **reçu téléchargeable** avec mentions de l’entreprise.
 - **Avis** soumis à **modération** avant publication ; support / signalement.
 
 ### Côté cuisinier (onglet « Cuisiner »)
-- Profil (nom affiché, commune, présentation, cuisine halal déclarée, livraison oui/non, langues).
+- Profil (nom affiché, commune, présentation, cuisine halal déclarée, langues). Un réglage livraison déjà enregistré n’est pas effacé et n’est pas proposé aux nouvelles commandes.
 - **Checklist hygiène** déclarative (8 points) obligatoire avant publication.
 - Plats : photo, prix par portion, **allergènes obligatoires** (ou confirmation explicite « aucun »), ingrédients, délai minimum, visibilité.
 - Créneaux (retrait / livraison, capacité, répétition sur 2 ou 4 semaines).

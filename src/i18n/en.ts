@@ -1,4 +1,5 @@
 import type { MsgKey } from './fr';
+import { LOCATION_STORED_EN } from '../lib/privacyCopy';
 
 export const en: Record<MsgKey, string> = {
   ofcoTitle: 'Next step: OFCO notification (VD)',
@@ -76,4 +77,13 @@ export const en: Record<MsgKey, string> = {
   preserveUnreadable: 'The recovery copy could not be read. It was not rewritten.',
   preserveNoCopy: 'No recovery copy on this device.',
   preservePurged: 'Recovery copy erased from this device.',
+  pickupOnlyTitle: 'Pickup only for this order',
+  pickupOnlyBody:
+    'Delivery is not offered at launch. Choose a pickup slot. The cart, addresses and orders already saved are left as they are.',
+  deliveryKept:
+    'A “delivery” setting is already saved on this profile. It is not offered for new orders and it is not erased.',
+  locationStored: LOCATION_STORED_EN,
+  paymentLaunch: 'Simulated payment for this launch: no charge and no payment server.',
+  paymentLaunchPrivacy:
+    'Payment for this launch is a simulation on this device. No card is sent. Stripe is not active.',
 };

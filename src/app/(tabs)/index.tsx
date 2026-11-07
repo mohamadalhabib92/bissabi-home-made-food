@@ -6,6 +6,7 @@ import { Avatar, DishCard, Stars, Wordmark } from '@/components/brand';
 import { useI18n } from '@/i18n';
 import { useData, useL } from '@/lib/data';
 import { fmtKm, zoneOf } from '@/lib/geo';
+import { buyerVisibleSlots } from '@/lib/launchCheckout';
 import { openSlotsFor, rating } from '@/lib/market';
 import { CUISINES, type Cuisine } from '@/lib/model';
 import { Button, Chip, DemoBanner, Empty, Field, H2, Ionicons, Muted, Notice, Segmented, Toggle, styles } from '@/ui/kit';
@@ -35,7 +36,7 @@ export default function Discover() {
     .filter((d) => !cuisine || d.cuisine === cuisine)
     .filter((d) => !favOnly || favorites.dishes.includes(d.id) || favorites.cooks.includes(d.cookId))
     .filter((d) => !needle || `${d.title} ${d.description} ${cooks.find((c) => c.id === d.cookId)?.name ?? ''}`.toLowerCase().includes(needle))
-    .map((d) => ({ d, next: openSlotsFor(d, slots)[0], dist: distanceTo(cooks.find((c) => c.id === d.cookId)!) }))
+    .map((d) => ({ d, next: openSlotsFor(d, buyerVisibleSlots(slots))[0], dist: distanceTo(cooks.find((c) => c.id === d.cookId)!) }))
     .sort((a, b) => (a.next ? 0 : 1) - (b.next ? 0 : 1) || (a.dist ?? 0) - (b.dist ?? 0));
 
   return (
