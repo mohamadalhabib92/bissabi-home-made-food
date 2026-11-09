@@ -57,7 +57,7 @@ const SLOT_FIELDS = ['id', 'cookId', 'date', 'from', 'to', 'modes', 'capacity', 
 
 const ORDER_FIELDS = [
   'id', 'number', 'side', 'cookId', 'buyerName', 'lines', 'slotId', 'slotDate', 'slotFrom', 'slotTo', 'mode',
-  'address', 'note', 'subtotal', 'commission', 'deliveryFee', 'total', 'status', 'timeline', 'payment',
+  'address', 'note', 'subtotal', 'commission', 'deliveryFee', 'total', 'cookNet', 'commissionRateBps', 'status', 'timeline', 'payment',
   'refuseReason', 'createdAt', 'demo', 'schemaVersion',
 ] as const;
 

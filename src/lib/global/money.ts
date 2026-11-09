@@ -49,8 +49,29 @@ export function roundMinor(amountMinor: number, increment: number): number {
 
 export function percentMinor(amountMinor: number, rateBps: number, increment: number): number {
   if (!Number.isInteger(rateBps) || rateBps < 0) throw new Error('bad_rate');
-  const raw = Math.round((amountMinor * rateBps) / 10_000);
-  return roundMinor(raw, increment);
+  return roundMinor(shareBps(amountMinor, rateBps), increment);
+}
+
+/**
+ * Part en points de base, stockée au centime (demi-supérieur).
+ * Le pas de 5 centimes du CHF ne s'applique pas ici : il reste un affichage comptant, pas une écriture.
+ */
+export function shareBps(amountMinor: number, rateBps: number): number {
+  if (!Number.isInteger(amountMinor) || amountMinor < 0) throw new Error('minor_not_integer');
+  if (!Number.isInteger(rateBps) || rateBps < 0) throw new Error('bad_rate');
+  return halfUp(amountMinor * rateBps, 10_000);
+}
+
+/** `part / whole` de rien : demi-supérieur, entiers seulement. */
+export function proportionalMinor(valueMinor: number, part: number, whole: number): number {
+  if (!Number.isInteger(valueMinor) || valueMinor < 0) throw new Error('minor_not_integer');
+  if (!Number.isInteger(part) || part < 0 || !Number.isInteger(whole) || whole <= 0) throw new Error('bad_ratio');
+  return halfUp(valueMinor * part, whole);
+}
+
+function halfUp(product: number, denom: number): number {
+  const rem = product % denom;
+  return Math.floor(product / denom) + (rem * 2 >= denom ? 1 : 0);
 }
 
 /**

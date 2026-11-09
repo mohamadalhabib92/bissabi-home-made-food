@@ -26,7 +26,8 @@ export default function IncomingOrder() {
   if (!o) return <Screen><Empty title={L('Commande introuvable', 'Order not found')} /></Screen>;
   const st = STATUS_LABEL[o.status];
   const allergens = [...new Set(o.lines.flatMap((l) => dishes.find((d) => d.id === l.dishId)?.allergens ?? []))];
-  const net = o.subtotal + o.deliveryFee;
+  const legacy = Math.abs(o.total - (o.subtotal + o.deliveryFee + o.commission)) < 0.02;
+  const net = legacy ? o.subtotal : (o.cookNet ?? o.subtotal - o.commission);
   return (
     <Screen>
       {o.demo ? <Notice tone="warning" title={L('Commande de démonstration', 'Demo order')} /> : null}
@@ -41,9 +42,10 @@ export default function IncomingOrder() {
       </Card>
       <Card>
         <H2>{L('Ce que vous recevez', 'What you receive')}</H2>
-        <Row style={{ justifyContent: 'space-between' }}><Muted>{L('Plats', 'Dishes')}</Muted><Body>{chf(o.subtotal)}</Body></Row>
-        {o.deliveryFee ? <Row style={{ justifyContent: 'space-between' }}><Muted>{L('Frais de livraison', 'Delivery fee')}</Muted><Body>{chf(o.deliveryFee)}</Body></Row> : null}
-        <Row style={{ justifyContent: 'space-between' }}><Muted>{L('Commission Bissabi 15 % (payée par le client)', 'Bissabi 15% commission (paid by customer)')}</Muted><Body>{chf(o.commission)}</Body></Row>
+        <Row style={{ justifyContent: 'space-between' }}><Muted>{L('Brut plats', 'Dish gross')}</Muted><Body>{chf(o.subtotal)}</Body></Row>
+        {o.deliveryFee ? <Muted>{L('La livraison est payée par le client et n’entre pas dans ce net.', 'Delivery is paid by the client and is not part of this net.')} {chf(o.deliveryFee)}</Muted> : null}
+        <Row style={{ justifyContent: 'space-between' }}><Muted>{L('Commission Bissabi 10 %', 'Bissabi 10% commission')}</Muted><Body>{chf(o.commission)}</Body></Row>
+        <Row style={{ justifyContent: 'space-between' }}><Muted>{L('Net plats', 'Dish net')}</Muted><Body>{chf(o.cookNet ?? o.subtotal - o.commission)}</Body></Row>
         <Row style={{ justifyContent: 'space-between' }}><Text style={{ fontWeight: '800', color: t.text }}>{L('Net pour vous', 'Net for you')}</Text><Text style={{ fontWeight: '800', color: t.success }}>{chf(net)}</Text></Row>
       </Card>
       {o.status === 'requested' && !refusing ? (

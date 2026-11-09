@@ -17,7 +17,7 @@ export default function Legal() {
         <Body>UID : {COMPANY.uid}</Body>
       </Card>
       <H2>{L('Rôle de la plateforme', 'Platform role')}</H2>
-      <Body>{L('Bissabi Home Made met en relation des particuliers qui cuisinent et des voisins qui commandent à l’avance. Les plats sont préparés sous la responsabilité de chaque cuisinier·ère. La plateforme perçoit une commission de 15 % affichée avant paiement.', 'Bissabi Home Made connects home cooks with neighbours who order in advance. Dishes are prepared under each cook’s responsibility. The platform charges a 15% commission shown before payment.')}</Body>
+      <Body>{L('Bissabi Home Made met en relation des particuliers qui cuisinent et des voisins qui commandent à l’avance. Les plats sont préparés sous la responsabilité de chaque cuisinier·ère. La plateforme retient 10 % du montant des plats sur le versement au cuisinier. Ce taux est celui du marché au moment du paiement. La livraison n’est pas dans cette assiette.', 'Bissabi Home Made connects home cooks with neighbours who order in advance. Dishes are prepared under each cook’s responsibility. The platform keeps 10% of the dish amount from the cook’s payout. That rate is the market rate at the moment of payment. Delivery is not part of this base.')}</Body>
       <H2>{L('Photos de démonstration', 'Demo photographs')}</H2>
       <Muted>{L('Elles ne s’affichent que si le plat de démo n’a pas de photo. Une photo ajoutée par un cuisinier n’est pas remplacée.', 'They only show when a demo dish has no photo. A photo added by a cook is not replaced.')}</Muted>
       <Card>

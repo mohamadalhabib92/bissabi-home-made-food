@@ -86,8 +86,9 @@ export default function PilotScreen() {
         <Card>
           <Text style={{ color: ui.text }}>{dish?.title}</Text>
           <Muted>{say('pilotPickup')} / {say('pilotDelivery')}</Muted>
-          <Text style={{ color: ui.text }}>{money(price.subtotalMinor)} + {money(price.commissionMinor)} + {money(price.deliveryFeeMinor)}</Text>
+          <Text style={{ color: ui.text }}>{money(price.subtotalMinor)} + {money(price.deliveryFeeMinor)}</Text>
           <Text style={{ color: ui.text, fontWeight: '700' }}>{money(price.totalMinor)}</Text>
+          <Muted>Commission 10 % retenue sur le cuisinier : {money(price.commissionMinor)}. Net cuisinier {money(price.cookNetMinor)}. Les frais de livraison ne sont pas dans cette commission.</Muted>
         </Card>
       ) : null}
       <Segmented

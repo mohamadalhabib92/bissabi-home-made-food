@@ -169,7 +169,8 @@ test('parcours test : cuisine activée, plat, précommande, paiement simulé, li
   assert.equal(delivery.ok, true);
   if (!delivery.ok) return;
   assert.equal(delivery.value.deliveryFeeMinor, 600);
-  assert.equal(delivery.value.totalMinor, 1800 + 270 + 600);
+  assert.equal(delivery.value.commissionMinor, 180);
+  assert.equal(delivery.value.totalMinor, 1800 + 600);
   const paid = paySimulated(delivery.state, delivery.value.id, payAt);
   assert.equal(paid.ok, true);
   if (!paid.ok) return;

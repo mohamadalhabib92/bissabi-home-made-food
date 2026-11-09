@@ -87,6 +87,8 @@ export type Order = {
   slotId: string; slotDate: string; slotFrom: string; slotTo: string;
   mode: FulfilMode; address?: string; note?: string;
   subtotal: number; commission: number; deliveryFee: number; total: number;
+  /** Présent sur les nouvelles commandes. Les anciennes restent lisibles sans ces champs. */
+  cookNet?: number; commissionRateBps?: number;
   status: OrderStatus; timeline: { status: OrderStatus; at: string; note?: string }[];
   payment: { method: 'stripe' | 'demo'; ref?: string; error?: string };
   refuseReason?: string; createdAt: string; demo?: boolean;

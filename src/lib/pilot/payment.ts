@@ -12,6 +12,8 @@ export type ProviderEvent = {
   kind: PaymentKind;
   amountMinor: number;
   currency: string;
+  /** Remboursement : part du sous-total plats rendue au client. La livraison n'est pas dedans. */
+  dishRefundMinor?: number;
 };
 
 export type PaymentProvider = {

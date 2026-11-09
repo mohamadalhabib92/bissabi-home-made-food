@@ -31,6 +31,7 @@ export function pilotKitchen(patch: Partial<Kitchen> = {}): Kitchen {
     trainingOk: false,
     salesAllowed: false,
     suspended: false,
+    kyc: 'missing',
     payoutLast4: null,
     decisions: [],
     ...patch,

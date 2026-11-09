@@ -49,8 +49,13 @@ export type Market = {
   defaultLocale: LocaleId;
   currency: string;
   timezone: string;
+  /** Pas d'affichage comptant. Les écritures restent au centime. */
   cashIncrementMinor: number;
+  /** Commission Bissabi sur le sous-total des plats, en points de base. 1000 = 10 %. */
   commissionRateBps: number;
+  /** Frais du prestataire, supportés par la plateforme. 0 tant qu'aucun contrat n'est signé. */
+  providerFeeBps: number;
+  providerFeeBearer: 'platform';
   holdMinutes: number;
   minLeadHours: number;
   zones: Zone[];
@@ -70,7 +75,9 @@ const CH_PILOT: Market = {
   currency: 'CHF',
   timezone: 'Europe/Zurich',
   cashIncrementMinor: 5,
-  commissionRateBps: 1500,
+  commissionRateBps: 1000,
+  providerFeeBps: 0,
+  providerFeeBearer: 'platform',
   holdMinutes: 15,
   minLeadHours: 24,
   zones: [

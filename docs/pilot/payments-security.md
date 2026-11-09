@@ -13,6 +13,20 @@
 
 Carte : jamais dans l’app. Le simulé ne demande pas de numéro.
 
+## Commission (décision du 9 novembre 2026, corrigée à 10 %)
+
+Le client paie le total au prestataire (simulé pour l’instant, découpage type Stripe Connect plus tard) : **sous-total des plats + livraison**.
+
+Bissabi retient **10 %** de ce sous-total. Le cuisinier reçoit le brut moins cette commission. Le taux est `markets.commissionRateBps` (défaut 1000). Il est recopié sur la commande **au moment du paiement** et ne bouge plus, même si le marché change ensuite.
+
+| Montant | Dans les 10 % ? | Qui le reçoit |
+| --- | --- | --- |
+| Plats | Oui, assiette | Cuisinier, net de commission |
+| Livraison | Non | Plateforme, pour le coursier. Pas le cuisinier. |
+| Frais du prestataire | Non | **Bissabi les supporte** (proposition). Ils sont au grand livre, pas déduits du net. Taux 0 tant que le contrat n’est pas signé. |
+
+Les écritures sont en centimes, demi-supérieur. Le pas de 5 centimes du CHF n’est pas appliqué au stocké. Un remboursement partiel des plats réduit la commission au prorata du même taux figé. Un événement de paiement rejoué ne crée pas une deuxième commission. Le versement reste bloqué tant que le compte du cuisinier n’est pas vérifié chez le prestataire. Changer l’IBAN demande une confirmation renforcée.
+
 ## Prestataires
 
 | | Stripe Connect | Payrexx | Datatrans | Wallee |

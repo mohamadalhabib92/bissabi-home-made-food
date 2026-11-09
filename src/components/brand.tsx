@@ -149,10 +149,15 @@ export function TotalsTable({ subtotal, commission, deliveryFee, total, L }: { s
   return (
     <View>
       {row(L('Plats', 'Dishes'), chf(subtotal))}
-      {row(L('Commission plateforme (15 %)', 'Platform commission (15%)'), chf(commission))}
       {row(L('Frais de livraison', 'Delivery fee'), deliveryFee ? chf(deliveryFee) : L('Retrait — gratuit', 'Pickup — free'))}
+      {Math.abs(subtotal + deliveryFee + commission - total) < 0.02
+        ? row(L('Commission enregistrée sur cette commande', 'Commission stored on this order'), chf(commission))
+        : null}
       <View style={{ height: 1, backgroundColor: t.border, marginVertical: 6 }} />
-      {row(L('Total TTC', 'Total'), chf(total), true)}
+      {row(L('Total à payer', 'Amount due'), chf(total), true)}
+      {Math.abs(subtotal + deliveryFee - total) < 0.02 && commission > 0
+        ? <Text style={{ color: t.muted, fontSize: 13, marginTop: 4 }}>{L(`Commission Bissabi 10 % retenue sur le cuisinier : ${chf(commission)}. Elle n’est pas ajoutée à votre total. La livraison n’entre pas dans ce calcul.`, `Bissabi keeps a 10% commission from the cook: ${chf(commission)}. It is not added to your total. Delivery is outside this calculation.`)}</Text>
+        : null}
     </View>
   );
 }

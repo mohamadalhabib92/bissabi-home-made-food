@@ -1,5 +1,5 @@
 import { ALLERGENS, type Allergen } from '../model';
-import { addMoney, money, percentMinor, type Money } from '../global/money';
+import { addMoney, money, proportionalMinor, shareBps, type Money } from '../global/money';
 import { pilotGaps, zoneForPostal, type Market } from '../global/markets';
 import { partnerById } from './delivery';
 import { providerById, simulatedSignature, type ProviderEvent } from './payment';
@@ -27,6 +27,8 @@ export type Kitchen = {
   trainingOk: boolean;
   salesAllowed: boolean;
   suspended: boolean;
+  /** Vérification du compte de versement chez le prestataire. Sans ça, pas de payout. */
+  kyc: 'missing' | 'verified';
   payoutLast4: string | null;
   decisions: { at: string; actorId: string; action: string; note: string }[];
 };
@@ -89,10 +91,16 @@ export type PilotOrder = {
   areaLabel: string;
   currency: string;
   subtotalMinor: number;
+  /** Commission figée au paiement. Avant paiement : estimation du taux courant, rate null. */
   commissionMinor: number;
+  commissionRateBps: number | null;
   deliveryFeeMinor: number;
+  providerFeeMinor: number;
   totalMinor: number;
-  paymentStatus: 'unpaid' | 'paid' | 'failed' | 'refunded';
+  refundedDishMinor: number;
+  refundedCommissionMinor: number;
+  payoutStatus: 'none' | 'blocked_kyc' | 'ready' | 'paid';
+  paymentStatus: 'unpaid' | 'paid' | 'failed' | 'refunded' | 'partially_refunded';
   prepStatus: 'pending' | 'accepted' | 'preparing' | 'ready' | 'handed';
   deliveryStatus: 'none' | 'assigned' | 'picked_up' | 'handed_over' | 'delayed' | 'damaged' | 'unreachable';
   handoverCode: string | null;
@@ -109,6 +117,8 @@ export type Mission = {
   preciseAddress: string;
 };
 
+export type PayoutStatus = 'blocked_kyc' | 'ready' | 'paid';
+
 export type LedgerEntry = {
   id: string;
   eventId: string;
@@ -116,8 +126,25 @@ export type LedgerEntry = {
   currency: string;
   collectedMinor: number;
   commissionMinor: number;
-  feesMinor: number;
-  owedKitchenMinor: number;
+  /** Frais du prestataire, supportés par Bissabi, pas déduits du cuisinier. */
+  providerFeeMinor: number;
+  deliveryFeeMinor: number;
+  /** Plats moins la commission. La livraison n'y est pas. */
+  owedCookMinor: number;
+  payoutStatus: PayoutStatus | 'not_payable';
+  commissionRateBps: number;
+};
+
+export type Payout = {
+  id: string;
+  kitchenId: string;
+  currency: string;
+  grossMinor: number;
+  commissionMinor: number;
+  netMinor: number;
+  status: 'paid';
+  orderIds: string[];
+  at: string;
 };
 
 export type PilotState = {
@@ -131,6 +158,7 @@ export type PilotState = {
   orders: PilotOrder[];
   events: { id: string; orderId: string; kind: string; applied: boolean }[];
   ledger: LedgerEntry[];
+  payouts: Payout[];
   missions: Mission[];
   lots: { id: string; kitchenId: string; ingredient: string; code: string }[];
   batches: { id: string; dishId: string; lotIds: string[]; blocked: boolean }[];
@@ -184,18 +212,25 @@ export function quotePortion(market: Market, priceMinor: number, qty: number, mo
   subtotalMinor: number;
   commissionMinor: number;
   deliveryFeeMinor: number;
+  providerFeeMinor: number;
   totalMinor: number;
+  cookNetMinor: number;
+  commissionRateBps: number;
   currency: string;
 } {
   const zone = zoneForPostal(market, postal);
   const subtotalMinor = priceMinor * qty;
-  const commissionMinor = percentMinor(subtotalMinor, market.commissionRateBps, market.cashIncrementMinor);
+  const commissionMinor = shareBps(subtotalMinor, market.commissionRateBps);
   const deliveryFeeMinor = mode === 'delivery' ? (zone?.deliveryFeeMinor ?? 0) : 0;
+  const providerFeeMinor = shareBps(subtotalMinor + deliveryFeeMinor, market.providerFeeBps);
   return {
     subtotalMinor,
     commissionMinor,
     deliveryFeeMinor,
-    totalMinor: subtotalMinor + commissionMinor + deliveryFeeMinor,
+    providerFeeMinor,
+    totalMinor: subtotalMinor + deliveryFeeMinor,
+    cookNetMinor: subtotalMinor - commissionMinor,
+    commissionRateBps: market.commissionRateBps,
     currency: market.currency,
   };
 }
@@ -203,7 +238,7 @@ export function quotePortion(market: Market, priceMinor: number, qty: number, mo
 export function emptyPilot(market: Market): PilotState {
   return {
     seq: 0, market, kitchens: [], dishes: [], recipes: [], slots: [], holds: [], orders: [],
-    events: [], ledger: [], missions: [], lots: [], batches: [], batchOrders: [], audit: [],
+    events: [], ledger: [], payouts: [], missions: [], lots: [], batches: [], batchOrders: [], audit: [],
   };
 }
 
@@ -378,8 +413,13 @@ export function reservePortion(
     currency: price.currency,
     subtotalMinor: price.subtotalMinor,
     commissionMinor: price.commissionMinor,
+    commissionRateBps: null,
     deliveryFeeMinor: price.deliveryFeeMinor,
+    providerFeeMinor: 0,
     totalMinor: price.totalMinor,
+    refundedDishMinor: 0,
+    refundedCommissionMinor: 0,
+    payoutStatus: 'none',
     paymentStatus: 'unpaid',
     prepStatus: 'pending',
     deliveryStatus: 'none',
@@ -422,7 +462,8 @@ export function applyPaymentEvent(state: PilotState, event: ProviderEvent, signa
   }
   const order = state.orders.find((item) => item.id === event.orderId);
   if (!order) return fail(state, 'unknown_order');
-  if (event.currency !== order.currency || event.amountMinor !== order.totalMinor) return fail(state, 'amount_mismatch');
+  if (event.currency !== order.currency) return fail(state, 'amount_mismatch');
+  if (event.kind !== 'refunded' && event.amountMinor !== order.totalMinor) return fail(state, 'amount_mismatch');
   const noted = { ...state, events: [...state.events, { id: event.id, orderId: event.orderId, kind: event.kind, applied: false }] };
   if (event.kind === 'refunded' && order.paymentStatus !== 'paid') {
     return fail(audit(noted, at, 'payment', 'out_of_order', event.id), 'out_of_order');
@@ -438,6 +479,11 @@ export function applyPaymentEvent(state: PilotState, event: ProviderEvent, signa
       const orders = released.orders.map((item) => (item.id === order.id ? { ...item, paymentStatus: 'failed' as const } : item));
       return fail(audit({ ...released, orders }, at, 'payment', 'hold_expired', event.id), 'hold_expired');
     }
+    const rate = noted.market.commissionRateBps;
+    const commissionMinor = shareBps(order.subtotalMinor, rate);
+    const providerFeeMinor = shareBps(order.totalMinor, noted.market.providerFeeBps);
+    const kitchen = noted.kitchens.find((item) => item.id === order.kitchenId);
+    const payoutStatus = kitchen?.kyc === 'verified' ? 'ready' : 'blocked_kyc';
     const ledgerId = nextId(noted, 'led');
     const entry: LedgerEntry = {
       id: ledgerId.id,
@@ -445,14 +491,25 @@ export function applyPaymentEvent(state: PilotState, event: ProviderEvent, signa
       orderId: order.id,
       currency: order.currency,
       collectedMinor: order.totalMinor,
-      commissionMinor: order.commissionMinor,
-      feesMinor: order.deliveryFeeMinor,
-      owedKitchenMinor: order.subtotalMinor,
+      commissionMinor,
+      providerFeeMinor,
+      deliveryFeeMinor: order.deliveryFeeMinor,
+      owedCookMinor: order.subtotalMinor - commissionMinor,
+      payoutStatus,
+      commissionRateBps: rate,
     };
     const updated: PilotState = {
       ...ledgerId.state,
       events: ledgerId.state.events.map((item) => (item.id === event.id ? { ...item, applied: true } : item)),
-      orders: ledgerId.state.orders.map((item) => (item.id === order.id ? { ...item, paymentStatus: 'paid', prepStatus: 'accepted' } : item)),
+      orders: ledgerId.state.orders.map((item) => (item.id === order.id ? {
+        ...item,
+        paymentStatus: 'paid' as const,
+        prepStatus: 'accepted' as const,
+        commissionMinor,
+        commissionRateBps: rate,
+        providerFeeMinor,
+        payoutStatus,
+      } : item)),
       holds: ledgerId.state.holds.map((item) => (item.id === hold.id ? { ...item, status: 'converted' } : item)),
       slots: ledgerId.state.slots.map((slot) => (slot.id === hold.slotId ? { ...slot, held: slot.held - hold.qty, sold: slot.sold + hold.qty } : slot)),
       ledger: [...ledgerId.state.ledger, entry],
@@ -465,21 +522,37 @@ export function applyPaymentEvent(state: PilotState, event: ProviderEvent, signa
     const events = released.events.map((item) => (item.id === event.id ? { ...item, applied: true } : item));
     return { ok: true, state: audit({ ...released, orders, events }, at, 'payment', 'declined', event.id), value: { applied: true, duplicate: false } };
   }
+  if (order.commissionRateBps == null) return fail(noted, 'not_payable');
+  const remainingDish = order.subtotalMinor - order.refundedDishMinor;
+  const dishRefund = event.dishRefundMinor ?? remainingDish;
+  if (dishRefund <= 0 || dishRefund > remainingDish) return fail(noted, 'bad_refund');
+  const remainingCommission = order.commissionMinor - order.refundedCommissionMinor;
+  const claw = dishRefund === remainingDish ? remainingCommission : proportionalMinor(order.commissionMinor, dishRefund, order.subtotalMinor);
   const ledgerId = nextId(noted, 'led');
   const refund: LedgerEntry = {
     id: ledgerId.id,
     eventId: event.id,
     orderId: order.id,
     currency: order.currency,
-    collectedMinor: -order.totalMinor,
-    commissionMinor: -order.commissionMinor,
-    feesMinor: -order.deliveryFeeMinor,
-    owedKitchenMinor: -order.subtotalMinor,
+    collectedMinor: -dishRefund,
+    commissionMinor: -claw,
+    providerFeeMinor: 0,
+    deliveryFeeMinor: 0,
+    owedCookMinor: -(dishRefund - claw),
+    payoutStatus: 'not_payable',
+    commissionRateBps: order.commissionRateBps,
   };
+  const fully = dishRefund === remainingDish;
   const updated: PilotState = {
     ...ledgerId.state,
     events: ledgerId.state.events.map((item) => (item.id === event.id ? { ...item, applied: true } : item)),
-    orders: ledgerId.state.orders.map((item) => (item.id === order.id ? { ...item, paymentStatus: 'refunded', flags: [...item.flags, 'refunded'] } : item)),
+    orders: ledgerId.state.orders.map((item) => (item.id === order.id ? {
+      ...item,
+      paymentStatus: fully ? 'refunded' as const : 'partially_refunded' as const,
+      refundedDishMinor: item.refundedDishMinor + dishRefund,
+      refundedCommissionMinor: item.refundedCommissionMinor + claw,
+      flags: item.flags.includes('refunded') ? item.flags : [...item.flags, 'refunded'],
+    } : item)),
     ledger: [...ledgerId.state.ledger, refund],
   };
   return { ok: true, state: audit(updated, at, 'payment', 'refund', event.id), value: { applied: true, duplicate: false } };
@@ -503,6 +576,56 @@ export function changePayoutIban(state: PilotState, actor: Actor, kitchenId: str
   const next = { ...kitchen, payoutLast4: last4 };
   const updated = { ...state, kitchens: state.kitchens.map((item) => (item.id === kitchenId ? next : item)) };
   return { ok: true, state: audit(updated, at, actor.id, 'payout_iban_changed', last4), value: { last4 } };
+}
+
+export function cookFigures(order: PilotOrder): { grossMinor: number; commissionMinor: number; netMinor: number; rateBps: number | null } {
+  const grossMinor = order.subtotalMinor - order.refundedDishMinor;
+  const commissionMinor = order.commissionMinor - order.refundedCommissionMinor;
+  return { grossMinor, commissionMinor, netMinor: grossMinor - commissionMinor, rateBps: order.commissionRateBps };
+}
+
+export function verifyKitchenKyc(state: PilotState, actor: Actor, kitchenId: string, at: string): Result<Kitchen> {
+  if (actor.role !== 'admin' || !actor.mfa || !actor.marketIds?.includes(state.market.id)) return fail(state, 'market_scope_refused');
+  const kitchen = state.kitchens.find((item) => item.id === kitchenId);
+  if (!kitchen) return fail(state, 'unknown_kitchen');
+  const next = { ...kitchen, kyc: 'verified' as const };
+  const orderIds = new Set(state.orders.filter((order) => order.kitchenId === kitchenId).map((order) => order.id));
+  const updated: PilotState = {
+    ...state,
+    kitchens: state.kitchens.map((item) => (item.id === kitchenId ? next : item)),
+    orders: state.orders.map((order) => (order.kitchenId === kitchenId && order.payoutStatus === 'blocked_kyc' ? { ...order, payoutStatus: 'ready' } : order)),
+    ledger: state.ledger.map((entry) => (orderIds.has(entry.orderId) && entry.payoutStatus === 'blocked_kyc' ? { ...entry, payoutStatus: 'ready' } : entry)),
+  };
+  return { ok: true, state: audit(updated, at, actor.id, 'kyc_verified', kitchenId), value: next };
+}
+
+export function createPayout(state: PilotState, actor: Actor, kitchenId: string, at: string): Result<Payout> {
+  const kitchen = state.kitchens.find((item) => item.id === kitchenId);
+  if (!kitchen || !ownsKitchen(actor, kitchen)) return fail(state, 'permission_denied');
+  if (kitchen.kyc !== 'verified') return fail(state, 'kyc_required');
+  const payable = state.orders.filter((order) => order.kitchenId === kitchenId && order.payoutStatus === 'ready' && order.commissionRateBps != null);
+  if (!payable.length) return fail(state, 'nothing_to_pay');
+  const figures = payable.map(cookFigures);
+  const minted = nextId(state, 'payout');
+  const payout: Payout = {
+    id: minted.id,
+    kitchenId,
+    currency: state.market.currency,
+    grossMinor: figures.reduce((sum, item) => sum + item.grossMinor, 0),
+    commissionMinor: figures.reduce((sum, item) => sum + item.commissionMinor, 0),
+    netMinor: figures.reduce((sum, item) => sum + item.netMinor, 0),
+    status: 'paid',
+    orderIds: payable.map((order) => order.id),
+    at,
+  };
+  const ids = new Set(payout.orderIds);
+  const updated: PilotState = {
+    ...minted.state,
+    payouts: [...minted.state.payouts, payout],
+    orders: minted.state.orders.map((order) => (ids.has(order.id) ? { ...order, payoutStatus: 'paid' } : order)),
+    ledger: minted.state.ledger.map((entry) => (ids.has(entry.orderId) && entry.payoutStatus === 'ready' ? { ...entry, payoutStatus: 'paid' } : entry)),
+  };
+  return { ok: true, state: audit(updated, at, actor.id, 'payout', payout.id), value: payout };
 }
 
 export function assignCourier(
