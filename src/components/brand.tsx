@@ -28,8 +28,8 @@ export function Wordmark({ size = 22, slogan = true }: { size?: number; slogan?:
   );
 }
 
-/** Visuel du plat. Photo du cuisinier si elle existe, sinon photo de démo, sinon marque. */
-export function DishVisual({ dish, height = 150, radius = 14 }: { dish: Dish; height?: number; radius?: number }) {
+/** Visuel du plat. Photo du cuisinier si elle existe, sinon photo de démo, sinon marque. `wide` = carte 16:9. */
+export function DishVisual({ dish, height = 150, radius = 14, wide = false }: { dish: Dish; height?: number; radius?: number; wide?: boolean }) {
   const picture = dishPicture(dish);
   const [ready, setReady] = useState(false);
   const [failed, setFailed] = useState(false);
@@ -41,7 +41,7 @@ export function DishVisual({ dish, height = 150, radius = 14 }: { dish: Dish; he
   const showImage = picture.kind !== 'none' && !failed;
   const tint = t.dishTints[dish.id.split('').reduce((s, c) => s + c.charCodeAt(0), 0) % t.dishTints.length];
   return (
-    <View accessibilityLabel={dish.title} style={{ width: '100%', height, borderRadius: radius, overflow: 'hidden', backgroundColor: showImage ? t.surfaceAlt : tint }}>
+    <View accessibilityLabel={dish.title} style={{ width: '100%', ...(wide ? { aspectRatio: 16 / 9 } : { height }), borderRadius: radius, overflow: 'hidden', backgroundColor: showImage ? t.surfaceAlt : tint }}>
       {showImage ? (
         <Image
           source={picture.source}
@@ -108,7 +108,7 @@ export function DishCard({ dish, cook, distance, nextSlot, onPress }: { dish: Di
     : (parts.present.length ? `${L('Allergènes', 'Allergens')} : ${allergenNames(parts.present, lang).join(', ')}` : L('Sans allergène majeur déclaré', 'No major allergen declared'));
   return (
     <Pressable onPress={onPress} accessibilityRole="button" accessibilityLabel={`${dish.title}, ${chf(dish.price)}`} style={[{ backgroundColor: t.surface, borderRadius: 18, marginBottom: 16, borderWidth: 1, borderColor: t.border, overflow: 'hidden' }, shadow(1)]}>
-      <DishVisual dish={dish} height={160} radius={0} />
+      <DishVisual dish={dish} wide radius={0} />
       <Pressable onPress={() => toggleFav('dishes', dish.id)} accessibilityLabel={fav ? L('Retirer des favoris', 'Remove from favourites') : L('Ajouter aux favoris', 'Add to favourites')}
         style={{ position: 'absolute', top: 10, right: 10, width: 44, height: 44, borderRadius: 22, backgroundColor: t.scrim, alignItems: 'center', justifyContent: 'center' }}>
         <Ionicons name={fav ? 'heart' : 'heart-outline'} size={22} color={t.primary} />

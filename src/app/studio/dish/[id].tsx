@@ -104,7 +104,7 @@ export default function DishEditor() {
   };
   return (
     <Screen>
-      <DishVisual dish={preview} height={160} />
+      <DishVisual dish={preview} wide />
       <Spacer h={8} />
       <Row wrap>
         <Button small variant="secondary" icon="image-outline" title={photo ? L('Changer la photo', 'Change photo') : L('Ajouter une photo', 'Add a photo')} onPress={pick} />

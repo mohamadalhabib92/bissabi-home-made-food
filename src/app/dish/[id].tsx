@@ -41,7 +41,7 @@ export default function DishScreen() {
   return (
     <Screen>
       <Stack.Screen options={{ title: dish.title, headerRight: () => <IconButton icon={fav ? 'heart' : 'heart-outline'} label={L('Favori', 'Favourite')} onPress={() => toggleFav('dishes', dish.id)} /> }} />
-      <DishVisual dish={dish} height={220} />
+      <DishVisual dish={dish} wide />
       <Spacer />
       <H1>{dish.title}</H1>
       <Text style={{ color: t.text, fontSize: 20, fontWeight: '800' }}>{chf(dish.price)} <Text style={{ color: t.muted, fontSize: 14, fontWeight: '500' }}>/ {L('portion', 'portion')}</Text></Text>
