@@ -104,6 +104,14 @@
         }
       ],
       [
+        "expo-localization",
+        {
+          "supportsRTL": true,
+          "forcesRTL": false,
+          "supportedLocales": ["fr", "en", "de", "it", "es", "pt", "ar", "zh", "tr", "ru", "hi"]
+        }
+      ],
+      [
         "expo-image-picker",
         {
           "photosPermission": "Bissabi Home Made Food accède à vos photos pour que vous puissiez illustrer vos plats lorsque vous les publiez.",

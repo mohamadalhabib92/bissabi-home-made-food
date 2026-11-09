@@ -18,7 +18,7 @@ Corps (montants en centimes CHF) :
 
 Réponse : `{ "url": "https://checkout.stripe.com/…" }`.
 
-⚠️ Le serveur doit **recalculer** les montants à partir de sa propre base (prix des plats, 15 %, frais) et ne jamais faire
+⚠️ Le serveur doit **recalculer** les montants à partir de sa propre base (prix des plats, commission 10 % retenue sur le cuisinier, frais) et ne jamais faire
 confiance aux montants envoyés par le client.
 
 ### `GET {EXPO_PUBLIC_PAYMENTS_API_URL}/orders/:id/payment`
@@ -38,7 +38,7 @@ app.post('/checkout/session', express.json(), async (req, res) => {
   const o = req.body; // ⚠️ revalider les prix côté serveur
   const line_items = [
     ...o.lines.map((l) => ({ quantity: l.quantity, price_data: { currency: 'chf', unit_amount: l.unit_amount, product_data: { name: l.name } } })),
-    { quantity: 1, price_data: { currency: 'chf', unit_amount: o.commission, product_data: { name: 'Commission plateforme (15 %)' } } },
+    // La commission 10 % n'est pas une ligne payée par le client : elle est retenue sur le versement au cuisinier.
     ...(o.deliveryFee ? [{ quantity: 1, price_data: { currency: 'chf', unit_amount: o.deliveryFee, product_data: { name: 'Frais de livraison' } } }] : []),
   ];
   const s = await stripe.checkout.sessions.create({ mode: 'payment', line_items, metadata: { orderId: o.orderId },

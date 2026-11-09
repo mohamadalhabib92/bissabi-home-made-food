@@ -1,3 +1,5 @@
+import { authoredText } from '@/i18n/authored';
+import type { LocaleId } from '@/i18n/locales';
 import type { OrderStatus } from './model';
 export const STATUS_LABEL: Record<OrderStatus, { fr: string; en: string; tone: 'neutral' | 'success' | 'warning' | 'danger' | 'info' }> = {
   awaiting_payment: { fr: 'Paiement en attente', en: 'Awaiting payment', tone: 'warning' },
@@ -10,3 +12,7 @@ export const STATUS_LABEL: Record<OrderStatus, { fr: string; en: string; tone: '
   completed: { fr: 'Terminée', en: 'Completed', tone: 'neutral' },
   cancelled: { fr: 'Annulée', en: 'Cancelled', tone: 'neutral' },
 };
+
+export function statusText(status: OrderStatus, locale: LocaleId): string {
+  return authoredText(STATUS_LABEL[status], locale);
+}

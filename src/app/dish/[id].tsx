@@ -1,6 +1,7 @@
 import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
 import { useState } from 'react';
 import { Text, View } from 'react-native';
+import { authoredText } from '@/i18n/authored';
 import { Avatar, DishVisual, Pill, Stars, allergenNames } from '@/components/brand';
 import { useI18n } from '@/i18n';
 import { confirmAsk } from '@/lib/confirm';
@@ -47,7 +48,7 @@ export default function DishScreen() {
       <Text style={{ color: t.text, fontSize: 20, fontWeight: '800' }}>{chf(dish.price)} <Text style={{ color: t.muted, fontSize: 14, fontWeight: '500' }}>/ {L('portion', 'portion')}</Text></Text>
       <Spacer h={8} />
       <Row wrap gap={6}>
-        <Pill label={CUISINES.find((c) => c.key === dish.cuisine)?.[lang] ?? ''} tone="gold" />
+        <Pill label={authoredText(CUISINES.find((c) => c.key === dish.cuisine) ?? { fr: '', en: '' }, lang)} tone="gold" />
         {dish.halal ? <Pill label={L('Halal (déclaré)', 'Halal (declared)')} tone="green" /> : null}
         {dish.vegetarian ? <Pill label={L('Végétarien', 'Vegetarian')} tone="green" /> : null}
         {dish.spicy ? <Pill label={L('Épicé', 'Spicy')} tone="red" /> : null}

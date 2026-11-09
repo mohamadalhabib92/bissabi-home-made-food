@@ -1,12 +1,14 @@
 import { useL } from '@/lib/data';
+import type { LocaleId } from './locales';
 import { en } from './en';
 import { fr, type MsgKey } from './fr';
 
 export type { MsgKey };
 export { en, fr };
 
-export function tr(lang: 'fr' | 'en', key: MsgKey): string {
-  return lang === 'en' ? en[key] : fr[key];
+/** Français rédigé, anglais rédigé. Toute autre langue retombe sur l’anglais. */
+export function tr(lang: LocaleId, key: MsgKey): string {
+  return lang === 'fr' ? fr[key] : en[key];
 }
 
 export function useI18n() {

@@ -4,22 +4,36 @@ import { COMPANY_LINE } from '@/lib/company';
 import { confirmAsk } from '@/lib/confirm';
 import { useI18n } from '@/i18n';
 import { useData, useL } from '@/lib/data';
+import { localeMeta } from '@/i18n/locales';
+import { useAccount } from '@/lib/auth/session';
 import { paymentsLive } from '@/lib/payments';
-import { Badge, Button, Card, H2, ListItem, Muted, Notice, Screen, Segmented, Spacer, Toggle } from '@/ui/kit';
+import { Badge, Button, Card, H2, ListItem, Muted, Notice, Screen, Spacer, Toggle } from '@/ui/kit';
 
 export default function Account() {
   const { prefs, setPrefs, hasDemo, removeDemo, loadDemo, reviews, favorites, dishes, cooks, preservation } = useData();
   const { L } = useL();
   const { t } = useI18n();
+  const { user, account } = useAccount();
   const router = useRouter();
   const pendingReviews = reviews.filter((r) => r.status === 'pending').length;
   return (
     <Screen>
       <Wordmark />
       <Spacer />
+      <Card>
+        <ListItem
+          icon="person-outline"
+          title={user ? (user.displayName || user.email) : L('Compte', 'Account')}
+          subtitle={account?.signupRole === 'cook' ? L('Cuisinier · dossier en cours tant que Bissabi n’a pas approuvé', 'Cook · file in progress until Bissabi approves') : user ? L('Client', 'Client') : L('Créer un compte ou se connecter', 'Create an account or sign in')}
+          onPress={() => router.push(user ? '/profile' : '/sign-in')}
+        />
+        {user ? null : <ListItem icon="person-add-outline" title={L('Créer un compte', 'Create an account')} onPress={() => router.push('/sign-up')} />}
+      </Card>
       {preservation.some((entry) => entry.heldOriginal) ? <Notice tone="warning" title={t('preserveHeldTitle')} text={t('preserveHeldBody')} /> : null}
       {preservation.some((entry) => entry.unknownCount > 0) ? <Notice tone="info" title={t('preserveUnknownTitle')} text={t('preserveUnknownBody')} /> : null}
-      <Segmented label={L('Langue', 'Language')} options={[{ label: 'Français', value: 'fr' as const }, { label: 'English', value: 'en' as const }]} value={prefs.lang} onChange={(v) => setPrefs((p) => ({ ...p, lang: v }))} />
+      <Card>
+        <ListItem icon="language-outline" title={L('Langue', 'Language')} subtitle={localeMeta(prefs.lang).endonym} onPress={() => router.push('/languages')} />
+      </Card>
       <Card>
         <ListItem icon="language-outline" title={L('Autres langues', 'Other languages')} subtitle="DE · IT · ES · de-CH · AR" right={<Badge label={L('à venir', 'coming')} />} onPress={() => router.push('/languages')} />
         <ListItem icon="location-outline" title={L('Lieu', 'Location')} subtitle={prefs.location?.label ?? L('Non défini', 'Not set')} onPress={() => router.push('/location')} />
@@ -49,6 +63,7 @@ export default function Account() {
       <Card>
         <ListItem icon="chatbubbles-outline" title={L('Modération des avis', 'Review moderation')} right={pendingReviews ? <Badge label={String(pendingReviews)} tone="warning" /> : undefined} onPress={() => router.push('/moderation')} />
         <ListItem icon="construct-outline" title={L('Notes admin & configuration', 'Admin notes & configuration')} right={<Badge label={paymentsLive ? 'Stripe' : L('démo', 'demo')} tone={paymentsLive ? 'success' : 'warning'} />} onPress={() => router.push('/admin-notes')} />
+        <ListItem icon="flask-outline" title={L('Parcours pilote (test)', 'Pilot journey (test)')} onPress={() => router.push('/pilot')} />
       </Card>
       {preservation.some((entry) => ['cooks', 'dishes', 'slots', 'orders', 'reviews'].includes(entry.key) && !entry.hydrated)
         ? null

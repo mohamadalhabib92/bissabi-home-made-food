@@ -8,8 +8,11 @@ import { useData, useL } from '@/lib/data';
 import { fmtKm, zoneOf } from '@/lib/geo';
 import { buyerVisibleSlots } from '@/lib/launchCheckout';
 import { openSlotsFor, rating } from '@/lib/market';
+import { authoredText } from '@/i18n/authored';
+import { pilotText } from '@/i18n/catalog';
+import { describeHomeOffer } from '@/lib/pilot/homeOffer';
 import { CUISINES, type Cuisine } from '@/lib/model';
-import { Button, Chip, DemoBanner, Empty, Field, H2, Ionicons, Muted, Notice, Segmented, Toggle, styles } from '@/ui/kit';
+import { Button, Card, Chip, DemoBanner, Empty, Field, H2, Ionicons, Muted, Notice, Segmented, Toggle, styles } from '@/ui/kit';
 import { theme as t } from '@/ui/theme';
 
 export default function Discover() {
@@ -30,6 +33,10 @@ export default function Discover() {
     .sort((a, b) => (a.d ?? 0) - (b.d ?? 0)), [cooks, distanceTo, prefs.radiusKm]);
   const ids = new Set(nearCooks.map((x) => x.c.id));
   const needle = q.trim().toLowerCase();
+  const offer = useMemo(() => describeHomeOffer({
+    dishes, slots, cooks, locale: lang, now: new Date(),
+  }).slice(0, 3), [dishes, slots, cooks, lang]);
+
   const list = dishes
     .filter((d) => d.active && ids.has(d.cookId))
     .filter((d) => !prefs.halalOnly || d.halal)
@@ -51,6 +58,14 @@ export default function Discover() {
           <Ionicons name="chevron-down" size={14} color={t.muted} />
         </Pressable>
         <View style={{ height: 14 }} />
+        <Card>
+          <H2>{pilotText(lang, 'homeQuestion').text}</H2>
+          {offer.length ? offer.map((line) => (
+            <Muted key={line.dishId}>{line.title} · {line.cookName} · {line.when} · {line.price}</Muted>
+          )) : <Muted>{pilotText(lang, 'homeEmpty').text}</Muted>}
+          <Muted>{pilotText(lang, 'homeNote').text}</Muted>
+          <Button variant="secondary" title={pilotText(lang, 'homeCta').text} onPress={() => router.push('/pilot')} />
+        </Card>
         {bootFallback && !storageReady ? <Notice tone="warning" title={tr('bootFallback')} /> : null}
         {preservation.some((entry) => entry.heldOriginal) ? <Notice tone="warning" title={tr('preserveHeldTitle')} text={tr('preserveHeldBody')} /> : null}
         {preservation.some((entry) => entry.unknownCount > 0) ? <Notice tone="info" title={tr('preserveUnknownTitle')} text={tr('preserveUnknownBody')} /> : null}
@@ -60,7 +75,7 @@ export default function Discover() {
         <Field label={L('Rechercher', 'Search')} value={q} onChangeText={setQ} placeholder={L('Thiéboudienne, couscous, végétarien…', 'Thieboudienne, couscous, veggie…')} />
         <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8, paddingBottom: 12 }}>
           <Chip label={L('♥ Favoris', '♥ Favourites')} active={favOnly} onPress={() => setFavOnly((v) => !v)} />
-          {CUISINES.map((c) => <Chip key={c.key} label={c[lang]} active={cuisine === c.key} onPress={() => setCuisine(cuisine === c.key ? null : c.key)} />)}
+          {CUISINES.map((c) => <Chip key={c.key} label={authoredText(c, lang)} active={cuisine === c.key} onPress={() => setCuisine(cuisine === c.key ? null : c.key)} />)}
         </ScrollView>
 
         {!prefs.location ? <Muted style={{ marginBottom: 10 }}>{L('Lieu non défini : tous les cuisinier·ères sont affichés, sans distance.', 'No location set: all cooks shown, without distance.')} {tr('zoneUnsetHint')}</Muted> : null}

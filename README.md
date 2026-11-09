@@ -14,7 +14,7 @@ Identité : rouge `#C8152A`, vert `#1A4D2E`, or `#C9A84C`, crème `#FAF8F2` ; lo
 ### Côté client
 - **Découvrir** : plats et cuisiniers proches, rayon **1 à 5 km** (GPS arrondi à ~100 m, enregistré dans les préférences de cet appareil, avec repli sur le choix d’une commune), filtre **Halal** (déclaration du cuisinier, non certifiée), recherche, cuisines, favoris.
 - **Fiche plat** : allergènes (14 allergènes majeurs, obligatoires), portion, prochains créneaux, signalement.
-- **Panier** (un cuisinier par commande), détail ligne par ligne : **plats + commission plateforme 15 %**. Au lancement le retrait n’ajoute pas de frais de livraison.
+- **Panier** (un cuisinier par commande) : **plats + livraison**. La commission Bissabi est **10 % des plats**, retenue sur le versement au cuisinier, pas ajoutée au total client. Au lancement le retrait n’ajoute pas de frais de livraison.
 - **Commande** : créneau de retrait seulement, note, accusé de lecture des allergènes. Un panier qui visait la livraison invite à choisir un retrait, sans réécrire l’historique.
 - **Paiement** : **simulation** sur cet appareil (option démo pour simuler un refus). Aucun appel Stripe ni serveur au lancement.
 - **Suivi** : statuts (paiement → en attente du cuisinier → acceptée → en préparation → prête → terminée / refusée / annulée), historique, **reçu téléchargeable** avec mentions de l’entreprise.
@@ -64,7 +64,7 @@ Service worker et manifeste générés par `scripts/pwa-postbuild.mjs`.
 - **Stockage local uniquement** (AsyncStorage / localStorage) : pas encore de serveur partagé. Cuisiniers et clients ne se voient que sur le même appareil — la place de marché réelle nécessite un backend (ex. Supabase) avec authentification.
 - **Audit du 7 novembre 2026** (12 axes, état de `main` `928ac7f`) et fondation de conservation locale : `docs/AUDIT-2026-11-07-preservation.md`. Ce n’est pas un avis juridique. La copie de récupération reste sur l’appareil ; les tests ne remplacent pas un essai sur appareil réel.
 - Serveur de paiement **non implémenté** (exemple fourni) ; Stripe Connect pour les versements aux cuisiniers à activer.
-- **À confirmer** (écran « Notes admin ») : qui paie la commission (actuellement le client, +15 %), frais de livraison (CHF 6.00 provisoire), arrondi à 5 centimes.
+- **Commission** : 10 % des plats, retenue sur le cuisinier, taux du marché figé au paiement. Frais de livraison CHF 6.00 provisoires, hors assiette. Les frais du prestataire sont proposés à la charge de Bissabi (à confirmer). Les centimes sont stockés exactement ; le pas de 5 centimes n’est pas appliqué à la commission.
 - Modération des avis et signalements : locale (pas d’outil d’administration serveur).
 - Annonce OFCO (VD), vérification d’identité, assurance RC : à venir — rien n’est affiché comme certifié. Schéma Supabase additif dans `supabase/migrations/` (non appliqué).
 - Photos de démonstration : emojis ; pas de vraies photos.

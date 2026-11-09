@@ -1,3 +1,4 @@
+import { intlTag } from '@/i18n/locales';
 import type { Lang } from './model';
 const pad = (n: number) => String(n).padStart(2, '0');
 export const iso = (d: Date) => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
@@ -18,6 +19,8 @@ const WD = { fr: ['dim.', 'lun.', 'mar.', 'mer.', 'jeu.', 'ven.', 'sam.'], en: [
 const MO = { fr: ['janv.', 'févr.', 'mars', 'avr.', 'mai', 'juin', 'juil.', 'août', 'sept.', 'oct.', 'nov.', 'déc.'], en: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'] };
 export function dayLabel(s: string, lang: Lang = 'fr') {
   const d = fromISO(s);
-  return lang === 'fr' ? `${WD.fr[d.getDay()]} ${d.getDate()} ${MO.fr[d.getMonth()]}` : `${WD.en[d.getDay()]} ${d.getDate()} ${MO.en[d.getMonth()]}`;
+  if (lang === 'fr') return `${WD.fr[d.getDay()]} ${d.getDate()} ${MO.fr[d.getMonth()]}`;
+  if (lang === 'en') return `${WD.en[d.getDay()]} ${d.getDate()} ${MO.en[d.getMonth()]}`;
+  return new Intl.DateTimeFormat(intlTag(lang), { weekday: 'short', day: 'numeric', month: 'short' }).format(d);
 }
 export const stamp = (isoStr: string, lang: Lang = 'fr') => { const d = new Date(isoStr); return `${dayLabel(iso(d), lang)} ${pad(d.getHours())}:${pad(d.getMinutes())}`; };

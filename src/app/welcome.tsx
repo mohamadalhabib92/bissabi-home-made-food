@@ -1,7 +1,9 @@
 import { useRouter } from 'expo-router';
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Text, View } from 'react-native';
 import { Wordmark } from '@/components/brand';
+import { detectedLocale } from '@/i18n/deviceLocale';
+import { localeMeta } from '@/i18n/locales';
 import { useData, useL } from '@/lib/data';
 import { Button, Card, Muted, Notice, Row, Screen, Segmented, Spacer, Toggle } from '@/ui/kit';
 import { theme as t } from '@/ui/theme';
@@ -13,6 +15,15 @@ export default function Welcome() {
   const [terms, setTerms] = useState(prefs.consents.terms);
   const [marketing, setMarketing] = useState(prefs.consents.marketing);
   const [mode, setMode] = useState(prefs.mode);
+  const applied = useRef(false);
+  useEffect(() => {
+    if (applied.current) return;
+    applied.current = true;
+    if (prefs.onboarded || prefs.lang !== 'fr') return;
+    const device = detectedLocale();
+    if (device === 'fr') return;
+    setPrefs((current) => (current.onboarded || current.lang !== 'fr' ? current : { ...current, lang: device }));
+  }, [prefs.lang, prefs.onboarded, setPrefs]);
   const go = () => {
     setPrefs((p) => ({ ...p, onboarded: true, mode, consents: { ...p.consents, terms: true, marketing, at: new Date().toISOString() } }));
     router.replace(mode === 'cook' ? '/kitchen' : prefs.location ? '/' : '/location');
@@ -27,7 +38,9 @@ export default function Welcome() {
       </Text>
       <Muted style={{ marginTop: 6 }}>{L('Pas un service de livraison de restaurants : des cuisinier·ères de quartier, des créneaux planifiés, des allergènes toujours affichés.', 'Not a restaurant delivery app: neighbourhood cooks, planned time slots, allergens always shown.')}</Muted>
       <Spacer />
-      <Segmented label={L('Langue', 'Language')} options={[{ label: 'Français', value: 'fr' as const }, { label: 'English', value: 'en' as const }]} value={prefs.lang} onChange={(v) => setPrefs((p) => ({ ...p, lang: v }))} />
+      <Card>
+        <Button variant="secondary" title={`${L('Langue', 'Language')} · ${localeMeta(prefs.lang).endonym}`} onPress={() => router.push('/languages')} />
+      </Card>
       <Segmented label={L('Je veux…', 'I want to…')} options={[{ label: L('Commander', 'Order food'), value: 'buyer' as const }, { label: L('Cuisiner', 'Cook'), value: 'cook' as const }]} value={mode} onChange={setMode} />
       <Card>
         <Toggle label={L('J’accepte les conditions d’utilisation et la politique de confidentialité (obligatoire)', 'I accept the terms of use and privacy policy (required)')} value={terms} onChange={setTerms} />

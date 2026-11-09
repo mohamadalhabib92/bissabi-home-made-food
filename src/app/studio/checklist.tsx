@@ -3,6 +3,7 @@ import { useState } from 'react';
 import { useI18n } from '@/i18n';
 import { useData, useL } from '@/lib/data';
 import { stamp } from '@/lib/dates';
+import { authoredText } from '@/i18n/authored';
 import { HYGIENE_CHECKLIST } from '@/lib/model';
 import { Button, Card, Empty, Muted, Notice, Screen, Spacer, Toggle } from '@/ui/kit';
 
@@ -18,7 +19,7 @@ export default function Checklist() {
     <Screen>
       <Muted>{t('hygieneNotCert')}</Muted>
       <Spacer />
-      <Card>{HYGIENE_CHECKLIST.map((h) => <Toggle key={h.key} label={h[lang]} value={!!c[h.key]} onChange={(v) => setC((x) => ({ ...x, [h.key]: v }))} />)}</Card>
+      <Card>{HYGIENE_CHECKLIST.map((h) => <Toggle key={h.key} label={authoredText(h, lang)} value={!!c[h.key]} onChange={(v) => setC((x) => ({ ...x, [h.key]: v }))} />)}</Card>
       {myCook.checklistAt ? <Muted>{L('Dernière attestation', 'Last attested')} : {stamp(myCook.checklistAt, lang)}</Muted> : null}
       <Notice tone="info" title={t('ofcoTitle')} text={t('ofcoBody')} />
       <Button title={L('J’atteste et j’enregistre', 'I attest and save')} disabled={!all} onPress={() => { setCooks((l) => l.map((x) => (x.id === myCook.id ? { ...x, checklist: c, checklistAt: new Date().toISOString() } : x))); router.replace('/kitchen'); }} />

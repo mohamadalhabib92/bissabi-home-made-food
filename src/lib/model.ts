@@ -1,5 +1,7 @@
 /** Modèle de données — Bissabi Home Made Food (marketplace cuisine maison, commandes à l’avance). */
-export type Lang = 'fr' | 'en';
+import type { LocaleId } from '@/i18n/locales';
+
+export type Lang = LocaleId;
 
 /** 14 allergènes à déclaration obligatoire (OIDAl, annexe 6 — alignés UE 1169/2011). */
 export const ALLERGENS = [
@@ -85,6 +87,8 @@ export type Order = {
   slotId: string; slotDate: string; slotFrom: string; slotTo: string;
   mode: FulfilMode; address?: string; note?: string;
   subtotal: number; commission: number; deliveryFee: number; total: number;
+  /** Présent sur les nouvelles commandes. Les anciennes restent lisibles sans ces champs. */
+  cookNet?: number; commissionRateBps?: number;
   status: OrderStatus; timeline: { status: OrderStatus; at: string; note?: string }[];
   payment: { method: 'stripe' | 'demo'; ref?: string; error?: string };
   refuseReason?: string; createdAt: string; demo?: boolean;
