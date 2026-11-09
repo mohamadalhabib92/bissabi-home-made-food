@@ -41,8 +41,9 @@
     "ios": "expo start --ios",
     "web": "expo start --web",
     "typecheck": "tsc --noEmit",
-    "test": "tsx --test src/lib/*.test.ts src/lib/global/*.test.ts src/lib/pilot/*.test.ts src/i18n/*.test.ts",
+    "test": "tsx --test src/lib/*.test.ts src/lib/global/*.test.ts src/lib/pilot/*.test.ts src/lib/auth/*.test.ts src/i18n/*.test.ts",
     "test:sql": "bash scripts/test-pilot-sql.sh",
+    "test:accounts": "bash scripts/test-accounts-sql.sh",
     "build:web": "expo export -p web && node scripts/pwa-postbuild.mjs",
     "icons": "python3 scripts/make-icons.py"
   },

@@ -5,6 +5,7 @@ import { I18nManager, Platform, Text, View } from 'react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { pilotText } from '@/i18n/catalog';
 import { directionFor, isCompleteLocale } from '@/i18n/locales';
+import { AuthProvider } from '@/lib/auth/session';
 import { DataProvider, useData, useL } from '@/lib/data';
 import { RebootProvider } from '@/lib/reboot';
 import { AppErrorBoundary } from '@/ui/error-boundary';
@@ -37,6 +38,10 @@ function Nav() {
       <Stack.Screen name="languages" options={{ title: L('Langues', 'Languages') }} />
       <Stack.Screen name="admin-notes" options={{ title: L('Notes admin', 'Admin notes') }} />
       <Stack.Screen name="pilot" options={{ title: L('Parcours pilote', 'Pilot journey') }} />
+      <Stack.Screen name="sign-in" options={{ title: L('Connexion', 'Sign in') }} />
+      <Stack.Screen name="sign-up" options={{ title: L('Créer un compte', 'Create an account') }} />
+      <Stack.Screen name="reset-password" options={{ title: L('Mot de passe', 'Password') }} />
+      <Stack.Screen name="profile" options={{ title: L('Profil', 'Profile') }} />
     </Stack>
   );
 }
@@ -74,7 +79,9 @@ export default function Layout() {
         <FontProvider>
           <RebootProvider reboot={reboot}>
             <DataProvider key={boot}>
-              <AppFrame />
+              <AuthProvider>
+                <AppFrame />
+              </AuthProvider>
             </DataProvider>
           </RebootProvider>
         </FontProvider>

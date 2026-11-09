@@ -7,6 +7,8 @@ import { authoredText } from '@/i18n/authored';
 import { DishVisual } from '@/components/brand';
 import { useI18n } from '@/i18n';
 import { confirmAsk } from '@/lib/confirm';
+import { useAccount } from '@/lib/auth/session';
+import { localPublishAllowed } from '@/lib/auth/rules';
 import { useData, useL } from '@/lib/data';
 import { allergensFromStatus, publishIssues, statusFromDish, type AllergenDraft, type PublishIssue } from '@/lib/dishPublish';
 import { ALLERGENS, CUISINES, type Allergen, type AllergenLevel, type AnimalOrigin, type Cuisine, type Dish, type Ingredient } from '@/lib/model';
@@ -32,6 +34,8 @@ const ISSUE_KEY: Record<PublishIssue, 'publishAllergens' | 'publishIngredients' 
 export default function DishEditor() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const { myCook, dishes, setDishes } = useData();
+  const { user, account } = useAccount();
+  const publishOk = !user || (account ? localPublishAllowed(account) : user.requestedRole !== 'cook');
   const { L, lang } = useL();
   const { t } = useI18n();
   const router = useRouter();
@@ -85,6 +89,7 @@ export default function DishEditor() {
     if (a) setPhoto(Platform.OS === 'web' && a.base64 ? `data:${a.mimeType ?? 'image/jpeg'};base64,${a.base64}` : a.uri);
   };
   const save = () => {
+    if (active && !publishOk) return;
     const d: Dish = {
       ...(ex ?? { cookId: myCook.id, emoji, active }),
       id: ex?.id ?? uid('dish_'), cookId: myCook.id, title: title.trim(), description: description.trim(), cuisine,
@@ -183,7 +188,8 @@ export default function DishEditor() {
         ))}
         <Button small variant="ghost" icon="add" title={L('Ajouter un ingrédient', 'Add ingredient')} onPress={() => setIngs((l) => [...l, { name: '', qty: '', unit: 'g' }])} />
       </Card>
-      <Toggle label={L('Plat visible (actif)', 'Dish visible (active)')} value={active} onChange={setActive} />
+      <Toggle label={L('Plat visible (actif)', 'Dish visible (active)')} value={active && publishOk} onChange={(value) => { if (value && !publishOk) return; setActive(value); }} />
+      {!publishOk ? <Notice tone="warning" title={L('Publication refusée', 'Publishing refused')} text={L('Compte cuisinier non vérifié ou dossier en cours. Le serveur refuse la publication. Vous pouvez enregistrer le plat masqué.', 'Cook account not verified, or the file is still in progress. The server refuses publication. You can save the dish hidden.')} /> : null}
       {active && issues.length ? (
         <Notice tone="warning" title={t('publishBlocked')} text={issues.map((i) => t(ISSUE_KEY[i])).join(' · ')} />
       ) : null}

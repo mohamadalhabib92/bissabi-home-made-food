@@ -34,6 +34,7 @@ npx tsc --noEmit
 | Partenaire de livraison | Interface. Non branché. Assignation manuelle dans le test. |
 | MFA admin, step-up IBAN | Porte de test. Le MFA Supabase n’est pas branché. |
 | RLS sur le projet hébergé | SQL écrit, **non appliqué**. |
+| Comptes client et cuisinier (courriel, rôle serveur, dossier en cours) | Implémenté et testé en local. Le projet hébergé n’est pas modifié. Apple et Google ne sont pas branchés. Voir [comptes](accounts.md). |
 | Pentest, essai de restauration, exercice d’incident | Requis avant ouverture. Non faits. |
 | Commande immédiate, dashboard web séparé | Plus tard. Voir le plan. |
 

@@ -5,6 +5,7 @@ import { confirmAsk } from '@/lib/confirm';
 import { useI18n } from '@/i18n';
 import { useData, useL } from '@/lib/data';
 import { localeMeta } from '@/i18n/locales';
+import { useAccount } from '@/lib/auth/session';
 import { paymentsLive } from '@/lib/payments';
 import { Badge, Button, Card, H2, ListItem, Muted, Notice, Screen, Spacer, Toggle } from '@/ui/kit';
 
@@ -12,12 +13,22 @@ export default function Account() {
   const { prefs, setPrefs, hasDemo, removeDemo, loadDemo, reviews, favorites, dishes, cooks, preservation } = useData();
   const { L } = useL();
   const { t } = useI18n();
+  const { user, account } = useAccount();
   const router = useRouter();
   const pendingReviews = reviews.filter((r) => r.status === 'pending').length;
   return (
     <Screen>
       <Wordmark />
       <Spacer />
+      <Card>
+        <ListItem
+          icon="person-outline"
+          title={user ? (user.displayName || user.email) : L('Compte', 'Account')}
+          subtitle={account?.signupRole === 'cook' ? L('Cuisinier · dossier en cours tant que Bissabi n’a pas approuvé', 'Cook · file in progress until Bissabi approves') : user ? L('Client', 'Client') : L('Créer un compte ou se connecter', 'Create an account or sign in')}
+          onPress={() => router.push(user ? '/profile' : '/sign-in')}
+        />
+        {user ? null : <ListItem icon="person-add-outline" title={L('Créer un compte', 'Create an account')} onPress={() => router.push('/sign-up')} />}
+      </Card>
       {preservation.some((entry) => entry.heldOriginal) ? <Notice tone="warning" title={t('preserveHeldTitle')} text={t('preserveHeldBody')} /> : null}
       {preservation.some((entry) => entry.unknownCount > 0) ? <Notice tone="info" title={t('preserveUnknownTitle')} text={t('preserveUnknownBody')} /> : null}
       <Card>
