@@ -8,11 +8,6 @@
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "light",
     "description": "La saveur du partage — cuisine de quartier authentique par Bissabi",
-    "splash": {
-      "image": "./assets/splash-icon.png",
-      "resizeMode": "contain",
-      "backgroundColor": "#FAF8F2"
-    },
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.vibecode.bissabihomemadefood.gjtply",
@@ -89,6 +84,15 @@
     },
     "plugins": [
       "expo-router",
+      [
+        "expo-splash-screen",
+        {
+          "image": "./assets/splash-icon.png",
+          "resizeMode": "contain",
+          "backgroundColor": "#FAF8F2",
+          "enableFullScreenImage_legacy": true
+        }
+      ],
       [
         "expo-location",
         {

@@ -1,10 +1,10 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { hydrationGate, persistDecision, settleLoad } from './persistGuard';
+import { createQuarantineIndex } from './quarantineWrite';
 import {
   APP_PREFIX,
   QUARANTINE_INDEX_KEY,
-  captureIfAbsent,
   classifyRaw,
   clearPreservation,
   emptyUnknown,
@@ -19,7 +19,6 @@ import {
   toRecoverySummary,
   unknownCount,
   type PreserveReason,
-  type QuarantineRecord,
   type RecoverySummary,
   type UnknownBag,
 } from './preserve';
@@ -32,68 +31,52 @@ import {
  */
 const PREFIX = APP_PREFIX;
 
-type QuarantineMap = Record<string, QuarantineRecord>;
+const quarantine = createQuarantineIndex({
+  getItem: (key) => AsyncStorage.getItem(key),
+  setItem: (key, value) => AsyncStorage.setItem(key, value),
+  removeItem: (key) => AsyncStorage.removeItem(key),
+});
 
-async function readQuarantineMap(): Promise<{ ok: true; map: QuarantineMap } | { ok: false }> {
-  try {
-    const raw = await AsyncStorage.getItem(QUARANTINE_INDEX_KEY);
-    if (raw == null) return { ok: true, map: {} };
-    const parsed = JSON.parse(raw) as unknown;
-    if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) return { ok: false };
-    return { ok: true, map: parsed as QuarantineMap };
-  } catch {
-    return { ok: false };
-  }
-}
-
-async function writeQuarantineMap(map: QuarantineMap): Promise<boolean> {
-  try {
-    await AsyncStorage.setItem(QUARANTINE_INDEX_KEY, JSON.stringify(map));
-    return true;
-  } catch {
-    return false;
-  }
+function readQuarantineMap() {
+  return quarantine.read();
 }
 
 /** Première copie seulement. N'écrase jamais une copie déjà là. */
-async function captureOriginal(key: string, reason: PreserveReason, raw: string): Promise<void> {
-  const read = await readQuarantineMap();
-  if (!read.ok) return;
-  const next = captureIfAbsent(read.map[key] ?? null, { key, reason, raw, at: new Date().toISOString() });
-  if (!next) return;
-  read.map[key] = next;
-  await writeQuarantineMap(read.map);
+function captureOriginal(key: string, reason: PreserveReason, raw: string): Promise<void> {
+  return quarantine.capture(key, reason, raw);
 }
 
 /** Archive les chaînes de travail avant un effacement. Échoue sans rien effacer si la copie ne peut pas être écrite. */
 export async function archiveWorkingCopies(): Promise<boolean> {
-  const read = await readQuarantineMap();
-  if (!read.ok) return false;
-  let storageKeys: readonly string[];
-  try {
-    storageKeys = await AsyncStorage.getAllKeys();
-  } catch {
-    return false;
-  }
-  let pairs: readonly (readonly [string, string | null])[];
-  try {
-    pairs = await AsyncStorage.multiGet(keysToClear(storageKeys));
-  } catch {
-    return false;
-  }
-  let changed = false;
-  for (const [storageKey, raw] of pairs) {
-    if (raw == null) continue;
-    const key = storageKey.startsWith(PREFIX) ? storageKey.slice(PREFIX.length) : storageKey;
-    const prev = read.map[key] ?? null;
-    const next = mergeQuarantine(prev, { key, reason: 'current', raw, at: new Date().toISOString() });
-    if (next !== prev) {
-      read.map[key] = next;
-      changed = true;
+  return quarantine.exclusive(async () => {
+    const read = await readQuarantineMap();
+    if (!read.ok) return false;
+    let storageKeys: readonly string[];
+    try {
+      storageKeys = await AsyncStorage.getAllKeys();
+    } catch {
+      return false;
     }
-  }
-  if (!changed) return true;
-  return writeQuarantineMap(read.map);
+    let pairs: readonly (readonly [string, string | null])[];
+    try {
+      pairs = await AsyncStorage.multiGet(keysToClear(storageKeys));
+    } catch {
+      return false;
+    }
+    let changed = false;
+    for (const [storageKey, raw] of pairs) {
+      if (raw == null) continue;
+      const key = storageKey.startsWith(PREFIX) ? storageKey.slice(PREFIX.length) : storageKey;
+      const prev = read.map[key] ?? null;
+      const next = mergeQuarantine(prev, { key, reason: 'current', raw, at: new Date().toISOString() });
+      if (next !== prev) {
+        read.map[key] = next;
+        changed = true;
+      }
+    }
+    if (!changed) return true;
+    return quarantine.write(read.map);
+  });
 }
 
 /** ok: false = lecture échouée (ne pas traiter comme un stockage vide). */
@@ -210,13 +193,8 @@ export async function releaseLockedKey(key: string): Promise<'released' | 'alrea
 }
 
 /** Efface uniquement la copie de récupération. Ne touche pas aux clés de travail. */
-export async function purgeQuarantine(): Promise<boolean> {
-  try {
-    await AsyncStorage.removeItem(QUARANTINE_INDEX_KEY);
-    return true;
-  } catch {
-    return false;
-  }
+export function purgeQuarantine(): Promise<boolean> {
+  return quarantine.purge();
 }
 
 /** État React persistant. Aucune écriture tant que la lecture de cette clé n'a pas réussi. */
