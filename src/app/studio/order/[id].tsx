@@ -4,7 +4,8 @@ import { Text } from 'react-native';
 import { useData, useL } from '@/lib/data';
 import { dayLabel, stamp } from '@/lib/dates';
 import { chf } from '@/lib/pricing';
-import { STATUS_LABEL } from '@/lib/status';
+import { authoredText } from '@/i18n/authored';
+import { STATUS_LABEL, statusText } from '@/lib/status';
 import { Badge, Body, Button, Card, Chip, Empty, Field, H1, H2, Muted, Notice, Row, Screen, Spacer } from '@/ui/kit';
 import { theme as t } from '@/ui/theme';
 
@@ -29,7 +30,7 @@ export default function IncomingOrder() {
   return (
     <Screen>
       {o.demo ? <Notice tone="warning" title={L('Commande de démonstration', 'Demo order')} /> : null}
-      <Row style={{ justifyContent: 'space-between' }}><H1>{o.buyerName}</H1><Badge label={st[lang]} tone={st.tone} /></Row>
+      <Row style={{ justifyContent: 'space-between' }}><H1>{o.buyerName}</H1><Badge label={statusText(o.status, lang)} tone={st.tone} /></Row>
       <Muted>{o.number} · {dayLabel(o.slotDate, lang)} {o.slotFrom}–{o.slotTo} · {o.mode === 'pickup' ? L('Retrait', 'Pickup') : L('Livraison', 'Delivery')}</Muted>
       {o.address ? <Body>{o.address}</Body> : null}
       <Spacer />
@@ -54,7 +55,7 @@ export default function IncomingOrder() {
       {refusing ? (
         <Card>
           <H2>{L('Motif du refus', 'Reason')}</H2>
-          <Row wrap>{REASONS.map((r) => <Chip key={r.fr} label={r[lang]} active={reason === r[lang]} onPress={() => setReason(r[lang])} />)}</Row>
+          <Row wrap>{REASONS.map((r) => <Chip key={r.fr} label={authoredText(r, lang)} active={reason === authoredText(r, lang)} onPress={() => setReason(authoredText(r, lang))} />)}</Row>
           <Field label={L('Ou précisez', 'Or specify')} value={reason} onChangeText={setReason} />
           <Muted>{L('Le client est remboursé intégralement.', 'The customer is fully refunded.')}</Muted>
           <Spacer h={8} />
@@ -70,7 +71,7 @@ export default function IncomingOrder() {
       <Spacer />
       <Card>
         <H2>{L('Chronologie', 'Timeline')}</H2>
-        {o.timeline.map((e, i) => <Muted key={i}>{stamp(e.at, lang)} — {STATUS_LABEL[e.status][lang]}{e.note ? ` · ${e.note}` : ''}</Muted>)}
+        {o.timeline.map((e, i) => <Muted key={i}>{stamp(e.at, lang)} — {statusText(e.status, lang)}{e.note ? ` · ${e.note}` : ''}</Muted>)}
       </Card>
     </Screen>
   );

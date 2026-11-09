@@ -1,5 +1,7 @@
 /** Modèle de données — Bissabi Home Made Food (marketplace cuisine maison, commandes à l’avance). */
-export type Lang = 'fr' | 'en';
+import type { LocaleId } from '@/i18n/locales';
+
+export type Lang = LocaleId;
 
 /** 14 allergènes à déclaration obligatoire (OIDAl, annexe 6 — alignés UE 1169/2011). */
 export const ALLERGENS = [

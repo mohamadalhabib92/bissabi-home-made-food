@@ -1,9 +1,11 @@
 import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
-import { useState } from 'react';
-import { View } from 'react-native';
+import { useEffect, useState } from 'react';
+import { I18nManager, Platform, Text, View } from 'react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
-import { DataProvider, useL } from '@/lib/data';
+import { pilotText } from '@/i18n/catalog';
+import { directionFor, isCompleteLocale } from '@/i18n/locales';
+import { DataProvider, useData, useL } from '@/lib/data';
 import { RebootProvider } from '@/lib/reboot';
 import { AppErrorBoundary } from '@/ui/error-boundary';
 import { FontProvider } from '@/ui/fonts';
@@ -34,7 +36,32 @@ function Nav() {
       <Stack.Screen name="moderation" options={{ title: L('Modération des avis', 'Review moderation') }} />
       <Stack.Screen name="languages" options={{ title: L('Langues', 'Languages') }} />
       <Stack.Screen name="admin-notes" options={{ title: L('Notes admin', 'Admin notes') }} />
+      <Stack.Screen name="pilot" options={{ title: L('Parcours pilote', 'Pilot journey') }} />
     </Stack>
+  );
+}
+
+I18nManager.allowRTL(true);
+
+function AppFrame() {
+  const { prefs } = useData();
+  const rtl = directionFor(prefs.lang) === 'rtl';
+  useEffect(() => {
+    if (Platform.OS === 'web' && typeof document !== 'undefined') {
+      document.documentElement.dir = rtl ? 'rtl' : 'ltr';
+      document.documentElement.lang = prefs.lang;
+    }
+  }, [prefs.lang, rtl]);
+  return (
+    <View style={{ flex: 1, backgroundColor: t.bg, direction: rtl ? 'rtl' : 'ltr' }}>
+      {isCompleteLocale(prefs.lang) ? null : (
+        <Text style={{ backgroundColor: t.warningBg, color: t.text, paddingHorizontal: 16, paddingVertical: 8, textAlign: 'center' }}>
+          {pilotText(prefs.lang, 'localeFallbackBanner').text}
+        </Text>
+      )}
+      <StatusBar style="dark" />
+      <Nav />
+    </View>
   );
 }
 
@@ -47,10 +74,7 @@ export default function Layout() {
         <FontProvider>
           <RebootProvider reboot={reboot}>
             <DataProvider key={boot}>
-              <View style={{ flex: 1, backgroundColor: t.bg }}>
-                <StatusBar style="dark" />
-                <Nav />
-              </View>
+              <AppFrame />
             </DataProvider>
           </RebootProvider>
         </FontProvider>

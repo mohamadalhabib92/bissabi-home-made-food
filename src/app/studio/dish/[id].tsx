@@ -2,6 +2,8 @@ import * as ImagePicker from 'expo-image-picker';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useState } from 'react';
 import { Platform, Text, View } from 'react-native';
+import { allergenLabel } from '@/i18n/allergens';
+import { authoredText } from '@/i18n/authored';
 import { DishVisual } from '@/components/brand';
 import { useI18n } from '@/i18n';
 import { confirmAsk } from '@/lib/confirm';
@@ -117,7 +119,7 @@ export default function DishEditor() {
       <Field label={L('Description', 'Description')} value={description} onChangeText={setDescription} multiline placeholder={L('Ce qui le rend unique…', 'What makes it special…')} />
       <Field label={L('Portion (g ou nombre de personnes, facultatif)', 'Portion (g or servings, optional)')} value={portion} onChangeText={setPortion} placeholder="450 g" />
       <Muted>{L('Cuisine', 'Cuisine')}</Muted>
-      <Row wrap>{CUISINES.map((c) => <Chip key={c.key} label={c[lang]} active={cuisine === c.key} onPress={() => setCuisine(c.key)} />)}</Row>
+      <Row wrap>{CUISINES.map((c) => <Chip key={c.key} label={authoredText(c, lang)} active={cuisine === c.key} onPress={() => setCuisine(c.key)} />)}</Row>
       <Spacer h={8} />
       <Row>
         <View style={{ flex: 1 }}><Field label={L('Prix / portion (CHF)', 'Price / portion (CHF)')} value={price} onChangeText={setPrice} keyboardType="decimal-pad" error={price ? errs.price : undefined} /></View>
@@ -126,9 +128,10 @@ export default function DishEditor() {
       <Card>
         <H2>{L('Allergènes (obligatoire)', 'Allergens (required)')}</H2>
         <Muted style={{ marginBottom: 8 }}>{L('Les 14 allergènes : Présent, Traces ou Absent pour chacun (OIDAl, annexe 6).', 'The 14 allergens: Present, Traces or Absent for each (Swiss OIDAl, annex 6).')}</Muted>
+        {allergenLabel('gluten', lang).needsReview ? <Notice tone="warning" title={L('Relecture humaine requise', 'Human review required')} text={L('Les noms d’allergènes affichés sont la version anglaise déjà relue. Ils ne sont pas traduits automatiquement.', 'Allergen names shown are the reviewed English version. They are not machine-translated.')} /> : null}
         {ALLERGENS.map((a) => (
           <View key={a.key} style={{ marginBottom: 8 }}>
-            <Text style={{ color: ui.text, fontWeight: '600', marginBottom: 4 }}>{a[lang]}</Text>
+            <Text style={{ color: ui.text, fontWeight: '600', marginBottom: 4 }}>{allergenLabel(a.key, lang).text}</Text>
             <Row wrap>
               {LEVELS.map((level) => (
                 <Chip key={level} label={levelLabel(level)} active={status[a.key] === level} color={level === 'present' ? ui.primary : level === 'traces' ? ui.warning : ui.secondary} onPress={() => setLevel(a.key, level)} />

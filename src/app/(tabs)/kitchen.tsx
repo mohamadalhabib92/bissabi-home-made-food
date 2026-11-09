@@ -7,7 +7,7 @@ import { activeDishesMissingPublish } from '@/lib/dishPublish';
 import { useData, useL } from '@/lib/data';
 import { dayLabel, todayISO } from '@/lib/dates';
 import { chf } from '@/lib/pricing';
-import { STATUS_LABEL } from '@/lib/status';
+import { STATUS_LABEL, statusText } from '@/lib/status';
 import { Badge, Body, Button, Card, DemoBanner, Empty, H1, H2, ListItem, Muted, Notice, Row, Screen, Spacer, Stat } from '@/ui/kit';
 
 export default function Kitchen() {
@@ -33,7 +33,7 @@ export default function Kitchen() {
   const net = done.reduce((s, o) => s + o.subtotal + o.deliveryFee, 0);
   const ready = checklistDone(myCook);
   const row = (o: (typeof inc)[number]) => (
-    <ListItem key={o.id} icon="receipt-outline" title={`${o.buyerName} · ${o.lines.reduce((s, l) => s + l.qty, 0)} ${L('portion(s)', 'portion(s)')}`} subtitle={`${dayLabel(o.slotDate, lang)} ${o.slotFrom}–${o.slotTo} · ${o.mode === 'pickup' ? L('Retrait', 'Pickup') : L('Livraison', 'Delivery')}${o.demo ? ' · démo' : ''}`} right={<Badge label={STATUS_LABEL[o.status][lang]} tone={STATUS_LABEL[o.status].tone} />} onPress={() => router.push(`/studio/order/${o.id}`)} />
+    <ListItem key={o.id} icon="receipt-outline" title={`${o.buyerName} · ${o.lines.reduce((s, l) => s + l.qty, 0)} ${L('portion(s)', 'portion(s)')}`} subtitle={`${dayLabel(o.slotDate, lang)} ${o.slotFrom}–${o.slotTo} · ${o.mode === 'pickup' ? L('Retrait', 'Pickup') : L('Livraison', 'Delivery')}${o.demo ? ' · démo' : ''}`} right={<Badge label={statusText(o.status, lang)} tone={STATUS_LABEL[o.status].tone} />} onPress={() => router.push(`/studio/order/${o.id}`)} />
   );
   return (
     <Screen>

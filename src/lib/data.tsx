@@ -115,6 +115,6 @@ export function DataProvider({ children }: { children: ReactNode }) {
 /** Bilingue FR/EN : L('Panier', 'Cart'). */
 export function useL() {
   const { prefs } = useData();
-  const L = (fr: string, en: string) => (prefs.lang === 'en' ? en : fr);
+  const L = (fr: string, en: string) => (prefs.lang === 'fr' ? fr : en);
   return { L, lang: prefs.lang };
 }

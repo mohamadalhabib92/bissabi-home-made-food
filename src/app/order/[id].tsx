@@ -11,7 +11,7 @@ import { downloadText } from '@/lib/download';
 import { launchPayment } from '@/lib/launchCheckout';
 import { ORDER_STEPS } from '@/lib/model';
 import { chf } from '@/lib/pricing';
-import { STATUS_LABEL } from '@/lib/status';
+import { STATUS_LABEL, statusText } from '@/lib/status';
 import { uid } from '@/lib/storage';
 import { Badge, Body, Button, Card, Empty, Field, H1, H2, Ionicons, Muted, Notice, Row, Screen, Spacer } from '@/ui/kit';
 import { theme as t } from '@/ui/theme';
@@ -53,7 +53,7 @@ export default function OrderScreen() {
       {o.demo || o.payment.method === 'demo' ? <Notice tone="warning" title={L('Commande de démonstration', 'Demo order')} text={L('Paiement simulé : aucun montant n’a été débité.', 'Simulated payment: nothing was charged.')} /> : null}
       <Row style={{ justifyContent: 'space-between' }}>
         <H1>{o.number}</H1>
-        <Badge label={st[lang]} tone={st.tone} />
+        <Badge label={statusText(o.status, lang)} tone={st.tone} />
       </Row>
       <Muted>{cook?.name} · {dayLabel(o.slotDate, lang)} {o.slotFrom}–{o.slotTo} · {o.mode === 'pickup' ? L('Retrait', 'Pickup') : L('Livraison', 'Delivery')}</Muted>
       <Spacer />
@@ -72,7 +72,7 @@ export default function OrderScreen() {
           {ORDER_STEPS.map((s, i) => (
             <Row key={s} gap={10} style={{ paddingVertical: 6 }}>
               <Ionicons name={i <= stepIdx ? 'checkmark-circle' : 'ellipse-outline'} size={22} color={i <= stepIdx ? t.success : t.border} />
-              <Text style={{ color: i <= stepIdx ? t.text : t.muted, fontWeight: i === stepIdx ? '700' : '500' }}>{STATUS_LABEL[s][lang]}</Text>
+              <Text style={{ color: i <= stepIdx ? t.text : t.muted, fontWeight: i === stepIdx ? '700' : '500' }}>{statusText(s, lang)}</Text>
             </Row>
           ))}
         </Card>
@@ -89,7 +89,7 @@ export default function OrderScreen() {
       </Card>
       <Card>
         <H2>{L('Historique', 'History')}</H2>
-        {o.timeline.map((e, i) => <Muted key={i}>{stamp(e.at, lang)} — {STATUS_LABEL[e.status][lang]}{e.note ? ` · ${e.note}` : ''}</Muted>)}
+        {o.timeline.map((e, i) => <Muted key={i}>{stamp(e.at, lang)} — {statusText(e.status, lang)}{e.note ? ` · ${e.note}` : ''}</Muted>)}
       </Card>
       {o.status === 'ready' ? <Button icon="checkmark-done" title={L('J’ai bien reçu ma commande', 'I received my order')} onPress={() => setOrderStatus(o.id, 'completed')} /> : null}
       {['requested', 'awaiting_payment', 'payment_failed'].includes(o.status) ? (

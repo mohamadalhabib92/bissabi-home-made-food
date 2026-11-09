@@ -4,7 +4,10 @@ import { useData, useL } from '@/lib/data';
 import { dishPicture } from '@/lib/dishPhotos';
 import { dayLabel } from '@/lib/dates';
 import { fmtKm } from '@/lib/geo';
-import { ALLERGENS, type Allergen, type Cook, type Dish, type Slot } from '@/lib/model';
+import { allergenLabel } from '@/i18n/allergens';
+import { authoredText } from '@/i18n/authored';
+import type { LocaleId } from '@/i18n/locales';
+import { type Allergen, type Cook, type Dish, type Slot } from '@/lib/model';
 import { chf } from '@/lib/pricing';
 import { splitAllergens } from '@/lib/dishPublish';
 import { Ionicons, shadow } from '@/ui/kit';
@@ -23,7 +26,7 @@ export function Wordmark({ size = 22, slogan = true }: { size?: number; slogan?:
         <Text style={{ color: t.primary }}>BISSABI </Text>
         <Text style={{ color: t.secondary }}>HOME MADE</Text>
       </Text>
-      {slogan ? <Text style={{ color: t.muted, fontSize: 13, marginTop: 2, fontStyle: 'italic' }}>{SLOGAN[lang]}</Text> : null}
+      {slogan ? <Text style={{ color: t.muted, fontSize: 13, marginTop: 2, fontStyle: 'italic' }}>{authoredText(SLOGAN, lang)}</Text> : null}
     </View>
   );
 }
@@ -93,8 +96,8 @@ export function Pill({ label, tone = 'cream', icon }: { label: string; tone?: 'c
   );
 }
 
-export function allergenNames(keys: Allergen[], lang: 'fr' | 'en') {
-  return keys.map((k) => ALLERGENS.find((a) => a.key === k)?.[lang] ?? k);
+export function allergenNames(keys: Allergen[], lang: LocaleId) {
+  return keys.map((key) => allergenLabel(key, lang).text);
 }
 
 export function DishCard({ dish, cook, distance, nextSlot, onPress }: { dish: Dish; cook?: Cook; distance: number | null; nextSlot?: Slot; onPress: () => void }) {
