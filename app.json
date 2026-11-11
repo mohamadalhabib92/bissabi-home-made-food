@@ -104,6 +104,13 @@
         }
       ],
       [
+        "@stripe/stripe-react-native",
+        {
+          "merchantIdentifier": "merchant.ch.bissabi.homemade",
+          "enableGooglePay": true
+        }
+      ],
+      [
         "expo-localization",
         {
           "supportsRTL": true,

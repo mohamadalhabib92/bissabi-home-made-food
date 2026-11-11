@@ -64,6 +64,7 @@ export default function Account() {
         <ListItem icon="chatbubbles-outline" title={L('Modération des avis', 'Review moderation')} right={pendingReviews ? <Badge label={String(pendingReviews)} tone="warning" /> : undefined} onPress={() => router.push('/moderation')} />
         <ListItem icon="construct-outline" title={L('Notes admin & configuration', 'Admin notes & configuration')} right={<Badge label={paymentsLive ? 'Stripe' : L('démo', 'demo')} tone={paymentsLive ? 'success' : 'warning'} />} onPress={() => router.push('/admin-notes')} />
         <ListItem icon="flask-outline" title={L('Parcours pilote (test)', 'Pilot journey (test)')} onPress={() => router.push('/pilot')} />
+        <ListItem icon="card-outline" title={L('Paiement Stripe (test)', 'Stripe payment (test)')} onPress={() => router.push('/stripe-pay')} />
       </Card>
       {preservation.some((entry) => ['cooks', 'dishes', 'slots', 'orders', 'reviews'].includes(entry.key) && !entry.hydrated)
         ? null

@@ -42,6 +42,8 @@ function Nav() {
       <Stack.Screen name="sign-up" options={{ title: L('Créer un compte', 'Create an account') }} />
       <Stack.Screen name="reset-password" options={{ title: L('Mot de passe', 'Password') }} />
       <Stack.Screen name="profile" options={{ title: L('Profil', 'Profile') }} />
+      <Stack.Screen name="stripe-pay" options={{ title: L('Paiement test', 'Test payment') }} />
+      <Stack.Screen name="pay-return" options={{ title: L('Retour de paiement', 'Payment return') }} />
     </Stack>
   );
 }
