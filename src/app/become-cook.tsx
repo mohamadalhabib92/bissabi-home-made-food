@@ -51,8 +51,8 @@ export default function BecomeCook() {
         tone="info"
         title={L('Pas de boissons maison', 'No homemade drinks')}
         text={L(
-          'Pour un motif d’hygiène (conservation délicate, contrôle difficile), les boissons maison — bissap, jus de gingembre, bouye, lait caillé, jus, etc. — ne sont pas proposées. Vous pouvez proposer des bouteilles Bissabi scellées achetées au tarif professionnel.',
-          'On hygiene grounds (they spoil quickly and are hard to control), homemade drinks — bissap, ginger juice, bouye, fermented milk, juices, and the like — are not listed. You may offer sealed Bissabi bottles bought at the professional rate.',
+          'Les boissons faites maison ne sont pas acceptées sur la plateforme.',
+          'Homemade drinks are not accepted on the platform.',
         )}
       />
       <Spacer />

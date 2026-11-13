@@ -68,7 +68,7 @@ test('aucun plat du catalogue démo n’est une boisson maison', () => {
   assert.deepEqual(bad.map((d) => d.title), []);
 });
 
-test('publishIssues bloque une boisson maison avec le message hygiène', () => {
+test('publishIssues bloque une boisson maison avec le message court', () => {
   const issues = publishIssues({
     ...okDraft,
     title: 'Bissap',
@@ -76,8 +76,8 @@ test('publishIssues bloque une boisson maison avec le message hygiène', () => {
     category: 'boisson_maison',
   });
   assert.ok(issues.includes('homemade_drink'));
-  assert.equal(HOMEMADE_DRINK_MESSAGE.fr.includes('se conservent mal'), true);
-  assert.equal(HOMEMADE_DRINK_MESSAGE.fr.toLowerCase().includes('bissap') && HOMEMADE_DRINK_MESSAGE.fr.toLowerCase().includes('lait caillé'), true);
+  assert.equal(HOMEMADE_DRINK_MESSAGE.fr, 'Les boissons faites maison ne sont pas acceptées sur la plateforme.');
+  assert.equal(HOMEMADE_DRINK_MESSAGE.en, 'Homemade drinks are not accepted on the platform.');
 });
 
 test('un plat complet sans boisson n’ajoute pas homemade_drink', () => {

@@ -6,7 +6,7 @@ Marque sœur de [Bissabi](https://bissabi.ch) : les deux marques restent distinc
 
 Place de marché de cuisine maison entre voisins : des cuisinier·ère·s du quartier proposent leurs plats,
 les client·e·s **commandent à l’avance** sur un créneau de retrait ou de livraison. Ce n’est ni un service de livraison
-de restaurants ni de la livraison express (délai minimum de 24 h par défaut). Les **boissons maison** (bissap, jus de gingembre, bouye, lait caillé, jus, etc.) ne sont pas proposées, pour un motif d’hygiène. Les bouteilles Bissabi scellées peuvent être ajoutées dans le canton de Vaud (livraison Bissabi offerte dès CHF 36 ; prix produits = `YOUR_PRICE_CHF`).
+de restaurants ni de la livraison express (délai minimum de 24 h par défaut). Les boissons faites maison ne sont pas acceptées sur la plateforme. Les bouteilles Bissabi scellées peuvent être ajoutées dans le canton de Vaud (livraison Bissabi offerte dès CHF 36 ; prix produits = `YOUR_PRICE_CHF`).
 
 Application Expo (iOS / Android) **et** PWA installable (GitHub Pages, `/bissabi-home-made-food/`).
 Identité : rouge `#C8152A`, vert `#1A4D2E`, or `#C9A84C`, crème `#FAF8F2` ; logotype BISSABI (rouge) + HOME MADE (vert).

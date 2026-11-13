@@ -48,7 +48,7 @@ export default function Legal() {
 
 7. Droit applicable. Droit suisse. For : siège de l’éditeur, sous réserve de fors légaux protecteurs.
 
-8. Boissons. Les boissons maison (bissap, jus de gingembre, bouye, lait caillé, jus et autres boissons préparées par le Cook) sont interdites sur la plateforme, pour un motif d’hygiène : elles se conservent mal et sont difficiles à contrôler. Cette règle vise toutes les boissons maison, et non une recette en particulier. Les Cooks peuvent, s’ils le souhaitent, proposer des bouteilles Bissabi scellées achetées au tarif professionnel. Home Made Food by Bissabi est une marque sœur de Bissabi (bissabi.ch) ; les marques ne sont pas fusionnées.`}
+8. Boissons. Les boissons faites maison ne sont pas acceptées sur la plateforme. Les Cooks peuvent proposer des bouteilles Bissabi scellées achetées au tarif professionnel. Home Made Food by Bissabi est une marque sœur de Bissabi (bissabi.ch) ; les marques ne sont pas fusionnées.`}
         </Body>
       </Card>
       <H2>{L('Draft terms (EN)', 'Draft terms (EN)')}</H2>
@@ -68,7 +68,7 @@ export default function Legal() {
 
 7. Governing law. Swiss law. Venue: publisher’s seat, subject to protective legal venues.
 
-8. Drinks. Homemade drinks (bissap, ginger juice, bouye, fermented milk, juices and other beverages prepared by the Cook) are not permitted on the platform, on hygiene grounds: they spoil quickly and are hard to control. This rule covers all homemade drinks, not one recipe. Cooks may, if they wish, offer sealed Bissabi bottles bought at the professional rate. Home Made Food by Bissabi is a sister brand of Bissabi (bissabi.ch); the brands are not merged.`}
+8. Drinks. Homemade drinks are not accepted on the platform. Cooks may offer sealed Bissabi bottles bought at the professional rate. Home Made Food by Bissabi is a sister brand of Bissabi (bissabi.ch); the brands are not merged.`}
         </Body>
       </Card>
       <Muted style={{ marginTop: 12 }}>{t('legalValidate')}</Muted>

@@ -38,13 +38,8 @@ Les températures citées dans l’app (frigo **≤ 5 °C**, cuisson / réchauff
 
 
 
-## Boissons maison — interdiction (hygiène)
+## Boissons maison
 
-Décision produit du 13.11.2026 (Europe/Zurich). Motif : **hygiène**, pas une règle visant une recette.
+Les boissons faites maison ne sont pas acceptées sur la plateforme.
 
-- **Toutes** les boissons maison sont interdites à la publication (bissap, jus de gingembre, bouye, lait caillé, jus, infusions maison, etc.).
-- Justification : ces préparations **se conservent mal** et sont **difficiles à contrôler** (chaîne du froid, acidité, conservation).
-- La catégorie de fiche `boisson_maison` n’est pas autorisée.
-- Un garde-fou sur le titre / la description / la catégorie affiche un message clair et bloquant (`homemade_drink` dans `publishIssues`).
-- Les bouteilles **Bissabi scellées**, achetées au tarif professionnel, restent possibles (voir `docs/BISSABI-DRINKS.md`) — ce n’est pas une boisson maison.
-- Code : `src/lib/homemadeDrinks.ts`, formulaire `src/app/studio/dish/[id].tsx`.
+Garde-fou technique (catégorie `boisson_maison`, titre / description) : `src/lib/homemadeDrinks.ts`, `publishIssues`, formulaire `src/app/studio/dish/[id].tsx`.

@@ -12,7 +12,7 @@
 
 ## 2. Interdiction des boissons maison
 
-Voir aussi `docs/COOK-QUALIFICATION.md`. Toutes les boissons préparées par le cook (bissap, gingembre, bouye, lait caillé, jus, etc.) sont refusées pour un motif d’hygiène (conservation délicate, contrôle difficile). Ce n’est pas une règle visant uniquement le bissap.
+Les boissons faites maison ne sont pas acceptées sur la plateforme. Voir aussi `docs/COOK-QUALIFICATION.md`.
 
 ## 3. Upsell à la commande : « Ajoute un Bissabi à ton repas »
 

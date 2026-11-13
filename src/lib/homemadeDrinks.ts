@@ -4,8 +4,8 @@ import type { DishCategory } from './model';
 export const HOMEMADE_DRINK_CATEGORY: DishCategory = 'boisson_maison';
 
 export const HOMEMADE_DRINK_MESSAGE = {
-  fr: 'Les boissons maison (bissap, jus de gingembre, bouye, lait caillé, jus, etc.) ne sont pas proposées sur Home Made Food : elles se conservent mal et sont difficiles à contrôler. Vous pouvez en revanche proposer des bouteilles Bissabi scellées, achetées au tarif professionnel.',
-  en: 'Homemade drinks (bissap, ginger juice, bouye, fermented milk, juices, and the like) are not listed on Home Made Food: they spoil quickly and are hard to control. You can, however, offer sealed Bissabi bottles bought at the professional rate.',
+  fr: 'Les boissons faites maison ne sont pas acceptées sur la plateforme.',
+  en: 'Homemade drinks are not accepted on the platform.',
 } as const;
 
 export type HomemadeDrinkDraft = {
