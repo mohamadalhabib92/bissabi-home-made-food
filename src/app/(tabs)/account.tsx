@@ -1,5 +1,5 @@
 import { useRouter } from 'expo-router';
-import { Wordmark } from '@/components/brand';
+import { SisterBrandNote, Wordmark } from '@/components/brand';
 import { COMPANY_LINE } from '@/lib/company';
 import { confirmAsk } from '@/lib/confirm';
 import { useData, useL } from '@/lib/data';
@@ -53,6 +53,7 @@ export default function Account() {
         ? <Button variant="secondary" icon="flask-outline" title={L('Retirer les données de démo', 'Remove demo data')} onPress={() => confirmAsk(L('Retirer tous les cuisiniers, plats et commandes de démo ?', 'Remove all demo cooks, dishes and orders?'), removeDemo)} />
         : <Button variant="ghost" icon="flask-outline" title={L('Recharger la démo', 'Reload demo')} onPress={loadDemo} />}
       <Spacer />
+      <SisterBrandNote />
       <Muted style={{ fontSize: 12, textAlign: 'center' }}>{COMPANY_LINE}</Muted>
     </Screen>
   );

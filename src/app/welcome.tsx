@@ -1,7 +1,7 @@
 import { useRouter } from 'expo-router';
 import { useState } from 'react';
 import { Text, View } from 'react-native';
-import { Wordmark } from '@/components/brand';
+import { SisterBrandNote, Wordmark } from '@/components/brand';
 import { useData, useL } from '@/lib/data';
 import { Button, Card, Muted, Notice, Row, Screen, Segmented, Spacer, Toggle } from '@/ui/kit';
 import { theme as t } from '@/ui/theme';
@@ -39,6 +39,7 @@ export default function Welcome() {
       </Card>
       <Notice tone="info" title={L('Données de démonstration', 'Demo data')} text={L('Les cuisinier·ères et plats marqués « démo » sont fictifs, pour essayer l’app. Supprimables dans Compte.', 'Cooks and dishes marked “démo” are fictional, for trying the app. Remove them in Account.')} />
       <Button title={L('Commencer', 'Get started')} icon="arrow-forward" disabled={!terms} onPress={go} />
+      <SisterBrandNote />
       <View style={{ height: 24 }} />
     </Screen>
   );

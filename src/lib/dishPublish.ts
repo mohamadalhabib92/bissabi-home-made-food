@@ -1,4 +1,5 @@
-import { ALLERGENS, type Allergen, type AllergenLevel, type AnimalOrigin, type Dish } from './model';
+import { homemadeDrinkHit } from './homemadeDrinks';
+import { ALLERGENS, type Allergen, type AllergenLevel, type AnimalOrigin, type Dish, type DishCategory } from './model';
 
 export type PublishIssue =
   | 'allergens'
@@ -9,7 +10,9 @@ export type PublishIssue =
   | 'animal'
   | 'provenance'
   | 'bakery'
-  | 'country';
+  | 'country'
+  | 'qualification'
+  | 'homemade_drink';
 
 export type AllergenDraft = Partial<Record<Allergen, AllergenLevel>>;
 
@@ -51,6 +54,11 @@ type Draft = {
   provenance?: string;
   isBakery?: boolean | null;
   productionCountry?: string;
+  /** Si false / absent → bloque la publication (badge formation requis). */
+  qualificationValid?: boolean;
+  title?: string;
+  description?: string;
+  category?: DishCategory | string | null;
 };
 
 const filled = (v: string | undefined | null) => !!v && v.trim().length > 0;
@@ -68,9 +76,19 @@ export function publishIssues(d: Draft): PublishIssue[] {
   else if (d.animalOrigin !== 'none' && !filled(d.provenance)) issues.push('provenance');
   if (d.isBakery == null) issues.push('bakery');
   else if (d.isBakery && !filled(d.productionCountry)) issues.push('country');
+  if (d.qualificationValid !== true) issues.push('qualification');
+  if (homemadeDrinkHit({ category: d.category, title: d.title, description: d.description, ingredients: d.ingredients })) issues.push('homemade_drink');
   return issues;
 }
 
-export function activeDishesMissingPublish(dishes: Dish[]): Dish[] {
-  return dishes.filter((d) => d.active && !d.demo && publishIssues(d).length > 0);
+export function activeDishesMissingPublish(dishes: Dish[], qualificationValid = false): Dish[] {
+  return dishes.filter((d) => d.active && !d.demo && publishIssues({ ...d, qualificationValid }).length > 0);
+}
+
+/** Issues d’un plat + statut badge cook. */
+export function publishIssuesForCookDish(
+  dish: Dish,
+  qualificationValid: boolean,
+): PublishIssue[] {
+  return publishIssues({ ...dish, qualificationValid });
 }

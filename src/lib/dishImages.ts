@@ -1,0 +1,66 @@
+/** Photos locales WebP — aucune URL distante. Voir docs/ATTRIBUTION.md. */
+import type { ImageSourcePropType } from 'react-native';
+
+export const DISH_IMAGES = {
+  thieboudienne: require('../../assets/dishes/thieboudienne.webp'),
+  thieb_vegetarien: require('../../assets/dishes/thieb_vegetarien.webp'),
+  mafe: require('../../assets/dishes/mafe.webp'),
+  yassa: require('../../assets/dishes/yassa.webp'),
+  couscous: require('../../assets/dishes/couscous.webp'),
+  tajine: require('../../assets/dishes/tajine.webp'),
+  pastilla: require('../../assets/dishes/pastilla.webp'),
+  chebakia: require('../../assets/dishes/chebakia.webp'),
+  papet: require('../../assets/dishes/papet.webp'),
+  tarte: require('../../assets/dishes/tarte.webp'),
+  rosti: require('../../assets/dishes/rosti.webp'),
+  fondue: require('../../assets/dishes/fondue.webp'),
+  gyoza: require('../../assets/dishes/gyoza.webp'),
+  noodles: require('../../assets/dishes/noodles.webp'),
+  mezze: require('../../assets/dishes/mezze.webp'),
+  maamoul: require('../../assets/dishes/maamoul.webp'),
+  manakish: require('../../assets/dishes/manakish.webp'),
+  fattoush: require('../../assets/dishes/fattoush.webp'),
+  falafel: require('../../assets/dishes/falafel.webp'),
+  injera: require('../../assets/dishes/injera.webp'),
+  doro: require('../../assets/dishes/doro.webp'),
+  kitfo: require('../../assets/dishes/kitfo.webp'),
+  biryani: require('../../assets/dishes/biryani.webp'),
+  samosa: require('../../assets/dishes/samosa.webp'),
+  idli: require('../../assets/dishes/idli.webp'),
+  veg_curry: require('../../assets/dishes/veg_curry.webp'),
+  pho: require('../../assets/dishes/pho.webp'),
+  bun_cha: require('../../assets/dishes/bun_cha.webp'),
+  spring_rolls: require('../../assets/dishes/spring_rolls.webp'),
+  kebab: require('../../assets/dishes/kebab.webp'),
+  baklava: require('../../assets/dishes/baklava.webp'),
+  dolma: require('../../assets/dishes/dolma.webp'),
+  tacos: require('../../assets/dishes/tacos.webp'),
+  arepa: require('../../assets/dishes/arepa.webp'),
+  empanada: require('../../assets/dishes/empanada.webp'),
+  ceviche: require('../../assets/dishes/ceviche.webp'),
+  lasagna: require('../../assets/dishes/lasagna.webp'),
+  pizza: require('../../assets/dishes/pizza.webp'),
+  bacalhau: require('../../assets/dishes/bacalhau.webp'),
+  pastel: require('../../assets/dishes/pastel.webp'),
+  burek: require('../../assets/dishes/burek.webp'),
+  qofte: require('../../assets/dishes/qofte.webp'),
+  padthai: require('../../assets/dishes/padthai.webp'),
+  green_curry: require('../../assets/dishes/green_curry.webp'),
+  moussaka: require('../../assets/dishes/moussaka.webp'),
+  salad: require('../../assets/dishes/salad.webp'),
+  soup: require('../../assets/dishes/soup.webp'),
+  family_stew: require('../../assets/dishes/family_stew.webp'),
+  grilled_fish: require('../../assets/dishes/grilled_fish.webp'),
+  ricebowl: require('../../assets/dishes/ricebowl.webp'),
+  chicken: require('../../assets/dishes/chicken.webp'),
+  curry: require('../../assets/dishes/curry.webp'),
+  bissara: require('../../assets/dishes/bissara.webp'),
+  puttu: require('../../assets/dishes/puttu.webp'),
+} as const;
+
+export type DishPhotoKey = keyof typeof DISH_IMAGES;
+
+export function dishImageSource(key?: string | null): ImageSourcePropType | null {
+  if (!key) return null;
+  return (DISH_IMAGES as Record<string, ImageSourcePropType>)[key] ?? null;
+}

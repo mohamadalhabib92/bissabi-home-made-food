@@ -2,6 +2,7 @@ import { createContext, useCallback, useContext, useMemo, useState, type ReactNo
 import { km } from './geo';
 import type { Cook, Dish, FulfilMode, Lang, Order, OrderStatus, Report, Review, Slot } from './model';
 import { quote } from './pricing';
+import { bissabiLineDetails } from './bissabiDrinks';
 import { demoKitchenOrders, demoMarket } from './seed';
 import { STORAGE_KEY } from './persistGuard';
 import { clearAll, uid, usePersistentState } from './storage';
@@ -13,8 +14,8 @@ export type Prefs = {
   consents: { terms: boolean; location: boolean; marketing: boolean; at?: string };
   location: Loc | null; radiusKm: number; halalOnly: boolean; buyerName: string;
 };
-const DEFAULT_PREFS: Prefs = { lang: 'fr', onboarded: false, mode: 'buyer', consents: { terms: false, location: false, marketing: false }, location: null, radiusKm: 3, halalOnly: false, buyerName: '' };
-export type Cart = { cookId: string | null; lines: { dishId: string; qty: number }[] };
+const DEFAULT_PREFS: Prefs = { lang: 'fr', onboarded: false, mode: 'buyer', consents: { terms: false, location: false, marketing: false }, location: null, radiusKm: 50, halalOnly: false, buyerName: '' };
+export type Cart = { cookId: string | null; lines: { dishId: string; qty: number }[]; bissabiLines?: { productId: string; qty: number }[] };
 
 type Ctx = {
   ready: boolean; storageReady: boolean; bootFallback: boolean; forceReady: () => void; prefs: Prefs; setPrefs: Setter<Prefs>;
@@ -60,11 +61,13 @@ export function DataProvider({ children }: { children: ReactNode }) {
     const placeOrder: Ctx['placeOrder'] = ({ slot, mode, address, note, buyerName }) => {
       const lines = cart.lines.map((l) => { const d = dishes.find((x) => x.id === l.dishId)!; return { dishId: d.id, title: d.title, qty: l.qty, unitPrice: d.price }; });
       const q = quote(lines, mode);
+      const bissabiLines = bissabiLineDetails(cart.bissabiLines).map((l) => ({ productId: l.productId, title: l.product.nameFr, qty: l.qty, priceLabel: l.product.priceLabel }));
       const at = new Date().toISOString();
       const o: Order = {
         id: uid('ord_'), number: `HMF-${at.slice(2, 10).replace(/-/g, '')}-${Math.random().toString(36).slice(2, 6).toUpperCase()}`, side: 'buyer',
         cookId: cart.cookId!, buyerName: buyerName || prefs.buyerName || 'Moi', lines, slotId: slot.id, slotDate: slot.date, slotFrom: slot.from, slotTo: slot.to,
         mode, address, note, ...q, status: 'awaiting_payment', timeline: [{ status: 'awaiting_payment', at }], payment: { method: 'demo' }, createdAt: at,
+        bissabiLines: bissabiLines.length ? bissabiLines : undefined,
       };
       setOrders((l) => [o, ...l]);
       return o;

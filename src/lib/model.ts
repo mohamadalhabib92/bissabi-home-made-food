@@ -26,18 +26,36 @@ export type AnimalOrigin = 'none' | 'meat' | 'fish' | 'both';
 export type OfcoStatus = 'none' | 'pending' | 'identity_verified' | 'ofco_verified';
 
 export const CUISINES = [
-  { key: 'sahel', fr: 'Sahel & Afrique de l’Ouest', en: 'Sahel & West Africa' },
-  { key: 'maghreb', fr: 'Maghreb', en: 'North Africa' },
-  { key: 'levant', fr: 'Levant', en: 'Levant' },
-  { key: 'swiss', fr: 'Suisse & terroir', en: 'Swiss & local' },
-  { key: 'asian', fr: 'Asie', en: 'Asia' },
-  { key: 'veggie', fr: 'Végétarien', en: 'Vegetarian' },
-  { key: 'sweet', fr: 'Desserts', en: 'Desserts' },
+  { key: 'sahel', fr: 'Sahel & Afrique de l’Ouest', en: 'Sahel & West Africa', flag: '🇸🇳' },
+  { key: 'maghreb', fr: 'Maghreb', en: 'North Africa', flag: '🇲🇦' },
+  { key: 'levant', fr: 'Levant', en: 'Levant', flag: '🇱🇧' },
+  { key: 'horn', fr: 'Corne de l’Afrique', en: 'Horn of Africa', flag: '🇪🇹' },
+  { key: 'swiss', fr: 'Suisse & terroir', en: 'Swiss & local', flag: '🇨🇭' },
+  { key: 'italian', fr: 'Italie & Méditerranée', en: 'Italy & Mediterranean', flag: '🇮🇹' },
+  { key: 'iberian', fr: 'Portugal & Amérique latine', en: 'Portugal & Latin America', flag: '🇵🇹' },
+  { key: 'balkan', fr: 'Balkans', en: 'Balkans', flag: '🇽🇰' },
+  { key: 'turkish', fr: 'Turquie & Anatolie', en: 'Turkey & Anatolia', flag: '🇹🇷' },
+  { key: 'indian', fr: 'Inde & Tamil', en: 'India & Tamil', flag: '🇮🇳' },
+  { key: 'seasia', fr: 'Asie du Sud-Est', en: 'Southeast Asia', flag: '🇹🇭' },
+  { key: 'asian', fr: 'Asie de l’Est', en: 'East Asia', flag: '🇨🇳' },
+  { key: 'veggie', fr: 'Végétarien', en: 'Vegetarian', flag: '🌿' },
+  { key: 'sweet', fr: 'Desserts', en: 'Desserts', flag: '🍯' },
 ] as const;
 export type Cuisine = (typeof CUISINES)[number]['key'];
 
+export const DISH_CATEGORIES = [
+  { key: 'plat', fr: 'Plat', en: 'Main' },
+  { key: 'entree', fr: 'Entrée', en: 'Starter' },
+  { key: 'accompagnement', fr: 'Accompagnement', en: 'Side' },
+  { key: 'dessert', fr: 'Dessert', en: 'Dessert' },
+  { key: 'boisson_maison', fr: 'Boisson maison', en: 'Homemade drink' },
+] as const;
+export type DishCategory = (typeof DISH_CATEGORIES)[number]['key'];
+
+
+export type SpiceLevel = 0 | 1 | 2 | 3;
 export type Ingredient = { name: string; qty: number; unit: string }; // par portion
-export type FulfilMode = 'pickup' | 'delivery';
+export type FulfilMode = 'pickup' | 'delivery' | 'partner';
 
 export type Cook = {
   id: string; name: string; commune: string; npa: string; lat: number; lng: number;
@@ -49,6 +67,24 @@ export type Cook = {
   canton?: string;
   /** Absent sur les fiches existantes : aucun badge n'est affiché. */
   ofcoStatus?: OfcoStatus;
+  /** Origine culturelle affichée (fictive en démo). */
+  originCountry?: string;
+  originFlag?: string;
+  story?: string;
+  specialties?: string[];
+  hygieneBadge?: boolean;
+  /** Note optionnelle de certification halal tierce (déclaration cook, non auditée par Bissabi). */
+  halalCertificationNote?: string;
+  /** Acceptation responsabilité / intermédiaire — horodatée. */
+  liabilityAcceptedAt?: string;
+  /** Modes de remise proposés par le cook (défaut: pickup + delivery si delivers). */
+  deliveryModes?: FulfilMode[];
+  /** Partenaire placeholder préféré (id générique). */
+  preferredPartnerId?: string;
+  /** Badge formation hygiène / allergènes / sécurité (interne Bissabi). */
+  qualification?: import('./cookQualification').CookQualification;
+  /** Revente de bouteilles Bissabi scellées (mock, tarif pro — pas de commande réelle). */
+  offerBissabiDrinks?: boolean;
 };
 
 export type Dish = {
@@ -57,7 +93,7 @@ export type Dish = {
   allergens: Allergen[]; allergensConfirmed: boolean; // « aucun des 14 » doit être confirmé explicitement
   halal: boolean; vegetarian: boolean; spicy: boolean;
   ingredients: Ingredient[]; leadHours: number; // délai minimum de commande
-  photo?: string; // uri / dataURL ; sinon visuel de marque
+  photo?: string; // uri / dataURL ; sinon photoKey ou visuel de marque
   emoji: string; active: boolean; demo?: boolean;
   /** Champs additifs (Passe 1). Les plats déjà enregistrés restent lisibles sans eux. */
   allergenStatus?: Partial<Record<Allergen, AllergenLevel>>;
@@ -68,6 +104,20 @@ export type Dish = {
   conservation?: string;
   reheating?: string;
   portionLabel?: string;
+  /** Clé d’asset locale (assets/dishes/*.webp). */
+  photoKey?: string;
+  vegan?: boolean;
+  glutenFree?: boolean;
+  spiceLevel?: SpiceLevel;
+  familySize?: boolean;
+  servings?: number;
+  galleryKeys?: string[];
+  availableToday?: boolean;
+  tags?: string[];
+  /** Modes de remise pour ce plat (sinon hérite du cook). */
+  deliveryModes?: FulfilMode[];
+  /** Catégorie de fiche. « boisson_maison » est refusée (hygiène). */
+  category?: DishCategory;
 };
 
 export type Slot = {
@@ -88,6 +138,12 @@ export type Order = {
   status: OrderStatus; timeline: { status: OrderStatus; at: string; note?: string }[];
   payment: { method: 'stripe' | 'demo'; ref?: string; error?: string };
   refuseReason?: string; createdAt: string; demo?: boolean;
+  /** Ajouts Bissabi (démo, prix YOUR_* — non inclus dans le total chiffré). */
+  bissabiLines?: { productId: string; title: string; qty: number; priceLabel: string }[];
+  /** Job livraison partenaire (mock). */
+  deliveryJobId?: string;
+  deliveryPartnerId?: string;
+  deliveryTracking?: import('./deliveryPartners').DeliveryTrackingState;
 };
 
 export type Review = { id: string; orderId: string; cookId: string; dishId?: string; rating: number; text: string; author: string; status: 'pending' | 'published' | 'rejected'; at: string; demo?: boolean };
@@ -105,3 +161,16 @@ export const HYGIENE_CHECKLIST = [
 ] as const;
 
 export const ORDER_STEPS: OrderStatus[] = ['requested', 'accepted', 'preparing', 'ready', 'completed'];
+
+export const CANTONS = [
+  { key: 'VD', fr: 'Vaud', en: 'Vaud' },
+  { key: 'GE', fr: 'Genève', en: 'Geneva' },
+  { key: 'FR', fr: 'Fribourg', en: 'Fribourg' },
+  { key: 'NE', fr: 'Neuchâtel', en: 'Neuchâtel' },
+  { key: 'VS', fr: 'Valais', en: 'Valais' },
+  { key: 'BE', fr: 'Berne', en: 'Bern' },
+  { key: 'ZH', fr: 'Zurich', en: 'Zurich' },
+  { key: 'BS', fr: 'Bâle-Ville', en: 'Basel-Stadt' },
+  { key: 'TI', fr: 'Tessin', en: 'Ticino' },
+  { key: 'SG', fr: 'Saint-Gall', en: 'St. Gallen' },
+] as const;

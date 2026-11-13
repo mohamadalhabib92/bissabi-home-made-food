@@ -40,6 +40,7 @@ export const fr = {
   publishProvenance: 'Provenance de la viande ou du poisson.',
   publishBakery: 'Indiquez s’il s’agit de pain ou de pâtisserie.',
   publishCountry: 'Pays de production pour le pain ou la pâtisserie.',
+  publishQualification: 'Badge formation hygiène / allergènes / sécurité requis (et valide).',
   publishBlocked: 'Publication bloquée tant que ces points manquent. Vous pouvez enregistrer le plat masqué.',
   allergenPresent: 'Présent',
   allergenTraces: 'Traces',
@@ -55,6 +56,18 @@ export const fr = {
   notProvided: 'Non renseigné par le cuisinier.',
   launchZone: 'Zone de lancement : canton de Vaud. Livraisons uniquement dans ce canton.',
   legalValidate: 'Textes juridiques complets : à valider avant lancement public.',
+  publishHomemadeDrink: 'Les boissons faites maison ne sont pas acceptées sur la plateforme.',
+  homemadeDrinkHint: 'Les boissons faites maison ne sont pas acceptées sur la plateforme.',
+  dishCategory: 'Catégorie',
+  bissabiUpsellTitle: 'Ajoute un Bissabi à ton repas',
+  bissabiUpsellBody: 'Bouteilles Bissabi scellées, livrées dans le canton de Vaud. Livraison Bissabi offerte dès CHF 36. Prix d’exemple : YOUR_PRICE_CHF (tarifs réels sur bissabi.ch, non inventés ici).',
+  bissabiSoonTitle: 'Bissabi — bientôt disponible',
+  bissabiSoonBody: 'La livraison des boissons Bissabi est pour l’instant limitée au canton de Vaud. Nous vous préviendrons quand elle arrivera chez vous.',
+  bissabiExamplePrice: 'Prix exemple : YOUR_PRICE_CHF',
+  offerBissabiDrinks: 'Proposer des boissons Bissabi',
+  offerBissabiDrinksHint: 'Bouteilles scellées achetées au tarif professionnel, revendues avec une marge (maquette : aucune commande fournisseur réelle).',
+  sisterBrand: 'Home Made Food by Bissabi — marque sœur de Bissabi. Les deux marques restent distinctes.',
+  visitBissabi: 'Découvrir Bissabi',
 } as const;
 
 export type MsgKey = keyof typeof fr;
