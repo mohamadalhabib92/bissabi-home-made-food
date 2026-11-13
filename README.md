@@ -1,10 +1,12 @@
-# Bissabi Home Made Food
+# Home Made Food by Bissabi
 
-**La saveur du partage — cuisine de quartier authentique par Bissabi**
+**La saveur du partage — cuisine de quartier authentique**
+
+Marque sœur de [Bissabi](https://bissabi.ch) : les deux marques restent distinctes.
 
 Place de marché de cuisine maison entre voisins : des cuisinier·ère·s du quartier proposent leurs plats,
 les client·e·s **commandent à l’avance** sur un créneau de retrait ou de livraison. Ce n’est ni un service de livraison
-de restaurants ni de la livraison express (délai minimum de 24 h par défaut). Pas de livraison de boissons.
+de restaurants ni de la livraison express (délai minimum de 24 h par défaut). Les **boissons maison** (bissap, jus de gingembre, bouye, lait caillé, jus, etc.) ne sont pas proposées, pour un motif d’hygiène. Les bouteilles Bissabi scellées peuvent être ajoutées dans le canton de Vaud (livraison Bissabi offerte dès CHF 36 ; prix produits = `YOUR_PRICE_CHF`).
 
 Application Expo (iOS / Android) **et** PWA installable (GitHub Pages, `/bissabi-home-made-food/`).
 Identité : rouge `#C8152A`, vert `#1A4D2E`, or `#C9A84C`, crème `#FAF8F2` ; logotype BISSABI (rouge) + HOME MADE (vert).
@@ -32,7 +34,7 @@ Identité : rouge `#C8152A`, vert `#1A4D2E`, or `#C9A84C`, crème `#FAF8F2` ; lo
 ### Confiance, droit, données
 - Message de responsabilité : les cuisiniers restent responsables de l’autocontrôle. Dans le canton de Vaud l’autorité est l’**OFCO** (libellé « Annonce OFCO (VD) »). Le badge n’apparaît qu’après validation admin. **Aucun faux badge.** Livraisons et commandes : canton de Vaud uniquement.
 - RGPD / LPD : consentements (CGU, position, marketing), export JSON des données, suppression complète.
-- Mentions légales discrètes : Bissabi Drinks - BA, Chemin de la Suettaz 17, 1008 Prilly, IDE CHE-332.255.936.
+- Mentions légales discrètes : Bissabi Drinks - BA, Chemin de la Suettaz 17, 1008 Prilly, IDE CHE-332.255.936. Lien vers [bissabi.ch](https://bissabi.ch). Une Sàrl séparée pour Home Made Food est recommandée (raison individuelle aujourd’hui) — à faire valider par un juriste / une fiduciaire.
 - Langues : **français et anglais complets**. DE, IT, ES, de-CH, AR (avec RTL) : affichées « à venir », non sélectionnables.
 
 ## Données de démonstration

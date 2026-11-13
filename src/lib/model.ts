@@ -43,6 +43,16 @@ export const CUISINES = [
 ] as const;
 export type Cuisine = (typeof CUISINES)[number]['key'];
 
+export const DISH_CATEGORIES = [
+  { key: 'plat', fr: 'Plat', en: 'Main' },
+  { key: 'entree', fr: 'Entrée', en: 'Starter' },
+  { key: 'accompagnement', fr: 'Accompagnement', en: 'Side' },
+  { key: 'dessert', fr: 'Dessert', en: 'Dessert' },
+  { key: 'boisson_maison', fr: 'Boisson maison', en: 'Homemade drink' },
+] as const;
+export type DishCategory = (typeof DISH_CATEGORIES)[number]['key'];
+
+
 export type SpiceLevel = 0 | 1 | 2 | 3;
 export type Ingredient = { name: string; qty: number; unit: string }; // par portion
 export type FulfilMode = 'pickup' | 'delivery' | 'partner';
@@ -73,6 +83,8 @@ export type Cook = {
   preferredPartnerId?: string;
   /** Badge formation hygiène / allergènes / sécurité (interne Bissabi). */
   qualification?: import('./cookQualification').CookQualification;
+  /** Revente de bouteilles Bissabi scellées (mock, tarif pro — pas de commande réelle). */
+  offerBissabiDrinks?: boolean;
 };
 
 export type Dish = {
@@ -104,6 +116,8 @@ export type Dish = {
   tags?: string[];
   /** Modes de remise pour ce plat (sinon hérite du cook). */
   deliveryModes?: FulfilMode[];
+  /** Catégorie de fiche. « boisson_maison » est refusée (hygiène). */
+  category?: DishCategory;
 };
 
 export type Slot = {
@@ -124,6 +138,8 @@ export type Order = {
   status: OrderStatus; timeline: { status: OrderStatus; at: string; note?: string }[];
   payment: { method: 'stripe' | 'demo'; ref?: string; error?: string };
   refuseReason?: string; createdAt: string; demo?: boolean;
+  /** Ajouts Bissabi (démo, prix YOUR_* — non inclus dans le total chiffré). */
+  bissabiLines?: { productId: string; title: string; qty: number; priceLabel: string }[];
   /** Job livraison partenaire (mock). */
   deliveryJobId?: string;
   deliveryPartnerId?: string;

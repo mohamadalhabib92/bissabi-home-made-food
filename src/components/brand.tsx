@@ -1,4 +1,5 @@
-import { Image, Pressable, Text, View } from 'react-native';
+import { Image, Linking, Pressable, Text, View } from 'react-native';
+import { BISSABI_SITE } from '@/lib/bissabiDrinks';
 import { useData, useL } from '@/lib/data';
 import { dayLabel } from '@/lib/dates';
 import { fmtKm } from '@/lib/geo';
@@ -10,19 +11,37 @@ import { Ionicons, shadow } from '@/ui/kit';
 import { useAppFonts } from '@/ui/fonts';
 import { theme as t } from '@/ui/theme';
 
-export const SLOGAN = { fr: 'La saveur du partage — cuisine de quartier authentique par Bissabi', en: 'The taste of sharing — authentic neighbourhood cooking by Bissabi' };
+export const SLOGAN = { fr: 'La saveur du partage — cuisine de quartier authentique', en: 'The taste of sharing — authentic neighbourhood cooking' };
+export const BRAND_NAME = 'Home Made Food by Bissabi';
 
 /** Logotype : BISSABI rouge + HOME MADE vert. */
 export function Wordmark({ size = 22, slogan = true }: { size?: number; slogan?: boolean }) {
   const { lang } = useL();
   const fonts = useAppFonts();
   return (
-    <View accessibilityRole="header" accessibilityLabel="Bissabi Home Made">
-      <Text style={{ fontSize: size, fontWeight: '600', letterSpacing: 2, fontFamily: fonts.display }}>
-        <Text style={{ color: t.primary }}>BISSABI </Text>
-        <Text style={{ color: t.secondary }}>HOME MADE</Text>
+    <View accessibilityRole="header" accessibilityLabel="Home Made Food by Bissabi">
+      <Text style={{ fontSize: size, fontWeight: '600', letterSpacing: 1.6, fontFamily: fonts.display, color: t.secondary }}>
+        HOME MADE FOOD
+      </Text>
+      <Text style={{ fontSize: Math.max(11, Math.round(size * 0.45)), fontWeight: '600', letterSpacing: 1.2, color: t.primary, marginTop: 2, fontFamily: fonts.display }}>
+        by Bissabi
       </Text>
       {slogan ? <Text style={{ color: t.muted, fontSize: 13, marginTop: 2, fontStyle: 'italic' }}>{SLOGAN[lang]}</Text> : null}
+    </View>
+  );
+}
+
+/** Pied / à propos : marque sœur, lien croisé vers bissabi.ch, sans fusion des marques. */
+export function SisterBrandNote() {
+  const { L } = useL();
+  return (
+    <View style={{ alignItems: 'center', gap: 4, paddingVertical: 8 }}>
+      <Text style={{ color: t.muted, fontSize: 12, textAlign: 'center' }}>
+        {L('Home Made Food by Bissabi — marque sœur de Bissabi. Les deux marques restent distinctes.', 'Home Made Food by Bissabi — a sister brand of Bissabi. The two brands remain distinct.')}
+      </Text>
+      <Pressable onPress={() => Linking.openURL(BISSABI_SITE)} accessibilityRole="link" accessibilityLabel={L('Découvrir Bissabi', 'Discover Bissabi')}>
+        <Text style={{ color: t.secondary, fontSize: 12, fontWeight: '700', textDecorationLine: 'underline' }}>bissabi.ch</Text>
+      </Pressable>
     </View>
   );
 }

@@ -1,4 +1,5 @@
-import { ALLERGENS, type Allergen, type AllergenLevel, type AnimalOrigin, type Dish } from './model';
+import { homemadeDrinkHit } from './homemadeDrinks';
+import { ALLERGENS, type Allergen, type AllergenLevel, type AnimalOrigin, type Dish, type DishCategory } from './model';
 
 export type PublishIssue =
   | 'allergens'
@@ -10,7 +11,8 @@ export type PublishIssue =
   | 'provenance'
   | 'bakery'
   | 'country'
-  | 'qualification';
+  | 'qualification'
+  | 'homemade_drink';
 
 export type AllergenDraft = Partial<Record<Allergen, AllergenLevel>>;
 
@@ -54,6 +56,9 @@ type Draft = {
   productionCountry?: string;
   /** Si false / absent → bloque la publication (badge formation requis). */
   qualificationValid?: boolean;
+  title?: string;
+  description?: string;
+  category?: DishCategory | string | null;
 };
 
 const filled = (v: string | undefined | null) => !!v && v.trim().length > 0;
@@ -72,6 +77,7 @@ export function publishIssues(d: Draft): PublishIssue[] {
   if (d.isBakery == null) issues.push('bakery');
   else if (d.isBakery && !filled(d.productionCountry)) issues.push('country');
   if (d.qualificationValid !== true) issues.push('qualification');
+  if (homemadeDrinkHit({ category: d.category, title: d.title, description: d.description, ingredients: d.ingredients })) issues.push('homemade_drink');
   return issues;
 }
 

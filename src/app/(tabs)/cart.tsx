@@ -1,6 +1,8 @@
 import { useRouter } from 'expo-router';
 import { Text, View } from 'react-native';
+import { BissabiUpsellCard } from '@/components/bissabi-upsell';
 import { Avatar, DishVisual, TotalsTable } from '@/components/brand';
+import { bissabiOfferState } from '@/lib/bissabiDrinks';
 import { useData, useL } from '@/lib/data';
 import { chf, quote } from '@/lib/pricing';
 import { Button, Card, Empty, H2, IconButton, Muted, Notice, Row, Screen, Segmented, Spacer } from '@/ui/kit';
@@ -9,7 +11,7 @@ import { useState } from 'react';
 import type { FulfilMode } from '@/lib/model';
 
 export default function CartScreen() {
-  const { cart, setCart, dishes, cooks, clearCart } = useData();
+  const { cart, setCart, dishes, cooks, clearCart, prefs } = useData();
   const { L } = useL();
   const router = useRouter();
   const cook = cooks.find((c) => c.id === cart.cookId);
@@ -47,6 +49,11 @@ export default function CartScreen() {
         <H2>{L('Détail du prix', 'Price breakdown')}</H2>
         <TotalsTable {...q} L={L} />
       </Card>
+      <BissabiUpsellCard
+        state={bissabiOfferState({ locationCanton: prefs.location?.canton, canton: prefs.location?.canton, address: prefs.location?.label })}
+        lines={cart.bissabiLines ?? []}
+        onChange={(bissabiLines) => setCart((c) => ({ ...c, bissabiLines }))}
+      />
       <Notice tone="info" title={L('Commande à l’avance', 'Advance order')} text={L('Vous choisissez le créneau à l’étape suivante. Le cuisinier confirme votre commande ; s’il refuse, vous êtes remboursé intégralement.', 'Pick the slot in the next step. The cook confirms your order; if they refuse, you are fully refunded.')} />
       <Button title={L('Choisir le créneau', 'Choose slot')} icon="arrow-forward" onPress={() => router.push({ pathname: '/checkout', params: { mode: cook.delivers ? mode : 'pickup' } })} />
       <Spacer h={8} />

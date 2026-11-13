@@ -33,8 +33,8 @@ export default function BecomeCook() {
       <H1>{L('Cuisiner chez soi, vendre en Suisse', 'Cook at home, sell in Switzerland')}</H1>
       <Body>
         {L(
-          'Bissabi Home Made met en relation des cuisinier·ères amateurs et des voisin·es. Ce guide résume les règles suisses connues — ce n’est pas un conseil juridique. Faites valider votre situation par l’autorité cantonale avant de vendre.',
-          'Bissabi Home Made connects home cooks and neighbours. This guide summarises known Swiss rules — it is not legal advice. Confirm your situation with the cantonal authority before selling.',
+          'Home Made Food by Bissabi met en relation des cuisinier·ères amateurs et des voisin·es. Ce guide résume les règles suisses connues — ce n’est pas un conseil juridique. Faites valider votre situation par l’autorité cantonale avant de vendre.',
+          'Home Made Food by Bissabi connects home cooks and neighbours. This guide summarises known Swiss rules — it is not legal advice. Confirm your situation with the cantonal authority before selling.',
         )}
       </Body>
       <Spacer />
@@ -44,6 +44,15 @@ export default function BecomeCook() {
         text={L(
           'Nous ne délivrons aucun certificat d’hygiène officiel. Le badge « Annonce OFCO vérifiée » n’apparaît qu’après validation admin d’une preuve d’annonce cantonale.',
           'We do not issue any official hygiene certificate. The “OFCO notice verified” badge only appears after admin validation of cantonal registration proof.',
+        )}
+      />
+      <Spacer />
+      <Notice
+        tone="info"
+        title={L('Pas de boissons maison', 'No homemade drinks')}
+        text={L(
+          'Pour un motif d’hygiène (conservation délicate, contrôle difficile), les boissons maison — bissap, jus de gingembre, bouye, lait caillé, jus, etc. — ne sont pas proposées. Vous pouvez proposer des bouteilles Bissabi scellées achetées au tarif professionnel.',
+          'On hygiene grounds (they spoil quickly and are hard to control), homemade drinks — bissap, ginger juice, bouye, fermented milk, juices, and the like — are not listed. You may offer sealed Bissabi bottles bought at the professional rate.',
         )}
       />
       <Spacer />

@@ -126,6 +126,8 @@ Une clause app ne remplace pas les polices RC / transport du partenaire ni l’a
 
 ---
 
+Voir aussi `docs/BISSABI-DRINKS.md` (upsell Bissabi, revente au tarif pro, cadre de marque sœur).
+
 ## 5. Prochaines actions (Mohamed)
 
 1. Contacter 2–3 collectifs vélo Lausanne / Genève + Velopass (si actif) pour un pilote.  

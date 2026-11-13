@@ -1,7 +1,9 @@
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useMemo, useState } from 'react';
 import { Pressable, Text, View } from 'react-native';
+import { BissabiUpsellCard } from '@/components/bissabi-upsell';
 import { TotalsTable } from '@/components/brand';
+import { bissabiOfferState } from '@/lib/bissabiDrinks';
 import { usePay } from '@/lib/checkout';
 import { useI18n } from '@/i18n';
 import { splitAllergens } from '@/lib/dishPublish';
@@ -17,7 +19,7 @@ import { theme as t } from '@/ui/theme';
 
 export default function Checkout() {
   const params = useLocalSearchParams<{ mode?: string }>();
-  const { cart, dishes, cooks, slots, orders, placeOrder, clearCart, prefs, setPrefs } = useData();
+  const { cart, setCart, dishes, cooks, slots, orders, placeOrder, clearCart, prefs, setPrefs } = useData();
   const { L, lang } = useL();
   const { t: tr } = useI18n();
   const router = useRouter();
@@ -118,9 +120,15 @@ export default function Checkout() {
           'The cook remains responsible for the dish. In partner mode, the courier is responsible for transport and the cold chain during the run. Draft terms: Legal screen — to be reviewed by a CH lawyer.',
         )}
       />
+      <BissabiUpsellCard
+        state={bissabiOfferState({ address: (mode === 'delivery' || mode === 'partner') ? address : undefined, locationCanton: prefs.location?.canton, canton: prefs.location?.canton })}
+        lines={cart.bissabiLines ?? []}
+        onChange={(bissabiLines) => setCart((c) => ({ ...c, bissabiLines }))}
+      />
       <Card>
         <H2>{L('Récapitulatif', 'Summary')}</H2>
         {lines.map((l) => <View key={l.dishId} style={{ flexDirection: 'row', justifyContent: 'space-between', paddingVertical: 3 }}><Text style={{ color: t.text }}>{l.qty} × {l.dish.title}</Text></View>)}
+        {(cart.bissabiLines ?? []).filter((l) => l.qty > 0).map((l) => <View key={l.productId} style={{ flexDirection: 'row', justifyContent: 'space-between', paddingVertical: 3 }}><Text style={{ color: t.muted }}>{l.qty} × Bissabi (exemple, YOUR_PRICE_CHF — hors total)</Text></View>)}
         <View style={{ height: 8 }} />
         <TotalsTable {...q} L={L} />
       </Card>

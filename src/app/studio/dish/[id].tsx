@@ -7,8 +7,9 @@ import { useI18n } from '@/i18n';
 import { confirmAsk } from '@/lib/confirm';
 import { useData, useL } from '@/lib/data';
 import { allergensFromStatus, publishIssues, statusFromDish, type AllergenDraft, type PublishIssue } from '@/lib/dishPublish';
+import { homemadeDrinkHit, homemadeDrinkMessage } from '@/lib/homemadeDrinks';
 import { isBadgeValid, BADGE_LABEL_FR, BADGE_LABEL_EN } from '@/lib/cookQualification';
-import { ALLERGENS, CUISINES, type Allergen, type AllergenLevel, type AnimalOrigin, type Cuisine, type Dish, type Ingredient } from '@/lib/model';
+import { ALLERGENS, CUISINES, DISH_CATEGORIES, type Allergen, type AllergenLevel, type AnimalOrigin, type Cuisine, type Dish, type DishCategory, type Ingredient } from '@/lib/model';
 import { MIN_LEAD_HOURS } from '@/lib/pricing';
 import { uid } from '@/lib/storage';
 import { Button, Card, Chip, Empty, Field, H2, IconButton, Muted, Notice, Row, Screen, Segmented, Spacer, Toggle, useFeedback } from '@/ui/kit';
@@ -16,7 +17,7 @@ import { theme as ui } from '@/ui/theme';
 
 const EMOJIS = ['🍲', '🍛', '🥘', '🍗', '🥙', '🥗', '🍝', '🥟', '🍰', '🧆', '🫓', '🍚'];
 const LEVELS: AllergenLevel[] = ['present', 'traces', 'absent'];
-const ISSUE_KEY: Record<PublishIssue, 'publishAllergens' | 'publishIngredients' | 'publishPhoto' | 'publishConservation' | 'publishReheating' | 'publishAnimal' | 'publishProvenance' | 'publishBakery' | 'publishCountry' | 'publishQualification'> = {
+const ISSUE_KEY: Record<PublishIssue, 'publishAllergens' | 'publishIngredients' | 'publishPhoto' | 'publishConservation' | 'publishReheating' | 'publishAnimal' | 'publishProvenance' | 'publishBakery' | 'publishCountry' | 'publishQualification' | 'publishHomemadeDrink'> = {
   allergens: 'publishAllergens',
   ingredients: 'publishIngredients',
   photo: 'publishPhoto',
@@ -27,6 +28,7 @@ const ISSUE_KEY: Record<PublishIssue, 'publishAllergens' | 'publishIngredients' 
   bakery: 'publishBakery',
   country: 'publishCountry',
   qualification: 'publishQualification',
+  homemade_drink: 'publishHomemadeDrink',
 };
 
 export default function DishEditor() {
@@ -40,6 +42,7 @@ export default function DishEditor() {
   const [title, setTitle] = useState(ex?.title ?? '');
   const [description, setDescription] = useState(ex?.description ?? '');
   const [cuisine, setCuisine] = useState<Cuisine>(ex?.cuisine ?? 'sahel');
+  const [category, setCategory] = useState<DishCategory>(ex?.category ?? 'plat');
   const [price, setPrice] = useState(ex ? ex.price.toFixed(2) : '');
   const [status, setStatus] = useState<AllergenDraft>(() => statusFromDish(ex));
   const [halal, setHalal] = useState(ex?.halal ?? !!myCook?.halalKitchen);
@@ -67,13 +70,14 @@ export default function DishEditor() {
   const issues = publishIssues({
     allergenStatus: status, ingredients: cleanIngs, photo, conservation, reheating,
     animalOrigin: animal, provenance, isBakery: bakery, productionCountry: country,
-    qualificationValid: qualOk,
+    qualificationValid: qualOk, title, description, category,
   });
   const errs = {
     title: title.trim().length < 3 ? L('3 caractères minimum', '3 characters minimum') : undefined,
     price: !(p >= 2 && p <= 200) ? L('Prix par portion entre CHF 2 et 200', 'Price per portion between CHF 2 and 200') : undefined,
     lead: !(lh >= MIN_LEAD_HOURS && lh <= 168) ? L(`Entre ${MIN_LEAD_HOURS} et 168 h`, `Between ${MIN_LEAD_HOURS} and 168 h`) : undefined,
   };
+  const drinkHit = homemadeDrinkHit({ category, title, description, ingredients: cleanIngs });
   const valid = !Object.values(errs).some(Boolean) && description.trim().length >= 10 && allergenOk && (!active || issues.length === 0);
   const levelLabel = (level: AllergenLevel) => (level === 'present' ? t('allergenPresent') : level === 'traces' ? t('allergenTraces') : t('allergenAbsent'));
   const setLevel = (key: Allergen, level: AllergenLevel) => setStatus((s) => ({ ...s, [key]: level }));
@@ -91,7 +95,7 @@ export default function DishEditor() {
   const save = () => {
     const d: Dish = {
       ...(ex ?? { cookId: myCook.id, emoji, active }),
-      id: ex?.id ?? uid('dish_'), cookId: myCook.id, title: title.trim(), description: description.trim(), cuisine,
+      id: ex?.id ?? uid('dish_'), cookId: myCook.id, title: title.trim(), description: description.trim(), cuisine, category,
       price: Math.round(p * 20) / 20,
       allergens: allergensFromStatus(status), allergensConfirmed: true, allergenStatus: status,
       halal, vegetarian: veg, spicy, ingredients: cleanIngs, leadHours: lh, photo, emoji, active,
@@ -126,6 +130,11 @@ export default function DishEditor() {
       <Field label={L('Portion (g ou nombre de personnes, facultatif)', 'Portion (g or servings, optional)')} value={portion} onChangeText={setPortion} placeholder="450 g" />
       <Muted>{L('Cuisine', 'Cuisine')}</Muted>
       <Row wrap>{CUISINES.map((c) => <Chip key={c.key} label={c[lang]} active={cuisine === c.key} onPress={() => setCuisine(c.key)} />)}</Row>
+      <Spacer h={8} />
+      <Muted>{t('dishCategory')}</Muted>
+      <Row wrap>{DISH_CATEGORIES.map((c) => <Chip key={c.key} label={c[lang]} active={category === c.key} onPress={() => setCategory(c.key)} />)}</Row>
+      <Muted style={{ marginTop: 6 }}>{t('homemadeDrinkHint')}</Muted>
+      {drinkHit ? <Notice tone="warning" title={t('publishHomemadeDrink')} text={homemadeDrinkMessage(lang)} /> : null}
       <Spacer h={8} />
       <Row>
         <View style={{ flex: 1 }}><Field label={L('Prix / portion (CHF)', 'Price / portion (CHF)')} value={price} onChangeText={setPrice} keyboardType="decimal-pad" error={price ? errs.price : undefined} /></View>

@@ -23,6 +23,7 @@ export default function CookProfile() {
   const [liability, setLiability] = useState(!!myCook?.liabilityAcceptedAt);
   const [deliveryModes, setDeliveryModes] = useState<FulfilMode[]>(myCook?.deliveryModes ?? (myCook?.delivers ? ['pickup', 'delivery', 'partner'] : ['pickup']));
   const [delivers, setDelivers] = useState(myCook?.delivers ?? false);
+  const [offerBissabi, setOfferBissabi] = useState(myCook?.offerBissabiDrinks ?? false);
   const [langs, setLangs] = useState<string[]>(myCook?.languages ?? ['fr']);
   const [color, setColor] = useState(myCook?.avatarColor ?? AVATAR_COLORS[0]);
   const place = COMMUNES.find((c) => c.name.toLowerCase() === commune.trim().toLowerCase());
@@ -39,6 +40,7 @@ export default function CookProfile() {
       halalCertificationNote: halal ? (halalCert.trim() || undefined) : undefined,
       liabilityAcceptedAt: liability ? (myCook?.liabilityAcceptedAt ?? new Date().toISOString()) : undefined,
       deliveryModes: delivers ? (deliveryModes.length ? deliveryModes : ['pickup', 'delivery']) : ['pickup'],
+      offerBissabiDrinks: offerBissabi,
     };
     if (liability && !next.liabilityAcceptedAt) next.liabilityAcceptedAt = new Date().toISOString();
     if (!liability) next.liabilityAcceptedAt = undefined;
@@ -63,6 +65,7 @@ export default function CookProfile() {
       <Toggle label={L('Coursier partenaire', 'Partner courier')} value={deliveryModes.includes('partner')} onChange={(v) => { setDelivers(v || deliveryModes.includes('delivery')); setDeliveryModes((m) => v ? [...new Set([...m, 'partner' as FulfilMode])] : m.filter((x) => x !== 'partner')); }} />
       {isBadgeValid(myCook?.qualification) ? <Muted>{L(BADGE_LABEL_FR, BADGE_LABEL_EN)}</Muted> : <Button title={L('Passer la formation (obligatoire pour publier)', 'Take training (required to publish)')} variant="secondary" onPress={() => router.push('/studio/qualification')} />}
       <Toggle label={L('Je peux livrer moi-même', 'I can deliver myself')} value={delivers} onChange={setDelivers} hint={t('deliveryHint')} />
+      <Toggle label={t('offerBissabiDrinks')} value={offerBissabi} onChange={setOfferBissabi} hint={t('offerBissabiDrinksHint')} />
       <Muted>{L('Langues parlées', 'Languages spoken')}</Muted>
       <Row wrap>{['fr', 'en', 'de', 'it', 'es', 'ar', 'wo'].map((k) => <Chip key={k} label={k.toUpperCase()} active={langs.includes(k)} onPress={() => setLangs((l) => (l.includes(k) ? l.filter((x) => x !== k) : [...l, k]))} />)}</Row>
       <Spacer h={8} />

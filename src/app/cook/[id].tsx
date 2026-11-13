@@ -35,11 +35,13 @@ export default function CookScreen() {
       </Row>
       <Spacer />
       <Row wrap gap={6}>
+        <Pill label={L('Cuisinier indépendant', 'Independent cook')} tone="gold" />
         {cook.originFlag ? <Pill label={`${cook.originFlag} ${cook.originCountry ?? ''}`} tone="gold" /> : null}
         {cook.ofcoStatus === 'ofco_verified' ? <Pill label={L('Annonce OFCO vérifiée (démo)', 'OFCO notice verified (demo)')} tone="green" /> : null}
         {cook.hygieneBadge ? <Pill label={L('Checklist hygiène OK (auto)', 'Hygiene checklist OK (self)')} /> : null}
         {cook.halalKitchen ? <Pill label={L('Cuisine halal (déclarée)', 'Halal kitchen (declared)')} tone="green" /> : <Pill label={L('Cuisine non déclarée halal', 'Kitchen not declared halal')} />}
         {isBadgeValid(cook.qualification) ? <Pill label={L(BADGE_LABEL_FR, BADGE_LABEL_EN)} tone="green" /> : null}
+        {cook.offerBissabiDrinks ? <Pill label={L('Propose des boissons Bissabi (bouteilles scellées)', 'Offers Bissabi drinks (sealed bottles)')} tone="gold" /> : null}
         {(cook.deliveryModes ?? (cook.delivers ? ['pickup', 'delivery'] : ['pickup'])).includes('partner') ? <Pill label={L('Livre via partenaire', 'Delivers via partner')} tone="gold" /> : null}
         <Pill label={cook.delivers ? L('Retrait & livraison', 'Pickup & delivery') : L('Retrait', 'Pickup')} tone="gold" />
         <Pill label={`${L('Checklist hygiène', 'Hygiene checklist')} ${checked}/${HYGIENE_CHECKLIST.length} (${L('auto-déclarée', 'self-declared')})`} />
