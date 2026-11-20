@@ -4,6 +4,7 @@ import { Avatar, DishCard, Pill, Stars } from '@/components/brand';
 import { useData, useL } from '@/lib/data';
 import { stamp } from '@/lib/dates';
 import { fmtKm } from '@/lib/geo';
+import { buyerVisibleSlots } from '@/lib/launchCheckout';
 import { openSlotsFor, rating } from '@/lib/market';
 import { HYGIENE_CHECKLIST } from '@/lib/model';
 import { Body, Button, Card, Empty, H1, H2, IconButton, Muted, Row, Screen, Spacer } from '@/ui/kit';
@@ -35,7 +36,7 @@ export default function CookScreen() {
       <Spacer />
       <Row wrap gap={6}>
         {cook.halalKitchen ? <Pill label={L('Cuisine halal (déclarée)', 'Halal kitchen (declared)')} tone="green" /> : null}
-        <Pill label={cook.delivers ? L('Retrait & livraison', 'Pickup & delivery') : L('Retrait', 'Pickup')} tone="gold" />
+        <Pill label={L('Retrait', 'Pickup')} tone="gold" />
         <Pill label={`${L('Checklist hygiène', 'Hygiene checklist')} ${checked}/${HYGIENE_CHECKLIST.length} (${L('auto-déclarée', 'self-declared')})`} />
         {cook.languages.map((x) => <Pill key={x} label={x.toUpperCase()} />)}
         {cook.demo ? <Pill label="démo" /> : null}
@@ -44,7 +45,7 @@ export default function CookScreen() {
       <Body>{cook.bio}</Body>
       <Spacer />
       <H2>{L('Ses plats', 'Dishes')}</H2>
-      {mine.length ? mine.map((x) => <DishCard key={x.id} dish={x} distance={d} nextSlot={openSlotsFor(x, slots)[0]} onPress={() => router.push(`/dish/${x.id}`)} />) : <Muted>{L('Aucun plat actif.', 'No active dish.')}</Muted>}
+      {mine.length ? mine.map((x) => <DishCard key={x.id} dish={x} distance={d} nextSlot={openSlotsFor(x, buyerVisibleSlots(slots))[0]} onPress={() => router.push(`/dish/${x.id}`)} />) : <Muted>{L('Aucun plat actif.', 'No active dish.')}</Muted>}
       <H2>{L('Avis vérifiés', 'Verified reviews')}</H2>
       {pub.length ? pub.map((x) => (
         <Card key={x.id}>

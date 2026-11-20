@@ -6,13 +6,8 @@
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
-    "userInterfaceStyle": "light",
+    "userInterfaceStyle": "automatic",
     "description": "La saveur du partage — cuisine de quartier authentique par Bissabi",
-    "splash": {
-      "image": "./assets/splash-icon.png",
-      "resizeMode": "contain",
-      "backgroundColor": "#FAF8F2"
-    },
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.vibecode.bissabihomemadefood.gjtply",
@@ -23,7 +18,7 @@
       "infoPlist": {
         "ITSAppUsesNonExemptEncryption": false,
         "CFBundleDevelopmentRegion": "fr",
-        "NSLocationWhenInUseUsageDescription": "Bissabi Home Made Food utilise votre position (arrondie à environ 100 m) pour afficher les plats et cuisiniers proches de vous. Elle n'est ni conservée ni envoyée à un serveur.",
+        "NSLocationWhenInUseUsageDescription": "Bissabi Home Made Food utilise votre position, arrondie à environ 100 m, pour afficher les plats et cuisiniers proches. Elle est enregistrée dans les préférences de cet appareil. Elle n'est pas envoyée à un serveur. La désactiver dans Compte efface cette préférence enregistrée.",
         "NSPhotoLibraryUsageDescription": "Bissabi Home Made Food accède à vos photos pour que vous puissiez illustrer vos plats lorsque vous les publiez.",
         "NSMotionUsageDescription": "Cette app n'utilise pas les données de mouvement ; cette mention est requise par le module de localisation.",
         "NSLocationTemporaryUsageDescriptionDictionary": {
@@ -90,11 +85,20 @@
     "plugins": [
       "expo-router",
       [
+        "expo-splash-screen",
+        {
+          "image": "./assets/splash-icon.png",
+          "resizeMode": "contain",
+          "backgroundColor": "#FAF8F2",
+          "enableFullScreenImage_legacy": true
+        }
+      ],
+      [
         "expo-location",
         {
-          "locationWhenInUsePermission": "Bissabi Home Made Food utilise votre position (arrondie à environ 100 m) pour afficher les plats et cuisiniers proches de vous. Elle n'est ni conservée ni envoyée à un serveur.",
-          "locationAlwaysAndWhenInUsePermission": "Bissabi Home Made Food utilise votre position (arrondie à environ 100 m) pour afficher les plats et cuisiniers proches de vous. Elle n'est ni conservée ni envoyée à un serveur.",
-          "locationAlwaysPermission": "Bissabi Home Made Food utilise votre position (arrondie à environ 100 m) pour afficher les plats et cuisiniers proches de vous. Elle n'est ni conservée ni envoyée à un serveur.",
+          "locationWhenInUsePermission": "Bissabi Home Made Food utilise votre position, arrondie à environ 100 m, pour afficher les plats et cuisiniers proches. Elle est enregistrée dans les préférences de cet appareil. Elle n'est pas envoyée à un serveur. La désactiver dans Compte efface cette préférence enregistrée.",
+          "locationAlwaysAndWhenInUsePermission": "Bissabi Home Made Food utilise votre position, arrondie à environ 100 m, pour afficher les plats et cuisiniers proches. Elle est enregistrée dans les préférences de cet appareil. Elle n'est pas envoyée à un serveur. La désactiver dans Compte efface cette préférence enregistrée.",
+          "locationAlwaysPermission": "Bissabi Home Made Food utilise votre position, arrondie à environ 100 m, pour afficher les plats et cuisiniers proches. Elle est enregistrée dans les préférences de cet appareil. Elle n'est pas envoyée à un serveur. La désactiver dans Compte efface cette préférence enregistrée.",
           "isIosBackgroundLocationEnabled": false,
           "isAndroidBackgroundLocationEnabled": false
         }

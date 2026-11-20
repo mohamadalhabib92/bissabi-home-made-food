@@ -8,8 +8,8 @@ import { confirmAsk } from '@/lib/confirm';
 import { useData, useL } from '@/lib/data';
 import { dayLabel, stamp } from '@/lib/dates';
 import { downloadText } from '@/lib/download';
+import { launchPayment } from '@/lib/launchCheckout';
 import { ORDER_STEPS } from '@/lib/model';
-import { paymentsLive } from '@/lib/payments';
 import { chf } from '@/lib/pricing';
 import { STATUS_LABEL } from '@/lib/status';
 import { uid } from '@/lib/storage';
@@ -27,8 +27,9 @@ export default function OrderScreen() {
   const [stars, setStars] = useState(5);
   const [text, setText] = useState('');
   const o = orders.find((x) => x.id === id);
-  // Retour de Stripe Checkout (la confirmation définitive vient du webhook serveur)
+  // Un retour ?paid= ne réécrit pas la commande tant que le lancement n'appelle pas Stripe.
   useEffect(() => {
+    if (!launchPayment().callsStripe) return;
     if (!o || !paid || o.status !== 'awaiting_payment') return;
     if (paid === 'success') setOrderStatus(o.id, 'requested', { payment: { method: 'stripe' } }, 'Paiement Stripe confirmé');
     if (paid === 'cancel') setOrderStatus(o.id, 'payment_failed', { payment: { method: 'stripe', error: 'Paiement annulé' } }, 'Paiement annulé');
@@ -61,7 +62,7 @@ export default function OrderScreen() {
           <Notice tone="danger" title={L('Le paiement n’a pas abouti', 'Payment did not go through')} text={`${o.payment.error ?? ''} ${L('Aucun montant n’a été prélevé. Vous pouvez réessayer ou annuler la commande.', 'Nothing was charged. You can retry or cancel the order.')}`} />
           {err ? <Muted>{err}</Muted> : null}
           <Button icon="refresh" title={L('Réessayer le paiement', 'Retry payment')} loading={busy} onPress={() => retry(false)} />
-          {!paymentsLive ? <Button variant="ghost" small title={L('Démo : échouer à nouveau', 'Demo: fail again')} onPress={() => retry(true)} /> : null}
+          {launchPayment().simulated ? <Button variant="ghost" small title={L('Démo : échouer à nouveau', 'Demo: fail again')} onPress={() => retry(true)} /> : null}
         </Card>
       ) : null}
       {o.status === 'refused' ? <Notice tone="danger" title={L('Le cuisinier n’a pas pu accepter', 'The cook could not accept')} text={`${o.refuseReason ?? ''} — ${L('remboursement intégral.', 'full refund.')}`} /> : null}

@@ -6,13 +6,14 @@ import { Avatar, DishCard, Stars, Wordmark } from '@/components/brand';
 import { useI18n } from '@/i18n';
 import { useData, useL } from '@/lib/data';
 import { fmtKm, zoneOf } from '@/lib/geo';
+import { buyerVisibleSlots } from '@/lib/launchCheckout';
 import { openSlotsFor, rating } from '@/lib/market';
 import { CUISINES, type Cuisine } from '@/lib/model';
-import { Button, Chip, DemoBanner, Empty, Field, H2, Ionicons, Muted, Notice, Segmented, Toggle, styles } from '@/ui/kit';
+import { Button, Chip, DemoBanner, Empty, Field, H2, Ionicons, Muted, Notice, Segmented, Toggle, panelStyle, styles } from '@/ui/kit';
 import { theme as t } from '@/ui/theme';
 
 export default function Discover() {
-  const { prefs, setPrefs, cooks, dishes, slots, reviews, distanceTo, favorites, hasDemo, loadDemo, bootFallback, storageReady } = useData();
+  const { prefs, setPrefs, cooks, dishes, slots, reviews, distanceTo, favorites, hasDemo, loadDemo, bootFallback, storageReady, preservation } = useData();
   const { L, lang } = useL();
   const { t: tr } = useI18n();
   const zone = zoneOf(prefs.location);
@@ -35,7 +36,7 @@ export default function Discover() {
     .filter((d) => !cuisine || d.cuisine === cuisine)
     .filter((d) => !favOnly || favorites.dishes.includes(d.id) || favorites.cooks.includes(d.cookId))
     .filter((d) => !needle || `${d.title} ${d.description} ${cooks.find((c) => c.id === d.cookId)?.name ?? ''}`.toLowerCase().includes(needle))
-    .map((d) => ({ d, next: openSlotsFor(d, slots)[0], dist: distanceTo(cooks.find((c) => c.id === d.cookId)!) }))
+    .map((d) => ({ d, next: openSlotsFor(d, buyerVisibleSlots(slots))[0], dist: distanceTo(cooks.find((c) => c.id === d.cookId)!) }))
     .sort((a, b) => (a.next ? 0 : 1) - (b.next ? 0 : 1) || (a.dist ?? 0) - (b.dist ?? 0));
 
   return (
@@ -44,13 +45,15 @@ export default function Discover() {
         <Wordmark />
         <View style={{ height: 14 }} />
         <Pressable onPress={() => router.push('/location')} accessibilityRole="button" accessibilityLabel={L('Changer de lieu', 'Change location')}
-          style={{ flexDirection: 'row', alignItems: 'center', gap: 8, backgroundColor: t.surface, borderRadius: 999, borderWidth: 1, borderColor: t.border, paddingHorizontal: 14, minHeight: 44, alignSelf: 'flex-start' }}>
+          style={panelStyle({ flexDirection: 'row', alignItems: 'center', gap: 8, borderRadius: 999, paddingHorizontal: 14, minHeight: t.hit, alignSelf: 'flex-start' })}>
           <Ionicons name={prefs.location?.source === 'gps' ? 'navigate' : 'location-outline'} size={16} color={t.primary} />
           <Text style={{ color: t.text, fontWeight: '600' }}>{prefs.location?.label ?? L('Choisir un lieu', 'Choose a location')}</Text>
           <Ionicons name="chevron-down" size={14} color={t.muted} />
         </Pressable>
         <View style={{ height: 14 }} />
         {bootFallback && !storageReady ? <Notice tone="warning" title={tr('bootFallback')} /> : null}
+        {preservation.some((entry) => entry.heldOriginal) ? <Notice tone="warning" title={tr('preserveHeldTitle')} text={tr('preserveHeldBody')} /> : null}
+        {preservation.some((entry) => entry.unknownCount > 0) ? <Notice tone="info" title={tr('preserveUnknownTitle')} text={tr('preserveUnknownBody')} /> : null}
         {hasDemo ? <DemoBanner text={L('Cuisinier·ères et plats de démonstration (fictifs).', 'Demo cooks and dishes (fictional).')} /> : null}
         <Segmented label={L('Rayon', 'Radius')} options={[1, 2, 3, 4, 5].map((k) => ({ label: `${k} km`, value: k }))} value={prefs.radiusKm} onChange={(v) => setPrefs((p) => ({ ...p, radiusKm: v }))} />
         <Toggle label={L('Halal uniquement', 'Halal only')} value={prefs.halalOnly} onChange={(v) => setPrefs((p) => ({ ...p, halalOnly: v }))} hint={L('Déclaration du cuisinier, non certifiée par Bissabi.', 'Cook’s declaration, not certified by Bissabi.')} />
@@ -69,7 +72,7 @@ export default function Discover() {
                 const r = rating(reviews, c.id);
                 return (
                   <Pressable key={c.id} onPress={() => router.push(`/cook/${c.id}`)} accessibilityRole="button" accessibilityLabel={c.name}
-                    style={{ width: 170, backgroundColor: t.surface, borderRadius: 16, borderWidth: 1, borderColor: t.border, padding: 12, gap: 6 }}>
+                    style={panelStyle({ width: 170, borderRadius: 16, padding: 12, gap: 6, minHeight: t.hit })}>
                     <Avatar cook={c} />
                     <Text style={{ color: t.text, fontWeight: '700' }} numberOfLines={1}>{c.name}</Text>
                     <Text style={{ color: t.muted, fontSize: 12 }} numberOfLines={1}>{c.commune}{d != null ? ` · ${fmtKm(d)}` : ''}</Text>
@@ -90,7 +93,7 @@ export default function Discover() {
           <Empty icon="restaurant-outline"
             title={favOnly ? L('Pas encore de favoris', 'No favourites yet') : L('Aucun plat dans ce rayon', 'No dish within this radius')}
             text={favOnly ? L('Touchez ♥ sur un plat pour le retrouver ici.', 'Tap ♥ on a dish to find it here.') : L('Élargissez le rayon, retirez un filtre, ou invitez un·e voisin·e qui cuisine à rejoindre Bissabi Home Made.', 'Widen the radius, remove a filter, or invite a neighbour who cooks to join Bissabi Home Made.')}
-            action={!cooks.some((c) => c.demo) ? <Button variant="secondary" title={L('Charger la démo', 'Load demo')} onPress={loadDemo} /> : prefs.radiusKm < 5 ? <Button variant="secondary" title={L('Passer à 5 km', 'Switch to 5 km')} onPress={() => setPrefs((p) => ({ ...p, radiusKm: 5 }))} /> : undefined} />
+            action={!cooks.some((c) => c.demo) && !preservation.some((entry) => ['cooks', 'dishes', 'slots', 'orders', 'reviews'].includes(entry.key) && !entry.hydrated) ? <Button variant="secondary" title={L('Charger la démo', 'Load demo')} onPress={loadDemo} /> : prefs.radiusKm < 5 ? <Button variant="secondary" title={L('Passer à 5 km', 'Switch to 5 km')} onPress={() => setPrefs((p) => ({ ...p, radiusKm: 5 }))} /> : undefined} />
         )}
       </View>
     </ScrollView>
