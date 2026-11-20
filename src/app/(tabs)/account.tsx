@@ -6,12 +6,14 @@ import { useI18n } from '@/i18n';
 import { useData, useL } from '@/lib/data';
 import { paymentsLive } from '@/lib/payments';
 import { Badge, Button, Card, H2, ListItem, Muted, Notice, Screen, Segmented, Spacer, Toggle } from '@/ui/kit';
+import { useVibrations } from '@/ui/access';
 
 export default function Account() {
   const { prefs, setPrefs, hasDemo, removeDemo, loadDemo, reviews, favorites, dishes, cooks, preservation } = useData();
   const { L } = useL();
   const { t } = useI18n();
   const router = useRouter();
+  const [vibrations, setVibrations] = useVibrations();
   const pendingReviews = reviews.filter((r) => r.status === 'pending').length;
   return (
     <Screen>
@@ -23,6 +25,7 @@ export default function Account() {
       <Card>
         <ListItem icon="language-outline" title={L('Autres langues', 'Other languages')} subtitle="DE · IT · ES · de-CH · AR" right={<Badge label={L('à venir', 'coming')} />} onPress={() => router.push('/languages')} />
         <ListItem icon="location-outline" title={L('Lieu', 'Location')} subtitle={prefs.location?.label ?? L('Non défini', 'Not set')} onPress={() => router.push('/location')} />
+        <Toggle label={L('Vibrations', 'Vibrations')} value={vibrations} onChange={setVibrations} hint={L('Petits retours tactiles quand vous touchez un bouton.', 'Small taps you can feel when you press a button.')} />
       </Card>
       <H2>{L('Favoris', 'Favourites')}</H2>
       <Card>

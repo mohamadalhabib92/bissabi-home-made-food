@@ -11,7 +11,7 @@ import { dayLabel, hoursUntil } from '@/lib/dates';
 import { buyerVisibleSlots, launchPayment, prepareLaunchCheckout } from '@/lib/launchCheckout';
 import { slotUsed } from '@/lib/market';
 import { MIN_LEAD_HOURS, quote } from '@/lib/pricing';
-import { Button, Card, DemoBanner, Empty, Field, H2, Muted, Notice, Screen, Spacer, Toggle } from '@/ui/kit';
+import { Button, Card, DemoBanner, Empty, Field, H2, Muted, Notice, Screen, Spacer, Toggle, haptic, useFeedback } from '@/ui/kit';
 import { theme as t } from '@/ui/theme';
 
 export default function Checkout() {
@@ -21,6 +21,7 @@ export default function Checkout() {
   const { t: tr } = useI18n();
   const router = useRouter();
   const pay = usePay();
+  const fb = useFeedback();
   const cook = cooks.find((c) => c.id === cart.cookId);
   const requested = Array.isArray(params.mode) ? params.mode[0] : params.mode;
   const launch = prepareLaunchCheckout(orders, cart.lines, requested);
@@ -62,7 +63,13 @@ export default function Checkout() {
     setBusy(false);
     clearCart();
     router.replace(`/order/${o.id}`);
-    if (!r.ok) setError(r.error ?? null);
+    if (!r.ok) {
+      haptic('error');
+      setError(r.error ?? null);
+    } else {
+      // Moment de réussite : la commande part chez le cuisinier.
+      fb.celebrate({ title: L('Commande envoyée', 'Order sent'), subtitle: `${cook.name} · ${dayLabel(slot.s.date, lang)} ${slot.s.from}`, icon: 'restaurant', tone: 'gold' });
+    }
   };
   return (
     <Screen>
@@ -74,7 +81,7 @@ export default function Checkout() {
       {options.length ? options.map(({ s, left }) => {
         const on = s.id === slotId; const full = left < portions;
         return (
-          <Pressable key={s.id} disabled={full} onPress={() => setSlotId(s.id)} accessibilityRole="radio" accessibilityState={{ checked: on, disabled: full }}
+          <Pressable key={s.id} disabled={full} onPress={() => { haptic('select'); setSlotId(s.id); }} accessibilityRole="radio" accessibilityState={{ checked: on, disabled: full }}
             style={{ borderWidth: on ? 2 : 1, borderColor: on ? t.primary : t.border, backgroundColor: t.surface, borderRadius: 14, padding: 14, marginBottom: 8, opacity: full ? 0.5 : 1, minHeight: 56 }}>
             <Text style={{ color: t.text, fontWeight: '700' }}>{dayLabel(s.date, lang)} · {s.from}–{s.to}</Text>
             <Text style={{ color: full ? t.danger : t.muted, fontSize: 13 }}>{full ? L('Complet pour votre quantité', 'Full for your quantity') : L(`${left} portion(s) disponibles`, `${left} portion(s) left`)}</Text>
