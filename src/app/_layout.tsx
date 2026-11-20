@@ -1,19 +1,21 @@
 import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
-import { useState } from 'react';
-import { useColorScheme, View } from 'react-native';
+import { useEffect, useState } from 'react';
+import { Platform, useColorScheme, View } from 'react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { DataProvider, useL } from '@/lib/data';
 import { RebootProvider } from '@/lib/reboot';
+import { prefersReducedTransparency, useReducedTransparency } from '@/ui/access';
 import { AppErrorBoundary } from '@/ui/error-boundary';
 import { FontProvider } from '@/ui/fonts';
+import { Wash } from '@/ui/kit';
 import { FeedbackProvider } from '@/ui/motion';
 import { applyScheme, theme as t } from '@/ui/theme';
 
 function Nav() {
   const { L } = useL();
   return (
-    <Stack screenOptions={{ headerStyle: { backgroundColor: t.bg }, headerTintColor: t.text, headerTitleStyle: { fontWeight: '700' }, headerShadowVisible: false, contentStyle: { backgroundColor: t.bg }, headerBackTitle: L('Retour', 'Back') }}>
+    <Stack screenOptions={{ headerStyle: { backgroundColor: prefersReducedTransparency() ? t.surface : t.surfaceGlass }, headerTintColor: t.text, headerTitleStyle: { fontWeight: '700' }, headerShadowVisible: false, contentStyle: { backgroundColor: t.bg }, headerBackTitle: L('Retour', 'Back') }}>
       <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
       <Stack.Screen name="welcome" options={{ headerShown: false, gestureEnabled: false }} />
       <Stack.Screen name="location" options={{ title: L('Où êtes-vous ?', 'Where are you?') }} />
@@ -43,6 +45,13 @@ export default function Layout() {
   // Apparence système : appliquée avant le rendu des enfants. Le remontage se fait
   // sous DataProvider (clé = schéma), donc les données et le panier ne bougent pas.
   const scheme = applyScheme(useColorScheme());
+  const reduce = useReducedTransparency();
+  useEffect(() => {
+    if (Platform.OS !== 'web' || typeof document === 'undefined') return;
+    const bg = t.bg;
+    document.documentElement.style.backgroundColor = bg;
+    document.body.style.backgroundColor = bg;
+  }, [scheme, reduce]);
   const [boot, setBoot] = useState(0);
   const reboot = () => setBoot((n) => n + 1);
   return (
@@ -51,7 +60,8 @@ export default function Layout() {
         <FontProvider>
           <RebootProvider reboot={reboot}>
             <DataProvider key={boot}>
-              <View key={scheme} style={{ flex: 1, backgroundColor: t.bg }}>
+              <View key={`${scheme}:${reduce ? 'solid' : 'glass'}`} style={{ flex: 1, backgroundColor: t.bg }}>
+                <Wash />
                 <FeedbackProvider>
                   <StatusBar style={scheme === 'dark' ? 'light' : 'dark'} />
                   <Nav />

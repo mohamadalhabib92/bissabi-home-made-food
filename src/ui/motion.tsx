@@ -7,7 +7,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, type ComponentProps, type ReactNode } from 'react';
 import { AccessibilityInfo, Animated, Easing, Platform, Pressable, StyleSheet, Text, View, type PressableProps, type StyleProp, type ViewStyle } from 'react-native';
 import { haptic, type HapticKind } from './haptics';
-import { announce, screenReaderOn } from './access';
+import { announce, prefersReducedTransparency, screenReaderOn } from './access';
 import { theme as T } from './theme';
 
 const native = Platform.OS !== 'web';
@@ -218,7 +218,7 @@ function CelebrationView({ c, onDone }: { c: Celebration; onDone: () => void }) 
   const accent = c.tone === 'gold' ? T.accent : T.success;
   return (
     <Animated.View pointerEvents="box-none" style={[StyleSheet.absoluteFill, cs.wrap, { opacity: fade }]}>
-      <Pressable onPress={onDone} accessibilityRole="button" accessibilityLabel={`${c.title}. Fermer`} style={[cs.card, { backgroundColor: T.surface, borderColor: T.border }]}>
+      <Pressable onPress={onDone} accessibilityRole="button" accessibilityLabel={`${c.title}. Fermer`} style={[cs.card, { backgroundColor: prefersReducedTransparency() ? T.surface : T.surfaceGlass, borderColor: prefersReducedTransparency() ? T.border : T.glassHighlight }]}>
         <View style={cs.badgeWrap}>
           <Animated.View
             style={[

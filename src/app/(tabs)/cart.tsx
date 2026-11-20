@@ -34,7 +34,7 @@ export default function CartScreen() {
               <Muted>{chf(l.dish!.price)} × {l.qty} = {chf(l.dish!.price * l.qty)}</Muted>
             </View>
             <IconButton icon="remove" label={L('Moins', 'Less')} onPress={() => setQty(l.dishId, l.qty - 1)} />
-            <Text style={{ fontWeight: '700', minWidth: 20, textAlign: 'center' }}>{l.qty}</Text>
+            <Text style={{ color: t.text, fontWeight: '700', minWidth: 20, textAlign: 'center' }}>{l.qty}</Text>
             <IconButton icon="add" label={L('Plus', 'More')} onPress={() => setQty(l.dishId, l.qty + 1)} />
           </Row>
         </Card>

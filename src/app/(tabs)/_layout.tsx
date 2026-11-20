@@ -4,6 +4,7 @@ import { Text, View, useWindowDimensions } from 'react-native';
 import { useI18n } from '@/i18n';
 import { useData } from '@/lib/data';
 import { useReboot } from '@/lib/reboot';
+import { prefersReducedTransparency } from '@/ui/access';
 import { Breathing, haptic, Button, Ionicons, type IconName } from '@/ui/kit';
 import { theme as t } from '@/ui/theme';
 
@@ -53,10 +54,18 @@ export default function TabsLayout() {
     <Tabs
       screenListeners={{ tabPress: () => haptic('select') }}
       screenOptions={{
-        headerStyle: { backgroundColor: t.bg }, headerTintColor: t.text, headerShadowVisible: false,
-        tabBarStyle: { backgroundColor: t.surface, borderTopColor: t.border, minHeight: 60 },
-        tabBarActiveTintColor: t.primary, tabBarInactiveTintColor: t.muted, tabBarAllowFontScaling: false,
+        headerStyle: { backgroundColor: prefersReducedTransparency() ? t.surface : t.surfaceGlass }, headerTintColor: t.text, headerShadowVisible: false,
+        tabBarStyle: {
+          backgroundColor: prefersReducedTransparency() ? t.surface : t.surfaceGlass,
+          borderTopColor: prefersReducedTransparency() ? t.border : t.glassHighlight,
+          borderTopWidth: 1,
+          minHeight: 60,
+        },
+        tabBarActiveTintColor: t.primary, tabBarInactiveTintColor: t.muted,
+        // La barre plafonne le Dynamic Type à ×1,4 (tabFs) pour rester sur une ligne.
+        tabBarAllowFontScaling: false,
         tabBarLabelStyle: { fontSize: tabFs(12), fontWeight: '600' },
+        tabBarItemStyle: { minHeight: t.hit },
         sceneStyle: { backgroundColor: t.bg },
       }}
     >

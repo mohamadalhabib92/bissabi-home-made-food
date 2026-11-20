@@ -16,10 +16,11 @@ import {
   type ViewStyle,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { prefersReducedTransparency } from './access';
 import { useAppFonts } from './fonts';
 import { haptic } from './haptics';
-import { FadeIn, PressableScale } from './motion';
-import { currentScheme, theme as t, type Scheme } from './theme';
+import { FadeIn, PressableScale, prefersReducedMotion } from './motion';
+import { currentScheme, spacing, theme as t, type Scheme } from './theme';
 
 const S = () => getStyles();
 
@@ -28,11 +29,23 @@ export { Ionicons };
 export { Breathing, FadeIn, PressableScale, ProgressBar, Skeleton, SkeletonList, useFeedback } from './motion';
 export { haptic } from './haptics';
 
-/** Conteneur d'écran défilant, largeur max sur desktop (PWA). */
+/** Halo de couleur derrière le verre. Masqué si « Réduire la transparence » est actif. */
+export function Wash() {
+  if (prefersReducedTransparency()) return null;
+  return (
+    <View pointerEvents="none" accessibilityElementsHidden importantForAccessibility="no-hide-descendants" style={StyleSheet.absoluteFill}>
+      <View style={{ position: 'absolute', top: -100, right: -80, width: 300, height: 300, borderRadius: 150, backgroundColor: t.washA }} />
+      <View style={{ position: 'absolute', top: 280, left: -120, width: 260, height: 260, borderRadius: 130, backgroundColor: t.washB }} />
+      <View style={{ position: 'absolute', bottom: -60, right: -40, width: 220, height: 220, borderRadius: 110, backgroundColor: t.washGold }} />
+    </View>
+  );
+}
+
+/** Conteneur d'écran défilant, largeur max sur desktop (PWA). Fond transparent : le halo est derrière. */
 export function Screen({ children, scroll = true, padded = true }: { children: ReactNode; scroll?: boolean; padded?: boolean }) {
   const insets = useSafeAreaInsets();
   const inner = (
-    <View style={[S().inner, padded && { padding: 20 }, { paddingBottom: 40 + insets.bottom }]}>{children}</View>
+    <View style={[S().inner, padded && { padding: spacing.lg }, { paddingBottom: spacing.xxxl + insets.bottom }]}>{children}</View>
   );
   return (
     <View style={S().screen}>
@@ -58,7 +71,7 @@ export function H1({ children, style }: { children: ReactNode; style?: StyleProp
 export function H2({ children, style }: { children: ReactNode; style?: StyleProp<TextStyle> }) {
   const f = useAppFonts();
   return (
-    <Text accessibilityRole="header" style={[S().h2, f.display ? { fontFamily: f.display } : null, style]}>
+    <Text maxFontSizeMultiplier={1.8} accessibilityRole="header" style={[S().h2, f.display ? { fontFamily: f.display } : null, style]}>
       {children}
     </Text>
   );
@@ -66,17 +79,17 @@ export function H2({ children, style }: { children: ReactNode; style?: StyleProp
 export function Body({ children, style, numberOfLines }: { children: ReactNode; style?: StyleProp<TextStyle>; numberOfLines?: number }) {
   const f = useAppFonts();
   return (
-    <Text style={[S().body, f.ui ? { fontFamily: f.ui } : null, style]} numberOfLines={numberOfLines}>
+    <Text maxFontSizeMultiplier={2} style={[S().body, f.ui ? { fontFamily: f.ui } : null, style]} numberOfLines={numberOfLines}>
       {children}
     </Text>
   );
 }
 export function Muted({ children, style }: { children: ReactNode; style?: StyleProp<TextStyle> }) {
   const f = useAppFonts();
-  return <Text style={[S().muted, f.ui ? { fontFamily: f.ui } : null, style]}>{children}</Text>;
+  return <Text maxFontSizeMultiplier={2} style={[S().muted, f.ui ? { fontFamily: f.ui } : null, style]}>{children}</Text>;
 }
 export function Eyebrow({ children, style }: { children: ReactNode; style?: StyleProp<TextStyle> }) {
-  return <Text style={[S().eyebrow, style]}>{children}</Text>;
+  return <Text maxFontSizeMultiplier={1.6} style={[S().eyebrow, style]}>{children}</Text>;
 }
 
 export function Card({ children, style, onPress, accessibilityLabel }: { children: ReactNode; style?: StyleProp<ViewStyle>; onPress?: () => void; accessibilityLabel?: string }) {
@@ -104,7 +117,48 @@ export function Spacer({ h = 12 }: { h?: number }) {
 }
 
 type BtnVariant = 'primary' | 'secondary' | 'ghost' | 'danger';
-/** Bouton accessible : cible tactile ≥ 44×44, retour visuel, états disabled/loading. */
+
+function webBlur(reduce: boolean): ViewStyle {
+  if (reduce || Platform.OS !== 'web') return {};
+  return { backdropFilter: 'saturate(140%) blur(18px)', WebkitBackdropFilter: 'saturate(140%) blur(18px)' } as ViewStyle;
+}
+
+/** Panneau de verre (ou aplat opaque si la transparence est réduite). */
+export function panelStyle(extra?: ViewStyle): ViewStyle {
+  const reduce = prefersReducedTransparency();
+  return {
+    backgroundColor: reduce ? t.surface : t.surfaceGlass,
+    borderWidth: 1,
+    borderColor: reduce ? t.border : t.glassBorder,
+    borderTopColor: reduce ? t.border : t.glassHighlight,
+    ...shadow(1),
+    ...webBlur(reduce),
+    ...extra,
+  };
+}
+
+/** Ombre large + ombre courte : le bouton a une hauteur, pas seulement une teinte. */
+function relief(pressed: boolean, solid: boolean): ViewStyle {
+  const dark = currentScheme() === 'dark';
+  if (Platform.OS === 'web') {
+    const rest = solid
+      ? 'inset 0 1px 0 rgba(255,255,255,0.45), 0 1px 1px rgba(28,20,12,0.14), 0 10px 18px rgba(28,20,12,0.18)'
+      : dark
+        ? 'inset 0 1px 0 rgba(255,244,230,0.2), 0 1px 1px rgba(0,0,0,0.35), 0 10px 18px rgba(0,0,0,0.35)'
+        : 'inset 0 1px 0 rgba(255,255,255,0.9), 0 1px 2px rgba(28,20,12,0.08), 0 10px 18px rgba(28,20,12,0.12)';
+    const down = 'inset 0 3px 6px rgba(28,20,12,0.28), 0 1px 1px rgba(28,20,12,0.12)';
+    return { boxShadow: pressed ? down : rest } as ViewStyle;
+  }
+  return {
+    shadowColor: t.shadow,
+    shadowOpacity: pressed ? 0.12 : dark ? 0.45 : 0.22,
+    shadowRadius: pressed ? 2 : 12,
+    shadowOffset: { width: 0, height: pressed ? 1 : 6 },
+    elevation: pressed ? 1 : 6,
+  };
+}
+
+/** Bouton en relief : ombre double, arête claire, enfoncement au pressage. Cible ≥ 44 pt. */
 export function Button({
   title,
   onPress,
@@ -127,14 +181,26 @@ export function Button({
   accessibilityLabel?: string;
 }) {
   const fonts = useAppFonts();
-  const bg = { primary: t.primary, secondary: t.surfaceAlt, ghost: 'transparent', danger: t.danger }[variant];
+  const solid = variant === 'primary' || variant === 'danger';
+  const reduce = prefersReducedTransparency();
+  const bg = solid
+    ? variant === 'danger'
+      ? t.danger
+      : t.primary
+    : variant === 'secondary'
+      ? reduce
+        ? t.surfaceAlt
+        : t.surfaceGlass
+      : reduce
+        ? 'transparent'
+        : t.surfaceGlass;
   const fg = { primary: t.onPrimary, secondary: t.text, ghost: t.primary, danger: t.onPrimary }[variant];
   const off = disabled || loading;
+  const hi = solid ? 'rgba(255,255,255,0.42)' : t.glassHighlight;
+  const shade = solid ? 'rgba(0,0,0,0.28)' : currentScheme() === 'dark' ? 'rgba(0,0,0,0.45)' : 'rgba(28,20,12,0.14)';
   return (
-    <PressableScale
-      onPress={off ? undefined : onPress}
-      disabled={!!off}
-      hapticKind={variant === 'danger' ? 'warning' : 'tap'}
+    <Pressable
+      onPress={off ? undefined : () => { haptic(variant === 'danger' ? 'warning' : 'tap'); onPress?.(); }}
       accessibilityRole="button"
       accessibilityLabel={accessibilityLabel ?? title}
       accessibilityState={{ disabled: !!off, busy: !!loading }}
@@ -142,22 +208,34 @@ export function Button({
       style={({ pressed }) => [
         S().btn,
         small && S().btnSmall,
-        { backgroundColor: bg },
-        variant === 'ghost' && { borderWidth: 1, borderColor: t.border },
-        pressed && !off && { opacity: 0.9 },
-        off && { opacity: 0.45 },
+        relief(pressed && !off, solid),
+        {
+          backgroundColor: bg,
+          borderTopColor: pressed && !off ? 'transparent' : hi,
+          borderBottomColor: shade,
+          borderLeftColor: solid ? 'transparent' : reduce ? t.border : t.glassBorder,
+          borderRightColor: solid ? 'transparent' : reduce ? t.border : t.glassBorder,
+        },
+        pressed && !off && { transform: [{ translateY: 1 }] },
+        off && { opacity: 0.45, elevation: 0 },
+        !solid && webBlur(reduce),
         style,
       ]}
     >
-      {loading ? (
-        <ActivityIndicator color={fg} />
-      ) : (
+      {({ pressed }) => (
         <>
-          {icon ? <Ionicons name={icon} size={small ? 16 : 18} color={fg} /> : null}
-          <Text maxFontSizeMultiplier={2} style={[S().btnText, small && { fontSize: 14 }, { color: fg }, fonts.uiStrong ? { fontFamily: fonts.uiStrong } : null]}>{title}</Text>
+          {pressed && !off ? <View pointerEvents="none" style={[StyleSheet.absoluteFill, { backgroundColor: 'rgba(0,0,0,0.08)' }]} /> : null}
+          {loading ? (
+            <ActivityIndicator color={fg} />
+          ) : (
+            <>
+              {icon ? <Ionicons name={icon} size={small ? 16 : 18} color={fg} /> : null}
+              <Text maxFontSizeMultiplier={2} style={[S().btnText, small && { fontSize: 14 }, { color: fg }, fonts.uiStrong ? { fontFamily: fonts.uiStrong } : null]}>{title}</Text>
+            </>
+          )}
         </>
       )}
-    </PressableScale>
+    </Pressable>
   );
 }
 
@@ -167,7 +245,8 @@ export function IconButton({ icon, onPress, label, color = t.text, size = 22 }: 
       onPress={onPress}
       accessibilityRole="button"
       accessibilityLabel={label}
-      style={({ pressed }) => [S().iconBtn, pressed && { backgroundColor: t.surfaceAlt }]}
+      hitSlop={4}
+      style={({ pressed }) => [S().iconBtn, panelStyle({ borderRadius: 22 }), pressed && { transform: [{ translateY: 1 }], opacity: 0.88 }]}
     >
       <Ionicons name={icon} size={size} color={color} />
     </Pressable>
@@ -267,6 +346,10 @@ export function Segmented<T extends string | number>({ options, value, onChange,
 function SpringSwitch({ on }: { on: boolean }) {
   const x = useRef(new Animated.Value(on ? 1 : 0)).current;
   useEffect(() => {
+    if (prefersReducedMotion()) {
+      x.setValue(on ? 1 : 0);
+      return;
+    }
     Animated.spring(x, { toValue: on ? 1 : 0, speed: 20, bounciness: 6, useNativeDriver: false }).start();
   }, [on, x]);
   const bg = x.interpolate({ inputRange: [0, 1], outputRange: [t.border, t.primary] });
@@ -386,76 +469,88 @@ export function DemoBanner({ text }: { text: string }) {
 }
 
 export function shadow(level = 1): ViewStyle {
-  if (currentScheme() === 'dark') return {};
-  if (Platform.OS === 'android') return { elevation: level * 2 };
+  const dark = currentScheme() === 'dark';
+  if (Platform.OS === 'android') return { elevation: level * (dark ? 3 : 2) };
+  if (Platform.OS === 'web') {
+    const soft = dark ? `0 ${4 * level}px ${14 * level}px rgba(0,0,0,0.45)` : `0 ${3 * level}px ${12 * level}px rgba(28,20,12,${0.08 * level})`;
+    const tight = dark ? `0 1px 2px rgba(0,0,0,0.4)` : `0 1px 2px rgba(28,20,12,0.08)`;
+    const edge = dark ? 'inset 0 1px 0 rgba(255,244,230,0.16)' : 'inset 0 1px 0 rgba(255,255,255,0.85)';
+    return { boxShadow: `${edge}, ${tight}, ${soft}` } as ViewStyle;
+  }
   return {
     shadowColor: t.shadow,
-    shadowOpacity: 0.06 * level,
-    shadowRadius: 8 * level,
-    shadowOffset: { width: 0, height: 2 * level },
+    shadowOpacity: (dark ? 0.4 : 0.1) * level,
+    shadowRadius: 10 * level,
+    shadowOffset: { width: 0, height: 4 * level },
   };
 }
 
 function makeStyles() {
+  const glass = panelStyle();
   return StyleSheet.create({
   screen: { flex: 1, backgroundColor: t.bg },
   inner: { width: '100%', maxWidth: 860, alignSelf: 'center' },
-  h1: { color: t.text, fontSize: t.type.h1, fontWeight: '600', letterSpacing: -0.5, marginBottom: 4 },
-  h2: { color: t.text, fontSize: t.type.h2, fontWeight: '600', letterSpacing: -0.2, marginBottom: 8 },
-  body: { color: t.text, fontSize: t.type.body, lineHeight: 23 },
-  muted: { color: t.muted, fontSize: 15, lineHeight: 21 },
-  eyebrow: { color: t.accent, fontSize: 12, fontWeight: '700', letterSpacing: 1.6, textTransform: 'uppercase', marginBottom: 6 },
+  h1: { color: t.text, fontSize: t.type.h1, lineHeight: t.leading.h1, fontWeight: '600', letterSpacing: -0.5, marginBottom: spacing.xxs },
+  h2: { color: t.text, fontSize: t.type.h2, lineHeight: t.leading.h2, fontWeight: '600', letterSpacing: -0.2, marginBottom: spacing.xs },
+  body: { color: t.text, fontSize: t.type.body, lineHeight: t.leading.body },
+  muted: { color: t.muted, fontSize: 15, lineHeight: t.leading.caption + 3 },
+  eyebrow: { color: t.accentInk, fontSize: t.type.caption - 1, fontWeight: '700', letterSpacing: 1.6, textTransform: 'uppercase', marginBottom: spacing.xxs + 2 },
   card: {
-    backgroundColor: t.surface,
+    ...glass,
     borderRadius: t.radius,
-    padding: 16,
-    marginBottom: 12,
-    borderWidth: StyleSheet.hairlineWidth,
-    borderColor: t.border,
-    ...shadow(1),
+    padding: spacing.md,
+    marginBottom: spacing.sm,
   },
   btn: {
-    minHeight: 48,
-    minWidth: 44,
-    paddingHorizontal: 18,
-    borderRadius: t.radius - 2,
+    minHeight: t.hit,
+    minWidth: t.hit,
+    paddingHorizontal: spacing.lg - 2,
+    borderRadius: t.radiusButton,
+    borderTopWidth: 1,
+    borderBottomWidth: 1,
+    borderLeftWidth: StyleSheet.hairlineWidth,
+    borderRightWidth: StyleSheet.hairlineWidth,
     alignItems: 'center',
     justifyContent: 'center',
     flexDirection: 'row',
-    gap: 8,
+    gap: spacing.xs,
+    overflow: 'hidden',
   },
-  btnSmall: { minHeight: 44, paddingHorizontal: 14 },
-  btnText: { fontSize: 16, fontWeight: '700', letterSpacing: 0.2, textAlign: 'center', flexShrink: 1 },
-  iconBtn: { width: 44, height: 44, borderRadius: 22, alignItems: 'center', justifyContent: 'center' },
-  chip: { minHeight: 44, maxWidth: '100%', paddingVertical: 6, paddingHorizontal: 14, borderRadius: t.radiusChip, borderWidth: 1, alignItems: 'center', justifyContent: 'center' },
-  badge: { paddingHorizontal: 8, paddingVertical: 3, borderRadius: 999, alignSelf: 'flex-start' },
-  label: { color: t.muted, fontSize: 13, fontWeight: '600', marginBottom: 6, letterSpacing: 0.3 },
+  btnSmall: { minHeight: t.hit, paddingHorizontal: spacing.sm + 2 },
+  btnText: { fontSize: t.type.body, fontWeight: '700', letterSpacing: 0.2, textAlign: 'center', flexShrink: 1 },
+  iconBtn: { width: t.hit, height: t.hit, borderRadius: 22, alignItems: 'center', justifyContent: 'center' },
+  chip: { minHeight: t.hit, maxWidth: '100%', paddingVertical: 6, paddingHorizontal: spacing.sm + 2, borderRadius: t.radiusChip, borderWidth: 1, alignItems: 'center', justifyContent: 'center' },
+  badge: { paddingHorizontal: spacing.xs, paddingVertical: 3, borderRadius: 999, alignSelf: 'flex-start' },
+  label: { color: t.muted, fontSize: t.type.caption, fontWeight: '600', marginBottom: spacing.xxs + 2, letterSpacing: 0.3 },
   input: {
     minHeight: 48,
     borderWidth: 1,
-    borderColor: t.border,
+    borderColor: prefersReducedTransparency() ? t.border : t.glassBorder,
     borderRadius: t.radius - 4,
-    paddingHorizontal: 14,
+    paddingHorizontal: spacing.sm + 2,
     color: t.text,
-    backgroundColor: t.surface,
-    fontSize: 16,
+    backgroundColor: prefersReducedTransparency() ? t.surface : t.surfaceGlass,
+    fontSize: t.type.body,
   },
-  segment: { flexDirection: 'row', backgroundColor: t.surfaceAlt, borderRadius: t.radius - 2, padding: 4, gap: 4 },
-  segItem: { flex: 1, minHeight: 44, paddingVertical: 6, borderRadius: t.radius - 4, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 8 },
-  track: { width: 50, height: 30, borderRadius: 15, padding: 3, justifyContent: 'center' },
-  thumb: { width: 24, height: 24, borderRadius: 12, backgroundColor: '#FFFFFF', ...shadow(1) },
-  empty: { alignItems: 'center', paddingVertical: 40, paddingHorizontal: 24, borderRadius: t.radius + 4, backgroundColor: t.surface, borderWidth: StyleSheet.hairlineWidth, borderColor: t.border, marginBottom: 16 },
-  emptyHalo: { width: 96, height: 96, borderRadius: 48, backgroundColor: t.surfaceAlt, alignItems: 'center', justifyContent: 'center', marginBottom: 16 },
-  emptyIcon: { width: 64, height: 64, borderRadius: 32, backgroundColor: t.surface, alignItems: 'center', justifyContent: 'center', ...shadow(1) },
-  notice: { flexDirection: 'row', gap: 10, padding: 12, borderRadius: t.radius - 4, marginBottom: 12 },
-  li: { flexDirection: 'row', alignItems: 'center', gap: 12, minHeight: 56, paddingVertical: 8, paddingHorizontal: 4, borderRadius: 10 },
+  segment: { flexDirection: 'row', backgroundColor: prefersReducedTransparency() ? t.surfaceAlt : t.surfaceGlass, borderRadius: t.radius - 2, padding: spacing.xxs, gap: spacing.xxs, borderWidth: 1, borderColor: prefersReducedTransparency() ? t.border : t.glassBorder },
+  segItem: { flex: 1, minHeight: t.hit, paddingVertical: 6, borderRadius: t.radius - 4, alignItems: 'center', justifyContent: 'center', paddingHorizontal: spacing.xs },
+  track: { width: 52, height: 32, borderRadius: 16, padding: 3, justifyContent: 'center' },
+  thumb: { width: 26, height: 26, borderRadius: 13, backgroundColor: '#FFFFFF', borderTopWidth: 1, borderTopColor: 'rgba(255,255,255,0.9)', ...shadow(1) },
+  empty: { alignItems: 'center', paddingVertical: spacing.xxxl, paddingHorizontal: spacing.xl, borderRadius: t.radius + 4, marginBottom: spacing.md, ...glass },
+  emptyHalo: { width: 96, height: 96, borderRadius: 48, backgroundColor: t.surfaceAlt, alignItems: 'center', justifyContent: 'center', marginBottom: spacing.md },
+  emptyIcon: { width: 64, height: 64, borderRadius: 32, backgroundColor: prefersReducedTransparency() ? t.surface : t.surfaceGlass, alignItems: 'center', justifyContent: 'center', ...shadow(1) },
+  notice: { flexDirection: 'row', gap: spacing.xs + 2, padding: spacing.sm, borderRadius: t.radius - 4, marginBottom: spacing.sm },
+  li: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm, minHeight: 56, paddingVertical: spacing.xs, paddingHorizontal: spacing.xxs, borderRadius: 10 },
   liIcon: { width: 36, height: 36, borderRadius: 18, backgroundColor: t.surfaceAlt, alignItems: 'center', justifyContent: 'center' },
-  demo: { flexDirection: 'row', alignItems: 'center', gap: 6, paddingVertical: 6, paddingHorizontal: 10, borderRadius: 8, backgroundColor: t.warningBg, marginBottom: 12 },
+  demo: { flexDirection: 'row', alignItems: 'center', gap: 6, paddingVertical: 6, paddingHorizontal: spacing.xs + 2, borderRadius: 8, backgroundColor: t.warningBg, marginBottom: spacing.sm },
   });
 }
 type Styles = ReturnType<typeof makeStyles>;
-const cache: Partial<Record<Scheme, Styles>> = {};
-/** Styles du kit, recalculés une fois par schéma (clair / sombre). */
-export const getStyles = (): Styles => (cache[currentScheme()] ??= makeStyles());
+const cache: Partial<Record<string, Styles>> = {};
+/** Styles du kit, une fois par schéma et par réglage de transparence. */
+export const getStyles = (): Styles => {
+  const key = `${currentScheme()}:${prefersReducedTransparency() ? 'solid' : 'glass'}`;
+  return (cache[key] ??= makeStyles());
+};
 /** Compatibilité : `styles.x` lit toujours la version du schéma courant. */
 export const styles = new Proxy({} as Styles, { get: (_o, k: string) => getStyles()[k as keyof Styles] });

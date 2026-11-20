@@ -100,7 +100,7 @@ export default function DishScreen() {
       <Spacer />
       <Row>
         <IconButton icon="remove" label={L('Moins', 'Less')} onPress={() => { haptic('select'); setQty((q) => Math.max(1, q - 1)); }} />
-        <Text style={{ fontSize: 18, fontWeight: '700', minWidth: 30, textAlign: 'center' }}>{qty}</Text>
+        <Text accessibilityLabel={`${qty}`} style={{ color: t.text, fontSize: 18, fontWeight: '700', minWidth: 30, textAlign: 'center' }}>{qty}</Text>
         <IconButton icon="add" label={L('Plus', 'More')} onPress={() => { haptic('select'); setQty((q) => Math.min(20, q + 1)); }} />
         <Button style={{ flex: 1 }} icon="bag-add-outline" title={`${L('Ajouter', 'Add')} · ${chf(dish.price * qty)}`} disabled={!open.length || outside} onPress={add} />
       </Row>

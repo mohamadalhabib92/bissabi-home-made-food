@@ -9,7 +9,7 @@ import { fmtKm, zoneOf } from '@/lib/geo';
 import { buyerVisibleSlots } from '@/lib/launchCheckout';
 import { openSlotsFor, rating } from '@/lib/market';
 import { CUISINES, type Cuisine } from '@/lib/model';
-import { Button, Chip, DemoBanner, Empty, Field, H2, Ionicons, Muted, Notice, Segmented, Toggle, styles } from '@/ui/kit';
+import { Button, Chip, DemoBanner, Empty, Field, H2, Ionicons, Muted, Notice, Segmented, Toggle, panelStyle, styles } from '@/ui/kit';
 import { theme as t } from '@/ui/theme';
 
 export default function Discover() {
@@ -45,7 +45,7 @@ export default function Discover() {
         <Wordmark />
         <View style={{ height: 14 }} />
         <Pressable onPress={() => router.push('/location')} accessibilityRole="button" accessibilityLabel={L('Changer de lieu', 'Change location')}
-          style={{ flexDirection: 'row', alignItems: 'center', gap: 8, backgroundColor: t.surface, borderRadius: 999, borderWidth: 1, borderColor: t.border, paddingHorizontal: 14, minHeight: 44, alignSelf: 'flex-start' }}>
+          style={panelStyle({ flexDirection: 'row', alignItems: 'center', gap: 8, borderRadius: 999, paddingHorizontal: 14, minHeight: t.hit, alignSelf: 'flex-start' })}>
           <Ionicons name={prefs.location?.source === 'gps' ? 'navigate' : 'location-outline'} size={16} color={t.primary} />
           <Text style={{ color: t.text, fontWeight: '600' }}>{prefs.location?.label ?? L('Choisir un lieu', 'Choose a location')}</Text>
           <Ionicons name="chevron-down" size={14} color={t.muted} />
@@ -72,7 +72,7 @@ export default function Discover() {
                 const r = rating(reviews, c.id);
                 return (
                   <Pressable key={c.id} onPress={() => router.push(`/cook/${c.id}`)} accessibilityRole="button" accessibilityLabel={c.name}
-                    style={{ width: 170, backgroundColor: t.surface, borderRadius: 16, borderWidth: 1, borderColor: t.border, padding: 12, gap: 6 }}>
+                    style={panelStyle({ width: 170, borderRadius: 16, padding: 12, gap: 6, minHeight: t.hit })}>
                     <Avatar cook={c} />
                     <Text style={{ color: t.text, fontWeight: '700' }} numberOfLines={1}>{c.name}</Text>
                     <Text style={{ color: t.muted, fontSize: 12 }} numberOfLines={1}>{c.commune}{d != null ? ` · ${fmtKm(d)}` : ''}</Text>

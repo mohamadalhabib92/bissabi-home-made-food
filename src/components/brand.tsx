@@ -7,9 +7,9 @@ import { fmtKm } from '@/lib/geo';
 import { ALLERGENS, type Allergen, type Cook, type Dish, type Slot } from '@/lib/model';
 import { chf } from '@/lib/pricing';
 import { splitAllergens } from '@/lib/dishPublish';
-import { Ionicons, shadow } from '@/ui/kit';
+import { Ionicons, panelStyle } from '@/ui/kit';
 import { useAppFonts } from '@/ui/fonts';
-import { theme as t } from '@/ui/theme';
+import { inkOn, theme as t } from '@/ui/theme';
 
 export const SLOGAN = { fr: 'La saveur du partage — cuisine de quartier authentique par Bissabi', en: 'The taste of sharing — authentic neighbourhood cooking by Bissabi' };
 
@@ -41,7 +41,7 @@ export function DishVisual({ dish, height = 150, radius = 14, wide = false }: { 
   const showImage = picture.kind !== 'none' && !failed;
   const tint = t.dishTints[dish.id.split('').reduce((s, c) => s + c.charCodeAt(0), 0) % t.dishTints.length];
   return (
-    <View accessibilityLabel={dish.title} style={{ width: '100%', ...(wide ? { aspectRatio: 16 / 9 } : { height }), borderRadius: radius, overflow: 'hidden', backgroundColor: showImage ? t.surfaceAlt : tint }}>
+    <View accessible accessibilityRole="image" accessibilityLabel={dish.title} style={{ width: '100%', ...(wide ? { aspectRatio: 16 / 9 } : { height }), borderRadius: radius, overflow: 'hidden', backgroundColor: showImage ? t.surfaceAlt : tint }}>
       {showImage ? (
         <Image
           source={picture.source}
@@ -68,8 +68,8 @@ export function DishVisual({ dish, height = 150, radius = 14, wide = false }: { 
 
 export function Avatar({ cook, size = 40 }: { cook: Cook; size?: number }) {
   return (
-    <View style={{ width: size, height: size, borderRadius: size / 2, backgroundColor: cook.avatarColor, alignItems: 'center', justifyContent: 'center', borderWidth: 2, borderColor: t.accent }}>
-      <Text style={{ color: t.onPrimary, fontWeight: '800', fontSize: size * 0.42 }}>{cook.name.trim().charAt(0).toUpperCase()}</Text>
+    <View accessibilityLabel={cook.name} style={{ width: size, height: size, borderRadius: size / 2, backgroundColor: cook.avatarColor, alignItems: 'center', justifyContent: 'center', borderWidth: 2, borderColor: t.glassHighlight }}>
+      <Text style={{ color: inkOn(cook.avatarColor), fontWeight: '800', fontSize: size * 0.42 }}>{cook.name.trim().charAt(0).toUpperCase()}</Text>
     </View>
   );
 }
@@ -107,12 +107,9 @@ export function DishCard({ dish, cook, distance, nextSlot, onPress }: { dish: Di
     ? `${L('Allergènes', 'Allergens')} : ${allergenNames(parts.present, lang).join(', ') || L('aucun', 'none')} · ${L('Traces', 'Traces')} : ${allergenNames(parts.traces, lang).join(', ')}`
     : (parts.present.length ? `${L('Allergènes', 'Allergens')} : ${allergenNames(parts.present, lang).join(', ')}` : L('Sans allergène majeur déclaré', 'No major allergen declared'));
   return (
-    <Pressable onPress={onPress} accessibilityRole="button" accessibilityLabel={`${dish.title}, ${chf(dish.price)}`} style={[{ backgroundColor: t.surface, borderRadius: 18, marginBottom: 16, borderWidth: 1, borderColor: t.border, overflow: 'hidden' }, shadow(1)]}>
+    <View style={panelStyle({ borderRadius: 18, marginBottom: 16, overflow: 'hidden' })}>
+      <Pressable onPress={onPress} accessibilityRole="button" accessibilityLabel={`${dish.title}, ${chf(dish.price)}`}>
       <DishVisual dish={dish} wide radius={0} />
-      <Pressable onPress={() => toggleFav('dishes', dish.id)} accessibilityRole="button" accessibilityState={{ selected: fav }} accessibilityLabel={fav ? L('Retirer des favoris', 'Remove from favourites') : L('Ajouter aux favoris', 'Add to favourites')}
-        style={{ position: 'absolute', top: 10, right: 10, width: 44, height: 44, borderRadius: 22, backgroundColor: t.scrim, alignItems: 'center', justifyContent: 'center' }}>
-        <Ionicons name={fav ? 'heart' : 'heart-outline'} size={22} color={t.primary} />
-      </Pressable>
       <View style={{ padding: 14, gap: 6 }}>
         <View style={{ flexDirection: 'row', justifyContent: 'space-between', gap: 8 }}>
           <Text style={{ color: t.text, fontWeight: '700', fontSize: 17, flex: 1 }} numberOfLines={2}>{dish.title}</Text>
@@ -131,7 +128,12 @@ export function DishCard({ dish, cook, distance, nextSlot, onPress }: { dish: Di
           {nextSlot ? `${L('Prochain créneau', 'Next slot')} : ${dayLabel(nextSlot.date, lang)} · ${nextSlot.from}–${nextSlot.to}` : L('Aucun créneau ouvert pour le moment', 'No open slot right now')}
         </Text>
       </View>
-    </Pressable>
+      </Pressable>
+      <Pressable onPress={() => toggleFav('dishes', dish.id)} accessibilityRole="button" accessibilityState={{ selected: fav }} accessibilityLabel={fav ? L('Retirer des favoris', 'Remove from favourites') : L('Ajouter aux favoris', 'Add to favourites')}
+        style={{ position: 'absolute', top: 10, right: 10, width: 44, height: 44, borderRadius: 22, backgroundColor: t.scrim, alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: t.glassHighlight }}>
+        <Ionicons name={fav ? 'heart' : 'heart-outline'} size={22} color={t.primary} />
+      </Pressable>
+    </View>
   );
 }
 
