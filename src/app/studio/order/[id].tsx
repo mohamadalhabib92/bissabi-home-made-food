@@ -5,7 +5,7 @@ import { useData, useL } from '@/lib/data';
 import { dayLabel, stamp } from '@/lib/dates';
 import { chf } from '@/lib/pricing';
 import { STATUS_LABEL } from '@/lib/status';
-import { Badge, Body, Button, Card, Chip, Empty, Field, H1, H2, Muted, Notice, Row, Screen, Spacer } from '@/ui/kit';
+import { Badge, Body, Button, Card, Chip, Empty, Field, H1, H2, Muted, Notice, Row, Screen, Spacer, useFeedback } from '@/ui/kit';
 import { theme as t } from '@/ui/theme';
 
 const REASONS = [
@@ -21,6 +21,7 @@ export default function IncomingOrder() {
   const { L, lang } = useL();
   const [refusing, setRefusing] = useState(false);
   const [reason, setReason] = useState('');
+  const fb = useFeedback();
   const o = orders.find((x) => x.id === id);
   if (!o) return <Screen><Empty title={L('Commande introuvable', 'Order not found')} /></Screen>;
   const st = STATUS_LABEL[o.status];
@@ -42,12 +43,12 @@ export default function IncomingOrder() {
         <H2>{L('Ce que vous recevez', 'What you receive')}</H2>
         <Row style={{ justifyContent: 'space-between' }}><Muted>{L('Plats', 'Dishes')}</Muted><Body>{chf(o.subtotal)}</Body></Row>
         {o.deliveryFee ? <Row style={{ justifyContent: 'space-between' }}><Muted>{L('Frais de livraison', 'Delivery fee')}</Muted><Body>{chf(o.deliveryFee)}</Body></Row> : null}
-        <Row style={{ justifyContent: 'space-between' }}><Muted>{L('Commission Bissabi 15 % (payée par le client)', 'Bissabi 15% commission (paid by customer)')}</Muted><Body>{chf(o.commission)}</Body></Row>
+        <Row style={{ justifyContent: 'space-between' }}><Muted>{L('Commission Bissabi', 'Bissabi commission')} ({Math.round(o.subtotal > 0 ? (o.commission / o.subtotal) * 100 : 0)} %)</Muted><Body>{chf(o.commission)}</Body></Row>
         <Row style={{ justifyContent: 'space-between' }}><Text style={{ fontWeight: '800', color: t.text }}>{L('Net pour vous', 'Net for you')}</Text><Text style={{ fontWeight: '800', color: t.success }}>{chf(net)}</Text></Row>
       </Card>
       {o.status === 'requested' && !refusing ? (
         <Row>
-          <Button style={{ flex: 1 }} icon="checkmark" title={L('Accepter', 'Accept')} onPress={() => setOrderStatus(o.id, 'accepted')} />
+          <Button style={{ flex: 1 }} icon="checkmark" title={L('Accepter', 'Accept')} onPress={() => { setOrderStatus(o.id, 'accepted'); fb.toast({ text: L('Commande acceptée', 'Order accepted'), icon: 'checkmark-circle' }); }} />
           <Button style={{ flex: 1 }} variant="secondary" title={L('Refuser', 'Refuse')} onPress={() => setRefusing(true)} />
         </Row>
       ) : null}
@@ -65,8 +66,8 @@ export default function IncomingOrder() {
         </Card>
       ) : null}
       {o.status === 'accepted' ? <Button icon="flame-outline" title={L('Commencer la préparation', 'Start preparing')} onPress={() => setOrderStatus(o.id, 'preparing')} /> : null}
-      {o.status === 'preparing' ? <Button icon="bag-check-outline" title={L('Marquer comme prête', 'Mark as ready')} onPress={() => setOrderStatus(o.id, 'ready')} /> : null}
-      {o.status === 'ready' ? <Button icon="checkmark-done" title={L('Remise effectuée', 'Handed over')} onPress={() => setOrderStatus(o.id, 'completed')} /> : null}
+      {o.status === 'preparing' ? <Button icon="bag-check-outline" title={L('Marquer comme prête', 'Mark as ready')} onPress={() => { setOrderStatus(o.id, 'ready'); fb.toast({ text: L('Commande prête', 'Order ready'), icon: 'bag-check' }); }} /> : null}
+      {o.status === 'ready' ? <Button icon="checkmark-done" title={L('Remise effectuée', 'Handed over')} onPress={() => { setOrderStatus(o.id, 'completed'); fb.celebrate({ title: L('Remise effectuée', 'Handed over'), subtitle: L('Merci pour ce bon repas fait maison', 'Thank you for this homemade meal'), icon: 'heart', tone: 'gold' }); }} /> : null}
       <Spacer />
       <Card>
         <H2>{L('Chronologie', 'Timeline')}</H2>

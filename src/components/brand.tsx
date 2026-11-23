@@ -1,13 +1,15 @@
+import { useEffect, useState } from 'react';
 import { Image, Pressable, Text, View } from 'react-native';
 import { useData, useL } from '@/lib/data';
+import { dishPicture } from '@/lib/dishPhotos';
 import { dayLabel } from '@/lib/dates';
 import { fmtKm } from '@/lib/geo';
 import { ALLERGENS, type Allergen, type Cook, type Dish, type Slot } from '@/lib/model';
-import { chf } from '@/lib/pricing';
+import { chf, COMMISSION_PAID_BY, COMMISSION_RATE } from '@/lib/pricing';
 import { splitAllergens } from '@/lib/dishPublish';
-import { Ionicons, shadow } from '@/ui/kit';
+import { Ionicons, panelStyle } from '@/ui/kit';
 import { useAppFonts } from '@/ui/fonts';
-import { theme as t } from '@/ui/theme';
+import { inkOn, theme as t } from '@/ui/theme';
 
 export const SLOGAN = { fr: 'La saveur du partage — cuisine de quartier authentique par Bissabi', en: 'The taste of sharing — authentic neighbourhood cooking by Bissabi' };
 
@@ -26,23 +28,48 @@ export function Wordmark({ size = 22, slogan = true }: { size?: number; slogan?:
   );
 }
 
-/** Visuel du plat : photo du cuisinier si fournie, sinon composition de marque (crème + or). */
-export function DishVisual({ dish, height = 150, radius = 14 }: { dish: Dish; height?: number; radius?: number }) {
-  if (dish.photo) return <Image source={{ uri: dish.photo }} style={{ width: '100%', height, borderRadius: radius }} resizeMode="cover" accessibilityLabel={dish.title} />;
+/** Visuel du plat. Photo du cuisinier si elle existe, sinon photo de démo, sinon marque. `wide` = carte 16:9. */
+export function DishVisual({ dish, height = 150, radius = 14, wide = false }: { dish: Dish; height?: number; radius?: number; wide?: boolean }) {
+  const picture = dishPicture(dish);
+  const [ready, setReady] = useState(false);
+  const [failed, setFailed] = useState(false);
+  const photoKey = `${dish.id}\0${dish.photo ?? ''}`;
+  useEffect(() => {
+    setReady(false);
+    setFailed(false);
+  }, [photoKey]);
+  const showImage = picture.kind !== 'none' && !failed;
   const tint = t.dishTints[dish.id.split('').reduce((s, c) => s + c.charCodeAt(0), 0) % t.dishTints.length];
   return (
-    <View style={{ height, borderRadius: radius, backgroundColor: tint, alignItems: 'center', justifyContent: 'center', overflow: 'hidden' }} accessibilityLabel={dish.title}>
-      <View style={{ position: 'absolute', width: height * 1.1, height: height * 1.1, borderRadius: height, borderWidth: 1, borderColor: t.accent, opacity: 0.45 }} />
-      <View style={{ position: 'absolute', width: height * 0.8, height: height * 0.8, borderRadius: height, backgroundColor: t.surface, opacity: 0.55 }} />
-      <Text style={{ fontSize: height * 0.36 }}>{dish.emoji || '🍽️'}</Text>
+    <View accessible accessibilityRole="image" accessibilityLabel={dish.title} style={{ width: '100%', ...(wide ? { aspectRatio: 16 / 9 } : { height }), borderRadius: radius, overflow: 'hidden', backgroundColor: showImage ? t.surfaceAlt : tint }}>
+      {showImage ? (
+        <Image
+          source={picture.source}
+          resizeMode="cover"
+          onLoad={() => setReady(true)}
+          onError={() => setFailed(true)}
+          style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, width: '100%', height: '100%' }}
+        />
+      ) : null}
+      {!showImage || !ready ? (
+        <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}>
+          {!showImage ? (
+            <>
+              <View style={{ position: 'absolute', width: height * 1.1, height: height * 1.1, borderRadius: height, borderWidth: 1, borderColor: t.accent, opacity: 0.45 }} />
+              <View style={{ position: 'absolute', width: height * 0.8, height: height * 0.8, borderRadius: height, backgroundColor: t.surface, opacity: 0.55 }} />
+              <Text style={{ fontSize: height * 0.36 }}>{dish.emoji || '🍽️'}</Text>
+            </>
+          ) : null}
+        </View>
+      ) : null}
     </View>
   );
 }
 
 export function Avatar({ cook, size = 40 }: { cook: Cook; size?: number }) {
   return (
-    <View style={{ width: size, height: size, borderRadius: size / 2, backgroundColor: cook.avatarColor, alignItems: 'center', justifyContent: 'center', borderWidth: 2, borderColor: t.accent }}>
-      <Text style={{ color: t.onPrimary, fontWeight: '800', fontSize: size * 0.42 }}>{cook.name.trim().charAt(0).toUpperCase()}</Text>
+    <View accessibilityLabel={cook.name} style={{ width: size, height: size, borderRadius: size / 2, backgroundColor: cook.avatarColor, alignItems: 'center', justifyContent: 'center', borderWidth: 2, borderColor: t.glassHighlight }}>
+      <Text style={{ color: inkOn(cook.avatarColor), fontWeight: '800', fontSize: size * 0.42 }}>{cook.name.trim().charAt(0).toUpperCase()}</Text>
     </View>
   );
 }
@@ -80,12 +107,9 @@ export function DishCard({ dish, cook, distance, nextSlot, onPress }: { dish: Di
     ? `${L('Allergènes', 'Allergens')} : ${allergenNames(parts.present, lang).join(', ') || L('aucun', 'none')} · ${L('Traces', 'Traces')} : ${allergenNames(parts.traces, lang).join(', ')}`
     : (parts.present.length ? `${L('Allergènes', 'Allergens')} : ${allergenNames(parts.present, lang).join(', ')}` : L('Sans allergène majeur déclaré', 'No major allergen declared'));
   return (
-    <Pressable onPress={onPress} accessibilityRole="button" accessibilityLabel={`${dish.title}, ${chf(dish.price)}`} style={[{ backgroundColor: t.surface, borderRadius: 18, marginBottom: 16, borderWidth: 1, borderColor: t.border, overflow: 'hidden' }, shadow(1)]}>
-      <DishVisual dish={dish} height={160} radius={0} />
-      <Pressable onPress={() => toggleFav('dishes', dish.id)} accessibilityLabel={fav ? L('Retirer des favoris', 'Remove from favourites') : L('Ajouter aux favoris', 'Add to favourites')}
-        style={{ position: 'absolute', top: 10, right: 10, width: 44, height: 44, borderRadius: 22, backgroundColor: t.scrim, alignItems: 'center', justifyContent: 'center' }}>
-        <Ionicons name={fav ? 'heart' : 'heart-outline'} size={22} color={t.primary} />
-      </Pressable>
+    <View style={panelStyle({ borderRadius: 18, marginBottom: 16, overflow: 'hidden' })}>
+      <Pressable onPress={onPress} accessibilityRole="button" accessibilityLabel={`${dish.title}, ${chf(dish.price)}`}>
+      <DishVisual dish={dish} wide radius={0} />
       <View style={{ padding: 14, gap: 6 }}>
         <View style={{ flexDirection: 'row', justifyContent: 'space-between', gap: 8 }}>
           <Text style={{ color: t.text, fontWeight: '700', fontSize: 17, flex: 1 }} numberOfLines={2}>{dish.title}</Text>
@@ -104,12 +128,21 @@ export function DishCard({ dish, cook, distance, nextSlot, onPress }: { dish: Di
           {nextSlot ? `${L('Prochain créneau', 'Next slot')} : ${dayLabel(nextSlot.date, lang)} · ${nextSlot.from}–${nextSlot.to}` : L('Aucun créneau ouvert pour le moment', 'No open slot right now')}
         </Text>
       </View>
-    </Pressable>
+      </Pressable>
+      <Pressable onPress={() => toggleFav('dishes', dish.id)} accessibilityRole="button" accessibilityState={{ selected: fav }} accessibilityLabel={fav ? L('Retirer des favoris', 'Remove from favourites') : L('Ajouter aux favoris', 'Add to favourites')}
+        style={{ position: 'absolute', top: 10, right: 10, width: 44, height: 44, borderRadius: 22, backgroundColor: t.scrim, alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: t.glassHighlight }}>
+        <Ionicons name={fav ? 'heart' : 'heart-outline'} size={22} color={t.primary} />
+      </Pressable>
+    </View>
   );
 }
 
 export function TotalsTable({ subtotal, commission, deliveryFee, total, L }: { subtotal: number; commission: number; deliveryFee: number; total: number; L: (fr: string, en: string) => string }) {
   const fonts = useAppFonts();
+  const pct = Math.round(COMMISSION_RATE * 100);
+  const commissionLabel = COMMISSION_PAID_BY === 'cook'
+    ? L(`Commission ${pct} % (retenue sur le cuisinier)`, `Commission ${pct}% (kept from the cook)`)
+    : L(`Commission plateforme (${pct} %)`, `Platform commission (${pct}%)`);
   const row = (a: string, b: string, bold = false) => (
     <View style={{ flexDirection: 'row', justifyContent: 'space-between', paddingVertical: 5 }}>
       <Text style={{ color: bold ? t.text : t.muted, fontWeight: bold ? '800' : '500', fontSize: bold ? 17 : 15 }}>{a}</Text>
@@ -119,10 +152,11 @@ export function TotalsTable({ subtotal, commission, deliveryFee, total, L }: { s
   return (
     <View>
       {row(L('Plats', 'Dishes'), chf(subtotal))}
-      {row(L('Commission plateforme (15 %)', 'Platform commission (15%)'), chf(commission))}
+      {row(commissionLabel, chf(commission))}
       {row(L('Frais de livraison', 'Delivery fee'), deliveryFee ? chf(deliveryFee) : L('Retrait — gratuit', 'Pickup — free'))}
       <View style={{ height: 1, backgroundColor: t.border, marginVertical: 6 }} />
-      {row(L('Total TTC', 'Total'), chf(total), true)}
+      {row(L('Total à payer', 'Amount due'), chf(total), true)}
+      {COMMISSION_PAID_BY === 'cook' ? <Text style={{ color: t.muted, fontSize: 13 }}>{L('La commission n’est pas ajoutée à ce total : elle est retenue sur le cuisinier.', 'The commission is not added to this total: it is kept from the cook.')}</Text> : null}
     </View>
   );
 }

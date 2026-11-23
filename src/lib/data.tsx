@@ -1,7 +1,9 @@
-import { createContext, useCallback, useContext, useMemo, useState, type ReactNode } from 'react';
+import { createContext, useCallback, useContext, useMemo, useState, useSyncExternalStore, type ReactNode } from 'react';
 import { km } from './geo';
 import type { Cook, Dish, FulfilMode, Lang, Order, OrderStatus, Report, Review, Slot } from './model';
 import { quote } from './pricing';
+import { saleBlock } from './saleGate';
+import { getPreservationSnapshot, neutralValue, subscribePreservation, type KeyPreservation } from './preserve';
 import { demoKitchenOrders, demoMarket } from './seed';
 import { STORAGE_KEY } from './persistGuard';
 import { clearAll, uid, usePersistentState } from './storage';
@@ -13,7 +15,7 @@ export type Prefs = {
   consents: { terms: boolean; location: boolean; marketing: boolean; at?: string };
   location: Loc | null; radiusKm: number; halalOnly: boolean; buyerName: string;
 };
-const DEFAULT_PREFS: Prefs = { lang: 'fr', onboarded: false, mode: 'buyer', consents: { terms: false, location: false, marketing: false }, location: null, radiusKm: 3, halalOnly: false, buyerName: '' };
+const DEFAULT_PREFS = neutralValue('prefs') as Prefs;
 export type Cart = { cookId: string | null; lines: { dishId: string; qty: number }[] };
 
 type Ctx = {
@@ -21,11 +23,12 @@ type Ctx = {
   cooks: Cook[]; setCooks: Setter<Cook[]>; dishes: Dish[]; setDishes: Setter<Dish[]>; slots: Slot[]; setSlots: Setter<Slot[]>;
   orders: Order[]; setOrders: Setter<Order[]>; reviews: Review[]; setReviews: Setter<Review[]>; reports: Report[]; setReports: Setter<Report[]>;
   favorites: { dishes: string[]; cooks: string[] }; toggleFav: (k: 'dishes' | 'cooks', id: string) => void;
-  cart: Cart; setCart: Setter<Cart>; addToCart: (d: Dish, qty?: number) => 'ok' | 'other_cook'; clearCart: () => void;
+  cart: Cart; setCart: Setter<Cart>; addToCart: (d: Dish, qty?: number) => 'ok' | 'other_cook' | 'blocked'; clearCart: () => void;
   myCook: Cook | null; distanceTo: (c: Cook) => number | null;
-  placeOrder: (p: { slot: Slot; mode: FulfilMode; address?: string; note?: string; buyerName?: string }) => Order;
+  placeOrder: (p: { slot: Slot; mode: FulfilMode; address?: string; note?: string; buyerName?: string }) => Order | null;
   setOrderStatus: (id: string, status: OrderStatus, patch?: Partial<Order>, note?: string) => void;
-  loadDemo: () => void; hasDemo: boolean; removeDemo: () => void; addKitchenDemo: () => void; wipe: () => Promise<void>;
+  loadDemo: () => void; hasDemo: boolean; removeDemo: () => void; addKitchenDemo: () => void; wipe: () => Promise<boolean>;
+  preservation: KeyPreservation[];
 };
 const C = createContext<Ctx | null>(null);
 export const useData = () => { const c = useContext(C); if (!c) throw new Error('DataProvider manquant'); return c; };
@@ -41,6 +44,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
   const [favorites, setFavorites, r8] = usePersistentState<{ dishes: string[]; cooks: string[] }>(STORAGE_KEY.favorites, { dishes: [], cooks: [] });
   const [cart, setCart, r9] = usePersistentState<Cart>(STORAGE_KEY.cart, { cookId: null, lines: [] });
   const storageReady = r1 && r2 && r3 && r4 && r5 && r6 && r7 && r8 && r9;
+  const preservation = useSyncExternalStore(subscribePreservation, getPreservationSnapshot, getPreservationSnapshot);
   const [bootFallback, setBootFallback] = useState(false);
   const forceReady = useCallback(() => setBootFallback(true), []);
   const ready = storageReady || bootFallback;
@@ -50,6 +54,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
   const value = useMemo<Ctx>(() => {
     const distanceTo = (c: Cook) => (loc ? km(loc, c) : null);
     const addToCart: Ctx['addToCart'] = (d, qty = 1) => {
+      if (saleBlock(d, cooks.find((c) => c.id === d.cookId))) return 'blocked';
       if (cart.cookId && cart.cookId !== d.cookId && cart.lines.length) return 'other_cook';
       setCart((c) => {
         const ex = c.lines.find((l) => l.dishId === d.id);
@@ -58,7 +63,13 @@ export function DataProvider({ children }: { children: ReactNode }) {
       return 'ok';
     };
     const placeOrder: Ctx['placeOrder'] = ({ slot, mode, address, note, buyerName }) => {
-      const lines = cart.lines.map((l) => { const d = dishes.find((x) => x.id === l.dishId)!; return { dishId: d.id, title: d.title, qty: l.qty, unitPrice: d.price }; });
+      const cook = cooks.find((c) => c.id === cart.cookId);
+      const lines = cart.lines.flatMap((l) => {
+        const d = dishes.find((x) => x.id === l.dishId);
+        if (!d || saleBlock(d, cook)) return [];
+        return [{ dishId: d.id, title: d.title, qty: l.qty, unitPrice: d.price }];
+      });
+      if (!cart.cookId || lines.length !== cart.lines.length) return null;
       const q = quote(lines, mode);
       const at = new Date().toISOString();
       const o: Order = {
@@ -73,34 +84,39 @@ export function DataProvider({ children }: { children: ReactNode }) {
       setOrders((l) => l.map((o) => (o.id === id ? { ...o, ...patch, status, timeline: [...o.timeline, { status, at: new Date().toISOString(), note }] } : o)));
     const toggleFav: Ctx['toggleFav'] = (k, id) => setFavorites((f) => ({ ...f, [k]: f[k].includes(id) ? f[k].filter((x) => x !== id) : [...f[k], id] }));
     const hasDemo = cooks.some((c) => c.demo) || orders.some((o) => o.demo);
+    const catalogueHeld = ['cooks', 'dishes', 'slots', 'orders', 'reviews'].some((key) => preservation.some((entry) => entry.key === key && !entry.hydrated));
     const removeDemo = () => {
       setCooks((l) => l.filter((x) => !x.demo)); setDishes((l) => l.filter((x) => !x.demo)); setSlots((l) => l.filter((x) => !x.demo));
       setOrders((l) => l.filter((x) => !x.demo)); setReviews((l) => l.filter((x) => !x.demo));
       setCart({ cookId: null, lines: [] });
     };
     const loadDemo = () => {
+      if (catalogueHeld) return;
       const d = demoMarket();
       setCooks((l) => [...l.filter((x) => !x.demo), ...d.cooks]); setDishes((l) => [...l.filter((x) => !x.demo), ...d.dishes]);
       setSlots((l) => [...l.filter((x) => !x.demo), ...d.slots]); setReviews((l) => [...l.filter((x) => !x.demo), ...d.reviews]);
       setOrders((l) => [...l.filter((x) => !x.demo), ...d.orders]);
     };
     const addKitchenDemo = () => {
-      if (!myCook) return;
+      if (!myCook || preservation.some((entry) => entry.key === 'orders' && !entry.hydrated)) return;
       const mine = dishes.filter((d) => d.cookId === myCook.id);
       setOrders((l) => [...l.filter((o) => !(o.demo && o.side === 'cook')), ...demoKitchenOrders(myCook.id, mine)]);
     };
     const wipe = async () => {
       const cleared = await clearAll();
-      if (!cleared) return;
-      setPrefs(DEFAULT_PREFS); setCooks([]); setDishes([]); setSlots([]); setOrders([]); setReviews([]); setReports([]);
-      setFavorites({ dishes: [], cooks: [] }); setCart({ cookId: null, lines: [] });
+      if (!cleared) return false;
+      setPrefs(neutralValue('prefs') as Prefs);
+      setCooks([]); setDishes([]); setSlots([]); setOrders([]); setReviews([]); setReports([]);
+      setFavorites(neutralValue('favorites') as { dishes: string[]; cooks: string[] });
+      setCart(neutralValue('cart') as Cart);
+      return true;
     };
     return {
       ready, storageReady, bootFallback, forceReady, prefs, setPrefs, cooks, setCooks, dishes, setDishes, slots, setSlots, orders, setOrders, reviews, setReviews, reports, setReports,
       favorites, toggleFav, cart, setCart, addToCart, clearCart: () => setCart({ cookId: null, lines: [] }), myCook, distanceTo,
-      placeOrder, setOrderStatus, loadDemo, hasDemo, removeDemo, addKitchenDemo, wipe,
+      placeOrder, setOrderStatus, loadDemo, hasDemo, removeDemo, addKitchenDemo, wipe, preservation,
     };
-  }, [ready, storageReady, bootFallback, forceReady, prefs, cooks, dishes, slots, orders, reviews, reports, favorites, cart, myCook, loc, setPrefs, setCooks, setDishes, setSlots, setOrders, setReviews, setReports, setFavorites, setCart]);
+  }, [ready, storageReady, bootFallback, forceReady, prefs, cooks, dishes, slots, orders, reviews, reports, favorites, cart, myCook, loc, preservation, setPrefs, setCooks, setDishes, setSlots, setOrders, setReviews, setReports, setFavorites, setCart]);
   return <C.Provider value={value}>{children}</C.Provider>;
 }
 

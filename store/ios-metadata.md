@@ -56,7 +56,7 @@ Bissabi Home Made Food connects neighbours with home cooks nearby. Customers dis
 Données stockées localement (pour information) :
 - Votre profil (nom affiché, commune) et, si vous cuisinez, votre profil de cuisinier, vos plats et leurs photos, vos créneaux ;
 - Vos commandes, reçus, avis et signalements ;
-- Votre position approximative (arrondie à environ 100 m), uniquement au moment où vous demandez les plats proches ; elle n'est pas conservée.
+- Votre position approximative (arrondie à environ 100 m), enregistrée dans les préférences de cet appareil lorsque vous la demandez. Elle n'est pas envoyée à un serveur. La désactiver dans Compte efface cette préférence. Elle n'est pas effacée toute seule.
 
 Autorisations :
 - Localisation « pendant l'utilisation » : facultative, pour trouver les plats proches. Vous pouvez choisir une commune à la place.

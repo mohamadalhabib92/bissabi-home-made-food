@@ -1,6 +1,6 @@
 /** Données de DÉMONSTRATION — toutes marquées `demo: true` et « (démo) ». Aucune personne réelle. */
 import { addDays, todayISO } from './dates';
-import type { Cook, Dish, Order, Review, Slot } from './model';
+import { ALLERGENS, type Allergen, type Cook, type Dish, type Order, type Review, type Slot } from './model';
 import { quote } from './pricing';
 
 const now = () => new Date().toISOString();
@@ -8,7 +8,12 @@ const ck = (id: string, name: string, commune: string, npa: string, lat: number,
   id, name: `${name} (démo)`, commune, npa, lat, lng, bio, halalKitchen: halal, languages, delivers, avatarColor: color, demo: true, createdAt: now(),
   checklist: { hands: true, cold: true, cooking: true, separation: true, allergens: true, packaging: true, traceability: true, health: true }, checklistAt: now(),
 });
-const dish = (d: Omit<Dish, 'active' | 'demo' | 'allergensConfirmed' | 'leadHours'> & { leadHours?: number }): Dish => ({ leadHours: 24, ...d, active: true, demo: true, allergensConfirmed: true });
+/** Démo seulement : les 14 allergènes sont renseignés. Les fiches déjà chez l'utilisateur ne sont pas réécrites. */
+const declared = (present: Allergen[]): Dish['allergenStatus'] =>
+  Object.fromEntries(ALLERGENS.map((a) => [a.key, present.includes(a.key) ? 'present' : 'absent'])) as Dish['allergenStatus'];
+const dish = (d: Omit<Dish, 'active' | 'demo' | 'allergensConfirmed' | 'leadHours' | 'allergenStatus'> & { leadHours?: number }): Dish => ({
+  leadHours: 24, ...d, active: true, demo: true, allergensConfirmed: true, allergenStatus: declared(d.allergens),
+});
 
 export function demoMarket() {
   const cooks: Cook[] = [

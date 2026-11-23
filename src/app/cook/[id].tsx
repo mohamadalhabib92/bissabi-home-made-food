@@ -4,8 +4,10 @@ import { Avatar, DishCard, Pill, Stars } from '@/components/brand';
 import { useData, useL } from '@/lib/data';
 import { stamp } from '@/lib/dates';
 import { fmtKm } from '@/lib/geo';
+import { buyerVisibleSlots } from '@/lib/launchCheckout';
 import { openSlotsFor, rating } from '@/lib/market';
 import { HYGIENE_CHECKLIST } from '@/lib/model';
+import { ofcoBadgeVisible, saleBlock } from '@/lib/saleGate';
 import { Body, Button, Card, Empty, H1, H2, IconButton, Muted, Row, Screen, Spacer } from '@/ui/kit';
 
 export default function CookScreen() {
@@ -17,7 +19,7 @@ export default function CookScreen() {
   if (!cook) return <Screen><Empty icon="help-circle-outline" title={L('Profil introuvable', 'Profile not found')} /></Screen>;
   const d = distanceTo(cook);
   const r = rating(reviews, cook.id);
-  const mine = dishes.filter((x) => x.cookId === cook.id && x.active);
+  const mine = dishes.filter((x) => x.cookId === cook.id && x.active && !saleBlock(x, cook));
   const pub = reviews.filter((x) => x.cookId === cook.id && x.status === 'published');
   const checked = HYGIENE_CHECKLIST.filter((h) => cook.checklist[h.key]).length;
   const fav = favorites.cooks.includes(cook.id);
@@ -35,8 +37,9 @@ export default function CookScreen() {
       <Spacer />
       <Row wrap gap={6}>
         {cook.halalKitchen ? <Pill label={L('Cuisine halal (déclarée)', 'Halal kitchen (declared)')} tone="green" /> : null}
-        <Pill label={cook.delivers ? L('Retrait & livraison', 'Pickup & delivery') : L('Retrait', 'Pickup')} tone="gold" />
+        <Pill label={L('Retrait', 'Pickup')} tone="gold" />
         <Pill label={`${L('Checklist hygiène', 'Hygiene checklist')} ${checked}/${HYGIENE_CHECKLIST.length} (${L('auto-déclarée', 'self-declared')})`} />
+        {ofcoBadgeVisible(cook.ofcoStatus) ? <Pill label={L('Annonce OFCO (VD)', 'OFCO notification (VD)')} tone="green" /> : null}
         {cook.languages.map((x) => <Pill key={x} label={x.toUpperCase()} />)}
         {cook.demo ? <Pill label="démo" /> : null}
       </Row>
@@ -44,8 +47,8 @@ export default function CookScreen() {
       <Body>{cook.bio}</Body>
       <Spacer />
       <H2>{L('Ses plats', 'Dishes')}</H2>
-      {mine.length ? mine.map((x) => <DishCard key={x.id} dish={x} distance={d} nextSlot={openSlotsFor(x, slots)[0]} onPress={() => router.push(`/dish/${x.id}`)} />) : <Muted>{L('Aucun plat actif.', 'No active dish.')}</Muted>}
-      <H2>{L('Avis vérifiés', 'Verified reviews')}</H2>
+      {mine.length ? mine.map((x) => <DishCard key={x.id} dish={x} distance={d} nextSlot={openSlotsFor(x, buyerVisibleSlots(slots))[0]} onPress={() => router.push(`/dish/${x.id}`)} />) : <Muted>{L('Aucun plat actif.', 'No active dish.')}</Muted>}
+      <H2>{L('Avis publiés', 'Published reviews')}</H2>
       {pub.length ? pub.map((x) => (
         <Card key={x.id}>
           <Row gap={8}><Stars value={x.rating} /><Muted>{x.author} · {stamp(x.at)}</Muted></Row>
