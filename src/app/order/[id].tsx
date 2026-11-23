@@ -44,7 +44,7 @@ export default function OrderScreen() {
     `BISSABI HOME MADE — ${L('Reçu', 'Receipt')} ${o.number}`, `${L('Date', 'Date')}: ${stamp(o.createdAt, lang)}`,
     `${L('Cuisinier·ère', 'Cook')}: ${cook?.name ?? ''} (${cook?.commune ?? ''})`, `${L('Créneau', 'Slot')}: ${dayLabel(o.slotDate, lang)} ${o.slotFrom}–${o.slotTo} · ${o.mode === 'pickup' ? L('Retrait', 'Pickup') : L('Livraison', 'Delivery')}`, '',
     ...o.lines.map((l) => `${l.qty} × ${l.title} @ ${chf(l.unitPrice)} = ${chf(l.qty * l.unitPrice)}`), '',
-    `${L('Plats', 'Dishes')}: ${chf(o.subtotal)}`, `${L('Commission plateforme 15 %', 'Platform commission 15%')}: ${chf(o.commission)}`, `${L('Livraison', 'Delivery')}: ${chf(o.deliveryFee)}`, `TOTAL: ${chf(o.total)}`, '',
+    `${L('Plats', 'Dishes')}: ${chf(o.subtotal)}`, `${L('Commission plateforme', 'Platform commission')} (${Math.round(o.subtotal > 0 ? (o.commission / o.subtotal) * 100 : 0)} %): ${chf(o.commission)}`, `${L('Livraison', 'Delivery')}: ${chf(o.deliveryFee)}`, `TOTAL: ${chf(o.total)}`, '',
     `${L('Paiement', 'Payment')}: ${o.payment.method === 'demo' ? L('SIMULATION DE DÉMO — aucun débit', 'DEMO SIMULATION — no charge') : 'Stripe'}${o.payment.ref ? ` · ${o.payment.ref}` : ''}`,
     `${L('Plateforme exploitée par', 'Platform operated by')} ${COMPANY_LINE}`,
   ].join('\n');

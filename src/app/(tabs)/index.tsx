@@ -7,6 +7,7 @@ import { useI18n } from '@/i18n';
 import { useData, useL } from '@/lib/data';
 import { fmtKm, zoneOf } from '@/lib/geo';
 import { buyerVisibleSlots } from '@/lib/launchCheckout';
+import { saleBlock } from '@/lib/saleGate';
 import { openSlotsFor, rating } from '@/lib/market';
 import { CUISINES, type Cuisine } from '@/lib/model';
 import { Button, Chip, DemoBanner, Empty, Field, H2, Ionicons, Muted, Notice, Segmented, Toggle, panelStyle, styles } from '@/ui/kit';
@@ -31,7 +32,7 @@ export default function Discover() {
   const ids = new Set(nearCooks.map((x) => x.c.id));
   const needle = q.trim().toLowerCase();
   const list = dishes
-    .filter((d) => d.active && ids.has(d.cookId))
+    .filter((d) => d.active && ids.has(d.cookId) && !saleBlock(d, cooks.find((c) => c.id === d.cookId)))
     .filter((d) => !prefs.halalOnly || d.halal)
     .filter((d) => !cuisine || d.cuisine === cuisine)
     .filter((d) => !favOnly || favorites.dishes.includes(d.id) || favorites.cooks.includes(d.cookId))

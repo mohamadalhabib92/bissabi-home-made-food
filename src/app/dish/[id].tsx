@@ -9,6 +9,7 @@ import { useData, useL } from '@/lib/data';
 import { dayLabel } from '@/lib/dates';
 import { fmtKm, zoneOf } from '@/lib/geo';
 import { buyerVisibleSlots } from '@/lib/launchCheckout';
+import { saleBlock } from '@/lib/saleGate';
 import { openSlotsFor, rating } from '@/lib/market';
 import { CUISINES } from '@/lib/model';
 import { chf, MIN_LEAD_HOURS } from '@/lib/pricing';
@@ -32,6 +33,7 @@ export default function DishScreen() {
   const r = cook ? rating(reviews, cook.id) : { avg: 0, count: 0 };
   const fav = favorites.dishes.includes(dish.id);
   const outside = zoneOf(prefs.location) === 'outside';
+  const blocked = saleBlock(dish, cook);
   const declared = splitAllergens(dish);
   const added_ = () => {
     setAdded(true);
@@ -39,8 +41,9 @@ export default function DishScreen() {
   };
   const add = () => {
     const res = addToCart(dish, qty);
+    if (res === 'blocked') return;
     if (res === 'other_cook')
-      return confirmAsk(L('Votre panier contient les plats d’un·e autre cuisinier·ère. Une commande = un·e cuisinier·ère. Vider le panier et ajouter ce plat ?', 'Your cart has dishes from another cook. One order = one cook. Empty the cart and add this dish?'), () => { clearCart(); setTimeout(() => { addToCart(dish, qty); added_(); }, 0); }, L('Vider et ajouter', 'Empty & add'));
+      return confirmAsk(L('Votre panier contient les plats d’un·e autre cuisinier·ère. Une commande = un·e cuisinier·ère. Vider le panier et ajouter ce plat ?', 'Your cart has dishes from another cook. One order = one cook. Empty the cart and add this dish?'), () => { clearCart(); setTimeout(() => { if (addToCart(dish, qty) === 'ok') added_(); }, 0); }, L('Vider et ajouter', 'Empty & add'));
     added_();
   };
   return (
@@ -102,8 +105,10 @@ export default function DishScreen() {
         <IconButton icon="remove" label={L('Moins', 'Less')} onPress={() => { haptic('select'); setQty((q) => Math.max(1, q - 1)); }} />
         <Text accessibilityLabel={`${qty}`} style={{ color: t.text, fontSize: 18, fontWeight: '700', minWidth: 30, textAlign: 'center' }}>{qty}</Text>
         <IconButton icon="add" label={L('Plus', 'More')} onPress={() => { haptic('select'); setQty((q) => Math.min(20, q + 1)); }} />
-        <Button style={{ flex: 1 }} icon="bag-add-outline" title={`${L('Ajouter', 'Add')} · ${chf(dish.price * qty)}`} disabled={!open.length || outside} onPress={add} />
+        <Button style={{ flex: 1 }} icon="bag-add-outline" title={`${L('Ajouter', 'Add')} · ${chf(dish.price * qty)}`} disabled={!open.length || outside || !!blocked} onPress={add} />
       </Row>
+      {blocked === 'allergens' ? <Notice tone="warning" title={L('Déclaration d’allergènes incomplète', 'Allergen declaration incomplete')} text={L('Les 14 allergènes doivent être Présent, Traces ou Absent avant toute vente. Rien n’est supposé absent.', 'All 14 allergens must be Present, Traces or Absent before a sale. Nothing is assumed absent.')} /> : null}
+      {blocked === 'hygiene' ? <Notice tone="warning" title={L('Checklist hygiène incomplète', 'Hygiene checklist incomplete')} text={L('Ce plat n’est pas en vente tant que le cuisinier n’a pas attesté la checklist.', 'This dish is not for sale until the cook attests the checklist.')} /> : null}
       {outside ? <Notice tone="warning" title={tr('zoneOutsideTitle')} text={tr('zoneOutsideBody')} /> : null}
       {added ? (<><Spacer h={10} /><Notice tone="success" title={L('Ajouté au panier', 'Added to cart')} text={`${cart.lines.reduce((s, l) => s + l.qty, 0)} ${L('portion(s) dans le panier', 'portion(s) in cart')}`} /><Button variant="secondary" title={L('Voir le panier', 'View cart')} onPress={() => router.push('/cart')} /></>) : null}
       <Spacer />

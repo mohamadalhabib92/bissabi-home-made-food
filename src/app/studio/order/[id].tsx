@@ -43,7 +43,7 @@ export default function IncomingOrder() {
         <H2>{L('Ce que vous recevez', 'What you receive')}</H2>
         <Row style={{ justifyContent: 'space-between' }}><Muted>{L('Plats', 'Dishes')}</Muted><Body>{chf(o.subtotal)}</Body></Row>
         {o.deliveryFee ? <Row style={{ justifyContent: 'space-between' }}><Muted>{L('Frais de livraison', 'Delivery fee')}</Muted><Body>{chf(o.deliveryFee)}</Body></Row> : null}
-        <Row style={{ justifyContent: 'space-between' }}><Muted>{L('Commission Bissabi 15 % (payée par le client)', 'Bissabi 15% commission (paid by customer)')}</Muted><Body>{chf(o.commission)}</Body></Row>
+        <Row style={{ justifyContent: 'space-between' }}><Muted>{L('Commission Bissabi', 'Bissabi commission')} ({Math.round(o.subtotal > 0 ? (o.commission / o.subtotal) * 100 : 0)} %)</Muted><Body>{chf(o.commission)}</Body></Row>
         <Row style={{ justifyContent: 'space-between' }}><Text style={{ fontWeight: '800', color: t.text }}>{L('Net pour vous', 'Net for you')}</Text><Text style={{ fontWeight: '800', color: t.success }}>{chf(net)}</Text></Row>
       </Card>
       {o.status === 'requested' && !refusing ? (

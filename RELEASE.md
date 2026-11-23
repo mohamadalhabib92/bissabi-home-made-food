@@ -35,13 +35,13 @@ Sans cela, le binaire peut refaire le plantage des builds 13 et 14.
 
 ## CI
 
-`.github/workflows/pr-checks.yml` tourne à chaque push et sur chaque pull request : `npm ci`, `tsc --noEmit`, `npm test`, `npx expo export --platform web`. Aucun secret, aucun déploiement. Le workflow Pages ne part que de `main`.
+`.github/workflows/pr-checks.yml` tourne à chaque push et sur chaque pull request : `npm ci`, `npx expo install --check`, `tsc --noEmit`, `npm test`, `npx expo export --platform web`. Aucun secret, aucun déploiement. Le workflow Pages ne part que de `main`.
 
 ## Questions ouvertes (pas tranchées ici)
 
-- **Commission.** Aujourd’hui le client paie les plats + 15 %. Le PR #7 propose 10 % retenus sur le cuisinier, figés à la commande. Les deux ne sont pas le même produit.
-- **Hygiène.** La checklist déclarative en 8 points reste celle du build TestFlight. Le PR #7 ajoute un dossier à approuver avant publication.
-- **Paiement.** Le lancement reste au retrait, paiement simulé si Stripe n’est pas configuré. Le PR #8 (Stripe Connect, TWINT, cartes, mode test) n’est pas dans cette branche.
+- **Commission.** Décidée : 10 % retenus sur le cuisinier. Les commandes déjà enregistrées gardent leurs montants.
+- **Hygiène.** Pas de vente tant que la checklist en 8 points n’est pas attestée. Le dossier d’approbation du PR #7 n’est pas repris.
+- **Paiement.** Décision : Stripe Connect. Le lancement reste au retrait, paiement simulé. Le branchement du PR #8 (TWINT, cartes, mode test) n’est pas dans cette branche.
 - **Place de marché du PR #4.** Filtres façon Uber, interdiction des boissons maison, partenaires de livraison, qualification des cuisiniers : en conflit avec les photos et les textes de la branche TestFlight, et ce sont des règles métier.
 - **Frais de livraison, pas de 5 centimes, qui paie les frais du prestataire, contact OFCO avant toute vente.** Déjà notés dans le README et le PR #7. Rien n’est décidé dans ce release.
 

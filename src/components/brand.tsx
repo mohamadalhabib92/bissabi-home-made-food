@@ -5,7 +5,7 @@ import { dishPicture } from '@/lib/dishPhotos';
 import { dayLabel } from '@/lib/dates';
 import { fmtKm } from '@/lib/geo';
 import { ALLERGENS, type Allergen, type Cook, type Dish, type Slot } from '@/lib/model';
-import { chf } from '@/lib/pricing';
+import { chf, COMMISSION_PAID_BY, COMMISSION_RATE } from '@/lib/pricing';
 import { splitAllergens } from '@/lib/dishPublish';
 import { Ionicons, panelStyle } from '@/ui/kit';
 import { useAppFonts } from '@/ui/fonts';
@@ -139,6 +139,10 @@ export function DishCard({ dish, cook, distance, nextSlot, onPress }: { dish: Di
 
 export function TotalsTable({ subtotal, commission, deliveryFee, total, L }: { subtotal: number; commission: number; deliveryFee: number; total: number; L: (fr: string, en: string) => string }) {
   const fonts = useAppFonts();
+  const pct = Math.round(COMMISSION_RATE * 100);
+  const commissionLabel = COMMISSION_PAID_BY === 'cook'
+    ? L(`Commission ${pct} % (retenue sur le cuisinier)`, `Commission ${pct}% (kept from the cook)`)
+    : L(`Commission plateforme (${pct} %)`, `Platform commission (${pct}%)`);
   const row = (a: string, b: string, bold = false) => (
     <View style={{ flexDirection: 'row', justifyContent: 'space-between', paddingVertical: 5 }}>
       <Text style={{ color: bold ? t.text : t.muted, fontWeight: bold ? '800' : '500', fontSize: bold ? 17 : 15 }}>{a}</Text>
@@ -148,10 +152,11 @@ export function TotalsTable({ subtotal, commission, deliveryFee, total, L }: { s
   return (
     <View>
       {row(L('Plats', 'Dishes'), chf(subtotal))}
-      {row(L('Commission plateforme (15 %)', 'Platform commission (15%)'), chf(commission))}
+      {row(commissionLabel, chf(commission))}
       {row(L('Frais de livraison', 'Delivery fee'), deliveryFee ? chf(deliveryFee) : L('Retrait — gratuit', 'Pickup — free'))}
       <View style={{ height: 1, backgroundColor: t.border, marginVertical: 6 }} />
-      {row(L('Total TTC', 'Total'), chf(total), true)}
+      {row(L('Total à payer', 'Amount due'), chf(total), true)}
+      {COMMISSION_PAID_BY === 'cook' ? <Text style={{ color: t.muted, fontSize: 13 }}>{L('La commission n’est pas ajoutée à ce total : elle est retenue sur le cuisinier.', 'The commission is not added to this total: it is kept from the cook.')}</Text> : null}
     </View>
   );
 }

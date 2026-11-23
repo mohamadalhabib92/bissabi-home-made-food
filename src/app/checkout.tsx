@@ -9,6 +9,7 @@ import { useData, useL } from '@/lib/data';
 import { cookIsOutsideVaud, zoneOf } from '@/lib/geo';
 import { dayLabel, hoursUntil } from '@/lib/dates';
 import { buyerVisibleSlots, launchPayment, prepareLaunchCheckout } from '@/lib/launchCheckout';
+import { saleBlock } from '@/lib/saleGate';
 import { slotUsed } from '@/lib/market';
 import { MIN_LEAD_HOURS, quote } from '@/lib/pricing';
 import { Button, Card, DemoBanner, Empty, Field, H2, Muted, Notice, Screen, Spacer, Toggle, haptic, panelStyle, useFeedback } from '@/ui/kit';
@@ -46,9 +47,11 @@ export default function Checkout() {
   const slot = options.find((o) => o.s.id === slotId);
   const allergenKeys = [...new Set(lines.flatMap((l) => { const s = splitAllergens(l.dish); return [...s.present, ...s.traces]; }))];
   const cookOutside = cookIsOutsideVaud(cook);
+  const unsellable = lines.some((l) => saleBlock(l.dish, cook));
   const problems = [
     zoneOf(prefs.location) === 'outside' && tr('zoneOutsideTitle'),
     cookOutside && tr('cookOutsideOrder'),
+    unsellable && L('Un plat du panier n’a pas les 14 allergènes déclarés, ou la checklist hygiène est incomplète.', 'A dish in the cart lacks the 14 allergen declarations, or the hygiene checklist is incomplete.'),
     !slot && L('Choisissez un créneau', 'Choose a slot'),
     slot && slot.left < portions && L('Capacité insuffisante sur ce créneau', 'Not enough capacity on this slot'),
     !name.trim() && L('Votre prénom est requis', 'Your first name is required'),
@@ -59,6 +62,11 @@ export default function Checkout() {
     setBusy(true); setError(null);
     setPrefs((p) => ({ ...p, buyerName: name.trim() }));
     const o = placeOrder({ slot: slot.s, mode: launch.next.mode, address: launch.next.address, note: note.trim() || undefined, buyerName: name.trim() });
+    if (!o) {
+      setBusy(false);
+      setError(L('Cette commande ne peut pas être enregistrée.', 'This order cannot be saved.'));
+      return;
+    }
     const r = await pay(o, demoFail ? 'failure' : 'success');
     setBusy(false);
     clearCart();

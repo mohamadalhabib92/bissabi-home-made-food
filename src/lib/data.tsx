@@ -2,6 +2,7 @@ import { createContext, useCallback, useContext, useMemo, useState, useSyncExter
 import { km } from './geo';
 import type { Cook, Dish, FulfilMode, Lang, Order, OrderStatus, Report, Review, Slot } from './model';
 import { quote } from './pricing';
+import { saleBlock } from './saleGate';
 import { getPreservationSnapshot, neutralValue, subscribePreservation, type KeyPreservation } from './preserve';
 import { demoKitchenOrders, demoMarket } from './seed';
 import { STORAGE_KEY } from './persistGuard';
@@ -22,9 +23,9 @@ type Ctx = {
   cooks: Cook[]; setCooks: Setter<Cook[]>; dishes: Dish[]; setDishes: Setter<Dish[]>; slots: Slot[]; setSlots: Setter<Slot[]>;
   orders: Order[]; setOrders: Setter<Order[]>; reviews: Review[]; setReviews: Setter<Review[]>; reports: Report[]; setReports: Setter<Report[]>;
   favorites: { dishes: string[]; cooks: string[] }; toggleFav: (k: 'dishes' | 'cooks', id: string) => void;
-  cart: Cart; setCart: Setter<Cart>; addToCart: (d: Dish, qty?: number) => 'ok' | 'other_cook'; clearCart: () => void;
+  cart: Cart; setCart: Setter<Cart>; addToCart: (d: Dish, qty?: number) => 'ok' | 'other_cook' | 'blocked'; clearCart: () => void;
   myCook: Cook | null; distanceTo: (c: Cook) => number | null;
-  placeOrder: (p: { slot: Slot; mode: FulfilMode; address?: string; note?: string; buyerName?: string }) => Order;
+  placeOrder: (p: { slot: Slot; mode: FulfilMode; address?: string; note?: string; buyerName?: string }) => Order | null;
   setOrderStatus: (id: string, status: OrderStatus, patch?: Partial<Order>, note?: string) => void;
   loadDemo: () => void; hasDemo: boolean; removeDemo: () => void; addKitchenDemo: () => void; wipe: () => Promise<boolean>;
   preservation: KeyPreservation[];
@@ -53,6 +54,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
   const value = useMemo<Ctx>(() => {
     const distanceTo = (c: Cook) => (loc ? km(loc, c) : null);
     const addToCart: Ctx['addToCart'] = (d, qty = 1) => {
+      if (saleBlock(d, cooks.find((c) => c.id === d.cookId))) return 'blocked';
       if (cart.cookId && cart.cookId !== d.cookId && cart.lines.length) return 'other_cook';
       setCart((c) => {
         const ex = c.lines.find((l) => l.dishId === d.id);
@@ -61,7 +63,13 @@ export function DataProvider({ children }: { children: ReactNode }) {
       return 'ok';
     };
     const placeOrder: Ctx['placeOrder'] = ({ slot, mode, address, note, buyerName }) => {
-      const lines = cart.lines.map((l) => { const d = dishes.find((x) => x.id === l.dishId)!; return { dishId: d.id, title: d.title, qty: l.qty, unitPrice: d.price }; });
+      const cook = cooks.find((c) => c.id === cart.cookId);
+      const lines = cart.lines.flatMap((l) => {
+        const d = dishes.find((x) => x.id === l.dishId);
+        if (!d || saleBlock(d, cook)) return [];
+        return [{ dishId: d.id, title: d.title, qty: l.qty, unitPrice: d.price }];
+      });
+      if (!cart.cookId || lines.length !== cart.lines.length) return null;
       const q = quote(lines, mode);
       const at = new Date().toISOString();
       const o: Order = {
