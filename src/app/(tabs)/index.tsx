@@ -7,6 +7,7 @@ import { useI18n } from '@/i18n';
 import { useData, useL } from '@/lib/data';
 import { fmtKm, zoneOf } from '@/lib/geo';
 import { buyerVisibleSlots } from '@/lib/launchCheckout';
+import { paymentsLive } from '@/lib/payments';
 import { saleBlock } from '@/lib/saleGate';
 import { openSlotsFor, rating } from '@/lib/market';
 import { CUISINES, type Cuisine } from '@/lib/model';
@@ -45,6 +46,7 @@ export default function Discover() {
       <View style={[styles.inner, { paddingHorizontal: 20 }]}>
         <Wordmark />
         <View style={{ height: 14 }} />
+        {!paymentsLive ? <Notice tone="info" title={L('Lancement bientôt', 'Launching soon')} text={L('Pré-inscription. Aucun paiement réel tant que les cuisines n’ont pas passé l’hygiène et que les autorités, le paiement et la sécurité ne sont pas validés.', 'Pre-registration. No real payment until kitchens pass hygiene and the authorities, payments and security are validated.')} /> : null}
         <Pressable onPress={() => router.push('/location')} accessibilityRole="button" accessibilityLabel={L('Changer de lieu', 'Change location')}
           style={panelStyle({ flexDirection: 'row', alignItems: 'center', gap: 8, borderRadius: 999, paddingHorizontal: 14, minHeight: t.hit, alignSelf: 'flex-start' })}>
           <Ionicons name={prefs.location?.source === 'gps' ? 'navigate' : 'location-outline'} size={16} color={t.primary} />

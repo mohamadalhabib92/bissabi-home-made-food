@@ -39,3 +39,17 @@ Tests : `src/lib/pricing.test.ts`.
 ### Bloquant
 
 Le paiement Stripe Connect (PR #8, TWINT et cartes) n’est pas intégré. Le branchement demande le module natif et un serveur. Rien n’est encaissé.
+
+## 2026-11-23 — préparation au lancement
+
+Branche `cursor/launch-readiness-07cc`, à partir de `a7fd0eb`. Pas de fusion dans `main`. Pas de soumission. Pas de migration hébergée.
+
+### Avant / Après
+
+Avant : pas d’audit de lancement, pas de code Connect testable, la suppression « compte » gardait la copie de récupération, pas de page CGU/CGV, pas de bandeau hors ligne ni de pré-inscription.
+
+Après : `docs/launch-readiness.md`. Connect Express (onboarding, frais 10 %, remboursement, webhook) dans `src/lib/stripeConnect.ts`, migration locale et fonction non déployée. Suppression définitive sur l’appareil. Conditions liées depuis Compte. Bandeau « Lancement bientôt » et hors ligne. La porte de vente reste fermée.
+
+Fichiers : `docs/launch-readiness.md`, `src/lib/stripeConnect.ts`, `src/lib/stripeConnect.test.ts`, `src/lib/storage.ts`, `src/lib/payments.ts`, `src/app/terms.tsx`, `src/app/privacy.tsx`, `src/ui/offline.tsx`, `supabase/migrations/20261123160000_stripe_connect_ledger.sql`.
+
+Tests : `src/lib/stripeConnect.test.ts` et la suite existante.

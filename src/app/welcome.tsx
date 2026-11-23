@@ -33,6 +33,7 @@ export default function Welcome() {
         <Toggle label={L('J’accepte les conditions d’utilisation et la politique de confidentialité (obligatoire)', 'I accept the terms of use and privacy policy (required)')} value={terms} onChange={setTerms} />
         <Toggle label={L('Recevoir des nouvelles de Bissabi (facultatif)', 'Receive news from Bissabi (optional)')} value={marketing} onChange={setMarketing} hint={L('Révocable à tout moment dans Compte.', 'You can withdraw anytime in Account.')} />
         <Row wrap>
+          <Button small variant="ghost" title={L('Conditions', 'Terms')} onPress={() => router.push('/terms')} />
           <Button small variant="ghost" title={L('Confidentialité', 'Privacy')} onPress={() => router.push('/privacy')} />
           <Button small variant="ghost" title={L('Mentions légales', 'Legal notice')} onPress={() => router.push('/legal')} />
         </Row>

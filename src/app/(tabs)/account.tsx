@@ -46,6 +46,8 @@ export default function Account() {
       <Card>
         <ListItem icon="help-buoy-outline" title={L('Signaler / support', 'Report / support')} onPress={() => router.push('/report')} />
         <ListItem icon="document-text-outline" title={L('Conformité & prochaines étapes', 'Compliance & next steps')} onPress={() => router.push('/compliance')} />
+        <ListItem icon="document-text-outline" title={L('Conditions (CGU et CGV)', 'Terms of use and sale')} onPress={() => router.push('/terms')} />
+        <ListItem icon="shield-outline" title={L('Politique de confidentialité', 'Privacy policy')} onPress={() => router.push('/privacy')} />
         <ListItem icon="business-outline" title={L('Mentions légales', 'Legal notice')} onPress={() => router.push('/legal')} />
       </Card>
       <H2>{L('Administration', 'Administration')}</H2>

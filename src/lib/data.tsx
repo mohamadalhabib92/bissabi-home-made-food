@@ -6,7 +6,7 @@ import { saleBlock } from './saleGate';
 import { getPreservationSnapshot, neutralValue, subscribePreservation, type KeyPreservation } from './preserve';
 import { demoKitchenOrders, demoMarket } from './seed';
 import { STORAGE_KEY } from './persistGuard';
-import { clearAll, uid, usePersistentState } from './storage';
+import { clearAll, deleteLocalAccount, uid, usePersistentState } from './storage';
 
 type Setter<T> = (v: T | ((p: T) => T)) => void;
 export type Loc = { lat: number; lng: number; label: string; source: 'gps' | 'commune'; canton?: string };
@@ -27,7 +27,7 @@ type Ctx = {
   myCook: Cook | null; distanceTo: (c: Cook) => number | null;
   placeOrder: (p: { slot: Slot; mode: FulfilMode; address?: string; note?: string; buyerName?: string }) => Order | null;
   setOrderStatus: (id: string, status: OrderStatus, patch?: Partial<Order>, note?: string) => void;
-  loadDemo: () => void; hasDemo: boolean; removeDemo: () => void; addKitchenDemo: () => void; wipe: () => Promise<boolean>;
+  loadDemo: () => void; hasDemo: boolean; removeDemo: () => void; addKitchenDemo: () => void; wipe: () => Promise<boolean>; deleteAccount: () => Promise<boolean>;
   preservation: KeyPreservation[];
 };
 const C = createContext<Ctx | null>(null);
@@ -102,19 +102,28 @@ export function DataProvider({ children }: { children: ReactNode }) {
       const mine = dishes.filter((d) => d.cookId === myCook.id);
       setOrders((l) => [...l.filter((o) => !(o.demo && o.side === 'cook')), ...demoKitchenOrders(myCook.id, mine)]);
     };
-    const wipe = async () => {
-      const cleared = await clearAll();
-      if (!cleared) return false;
+    const resetMemory = () => {
       setPrefs(neutralValue('prefs') as Prefs);
       setCooks([]); setDishes([]); setSlots([]); setOrders([]); setReviews([]); setReports([]);
       setFavorites(neutralValue('favorites') as { dishes: string[]; cooks: string[] });
       setCart(neutralValue('cart') as Cart);
+    };
+    const wipe = async () => {
+      const cleared = await clearAll();
+      if (!cleared) return false;
+      resetMemory();
+      return true;
+    };
+    const deleteAccount = async () => {
+      const cleared = await deleteLocalAccount();
+      if (!cleared) return false;
+      resetMemory();
       return true;
     };
     return {
       ready, storageReady, bootFallback, forceReady, prefs, setPrefs, cooks, setCooks, dishes, setDishes, slots, setSlots, orders, setOrders, reviews, setReviews, reports, setReports,
       favorites, toggleFav, cart, setCart, addToCart, clearCart: () => setCart({ cookId: null, lines: [] }), myCook, distanceTo,
-      placeOrder, setOrderStatus, loadDemo, hasDemo, removeDemo, addKitchenDemo, wipe, preservation,
+      placeOrder, setOrderStatus, loadDemo, hasDemo, removeDemo, addKitchenDemo, wipe, deleteAccount, preservation,
     };
   }, [ready, storageReady, bootFallback, forceReady, prefs, cooks, dishes, slots, orders, reviews, reports, favorites, cart, myCook, loc, preservation, setPrefs, setCooks, setDishes, setSlots, setOrders, setReviews, setReports, setFavorites, setCart]);
   return <C.Provider value={value}>{children}</C.Provider>;
