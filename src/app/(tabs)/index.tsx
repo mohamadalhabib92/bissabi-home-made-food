@@ -9,6 +9,7 @@ import { fmtKm, zoneOf } from '@/lib/geo';
 import { buyerVisibleSlots } from '@/lib/launchCheckout';
 import { paymentsLive } from '@/lib/payments';
 import { saleBlock } from '@/lib/saleGate';
+import { sellerKindOf } from '@/lib/seller';
 import { openSlotsFor, rating } from '@/lib/market';
 import { CUISINES, type Cuisine } from '@/lib/model';
 import { Button, Chip, DemoBanner, Empty, Field, H2, Ionicons, Muted, Notice, Segmented, Toggle, panelStyle, styles } from '@/ui/kit';
@@ -46,7 +47,7 @@ export default function Discover() {
       <View style={[styles.inner, { paddingHorizontal: 20 }]}>
         <Wordmark />
         <View style={{ height: 14 }} />
-        {!paymentsLive ? <Notice tone="info" title={L('Lancement bientôt', 'Launching soon')} text={L('Pré-inscription. Aucun paiement réel tant que les cuisines n’ont pas passé l’hygiène et que les autorités, le paiement et la sécurité ne sont pas validés.', 'Pre-registration. No real payment until kitchens pass hygiene and the authorities, payments and security are validated.')} /> : null}
+        {!paymentsLive ? <Notice tone="info" title={L('Lancement bientôt', 'Launching soon')} text={L('Pré-inscription à Lausanne et Prilly. Cuisines maison et traiteurs : menus, panier, retrait ou livraison, suivi. Aucun paiement réel avant l’hygiène et les validations.', 'Pre-registration in Lausanne and Prilly. Home kitchens and caterers: menus, cart, pickup or delivery, tracking. No real payment before hygiene and the validations.')} /> : null}
         <Pressable onPress={() => router.push('/location')} accessibilityRole="button" accessibilityLabel={L('Changer de lieu', 'Change location')}
           style={panelStyle({ flexDirection: 'row', alignItems: 'center', gap: 8, borderRadius: 999, paddingHorizontal: 14, minHeight: t.hit, alignSelf: 'flex-start' })}>
           <Ionicons name={prefs.location?.source === 'gps' ? 'navigate' : 'location-outline'} size={16} color={t.primary} />
@@ -69,7 +70,7 @@ export default function Discover() {
         {!prefs.location ? <Muted style={{ marginBottom: 10 }}>{L('Lieu non défini : tous les cuisinier·ères sont affichés, sans distance.', 'No location set: all cooks shown, without distance.')} {tr('zoneUnsetHint')}</Muted> : null}
         {zone !== 'outside' && nearCooks.length ? (
           <>
-            <H2>{L('Près de chez vous', 'Near you')}</H2>
+            <H2>{L('Cuisines près de vous', 'Kitchens near you')}</H2>
             <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 10, paddingBottom: 16 }}>
               {nearCooks.map(({ c, d }) => {
                 const r = rating(reviews, c.id);
@@ -78,7 +79,7 @@ export default function Discover() {
                     style={panelStyle({ width: 170, borderRadius: 16, padding: 12, gap: 6, minHeight: t.hit })}>
                     <Avatar cook={c} />
                     <Text style={{ color: t.text, fontWeight: '700' }} numberOfLines={1}>{c.name}</Text>
-                    <Text style={{ color: t.muted, fontSize: 12 }} numberOfLines={1}>{c.commune}{d != null ? ` · ${fmtKm(d)}` : ''}</Text>
+                    <Text style={{ color: t.muted, fontSize: 12 }} numberOfLines={1}>{sellerKindOf(c) === 'caterer' ? L('Traiteur', 'Caterer') : L('Cuisine maison', 'Home kitchen')} · {c.commune}{d != null ? ` · ${fmtKm(d)}` : ''}</Text>
                     {r.count ? <Stars value={r.avg} size={12} /> : <Text style={{ color: t.muted, fontSize: 12 }}>{L('Nouveau', 'New')}</Text>}
                   </Pressable>
                 );
@@ -87,7 +88,7 @@ export default function Discover() {
           </>
         ) : null}
 
-        <H2>{L('Plats à commander à l’avance', 'Dishes to pre-order')}</H2>
+        <H2>{L('Menus à commander', 'Menus to order')}</H2>
         {zone === 'outside' ? (
           <Empty icon="location-outline" title={tr('zoneOutsideTitle')} text={tr('zoneOutsideBody')} action={<Button variant="secondary" title={L('Choisir une commune', 'Choose a town')} onPress={() => router.push('/location')} />} />
         ) : list.length ? list.map(({ d, next, dist }) => (

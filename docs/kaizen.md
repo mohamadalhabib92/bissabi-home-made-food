@@ -53,3 +53,13 @@ Après : `docs/launch-readiness.md`. Connect Express (onboarding, frais 10 %, re
 Fichiers : `docs/launch-readiness.md`, `src/lib/stripeConnect.ts`, `src/lib/stripeConnect.test.ts`, `src/lib/storage.ts`, `src/lib/payments.ts`, `src/app/terms.tsx`, `src/app/privacy.tsx`, `src/ui/offline.tsx`, `supabase/migrations/20261123160000_stripe_connect_ledger.sql`.
 
 Tests : `src/lib/stripeConnect.test.ts` et la suite existante.
+
+### Vendeurs : cuisine maison et traiteur
+
+Avant : un seul profil, souvent nommé au masculin, sans type.
+
+Après : à l’inscription on choisit cuisine maison ou traiteur. Les deux ont la même checklist, les mêmes 14 allergènes et les 10 %. Un traiteur peut poser un minimum de portions et un délai ou une capacité plus grands. Une fiche déjà enregistrée sans type n’est pas réécrite. Commission ou contrôle différents pour les traiteurs : non décidés, listés dans `docs/launch-readiness.md`.
+
+Fichiers : `src/lib/seller.ts`, `src/app/studio/profile.tsx`, `src/lib/model.ts`.
+
+Tests : `src/lib/seller.test.ts`.

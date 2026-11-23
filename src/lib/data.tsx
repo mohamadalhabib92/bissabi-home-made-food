@@ -3,6 +3,7 @@ import { km } from './geo';
 import type { Cook, Dish, FulfilMode, Lang, Order, OrderStatus, Report, Review, Slot } from './model';
 import { quote } from './pricing';
 import { saleBlock } from './saleGate';
+import { belowMinimum } from './seller';
 import { getPreservationSnapshot, neutralValue, subscribePreservation, type KeyPreservation } from './preserve';
 import { demoKitchenOrders, demoMarket } from './seed';
 import { STORAGE_KEY } from './persistGuard';
@@ -70,6 +71,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
         return [{ dishId: d.id, title: d.title, qty: l.qty, unitPrice: d.price }];
       });
       if (!cart.cookId || lines.length !== cart.lines.length) return null;
+      if (belowMinimum(cook, lines.reduce((s, l) => s + l.qty, 0))) return null;
       const q = quote(lines, mode);
       const at = new Date().toISOString();
       const o: Order = {

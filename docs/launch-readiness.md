@@ -13,6 +13,23 @@ Légende : **Ready** utilisable pour le pilote tel quel · **Partial** une parti
 | Coursier : mission, remise | Missing | Aucun écran ni rôle coursier. |
 | Admin Bissabi : modération des avis | Partial | `src/app/moderation.tsx` est local à l’appareil, pas un compte admin. |
 | Zone Lausanne + Prilly, CHF | Partial | `src/i18n/fr.ts` (`zoneOutside*`), prix `chf` dans `src/lib/pricing.ts`. Le filtre géographique est le canton de Vaud, pas seulement les deux communes. |
+| Découverte façon commande de quartier | Partial | Accueil : cuisines près de vous, menus, panier, retrait ou livraison, suivi (`src/app/(tabs)/index.tsx`, `cart.tsx`, `orders.tsx`). Pas la marque d’un tiers. |
+| Vendeur : cuisine maison ou traiteur | Partial | Choix à l’inscription `src/app/studio/profile.tsx`. Champ `sellerKind` ajouté seulement à l’enregistrement. Une fiche ancienne sans ce champ s’affiche « cuisine maison » et n’est pas réécrite. |
+| Traiteur : plus de portions, minimum, délai | Partial | Minimum de portions s’il est saisi (`src/lib/seller.ts`). Plafond de créneau 500 et délai jusqu’à 14 jours pour un traiteur, 100 portions et 7 jours pour une cuisine maison. Ces plafonds sont des garde-fous, pas une règle métier validée. |
+| Commission et hygiène identiques | Ready | 10 % et la porte de vente ne dépendent pas du type (`src/lib/pricing.ts`, `src/lib/saleGate.ts`). |
+
+## Règles par type — à trancher par Mohamed
+
+Ces points ne sont pas codés, pour ne pas inventer une règle.
+
+| Sujet | État |
+|---|---|
+| Commission différente pour un traiteur | Needs owner decision |
+| Vérification d’identité ou OFCO différente pour un traiteur | Needs owner decision |
+| Minimum en francs plutôt qu’en portions | Needs owner decision |
+| Plafonds exacts (portions par créneau, délai maximum) | Needs owner decision |
+| Un traiteur peut-il vendre hors Lausanne / Prilly | Needs owner decision |
+| TVA, statut d’entreprise, assurance propre aux traiteurs | Needs owner decision |
 
 ## Comptes et suppression
 

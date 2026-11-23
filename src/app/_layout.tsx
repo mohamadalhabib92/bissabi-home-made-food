@@ -24,7 +24,7 @@ function Nav() {
       <Stack.Screen name="cook/[id]" options={{ title: L('Cuisinier·ère', 'Cook') }} />
       <Stack.Screen name="checkout" options={{ title: L('Commande à l’avance', 'Advance order') }} />
       <Stack.Screen name="order/[id]" options={{ title: L('Commande', 'Order') }} />
-      <Stack.Screen name="studio/profile" options={{ title: L('Mon profil cuisinier', 'My cook profile') }} />
+      <Stack.Screen name="studio/profile" options={{ title: L('Ma cuisine', 'My kitchen') }} />
       <Stack.Screen name="studio/checklist" options={{ title: L('Checklist hygiène', 'Hygiene checklist') }} />
       <Stack.Screen name="studio/dish/[id]" options={{ title: L('Plat', 'Dish') }} />
       <Stack.Screen name="studio/slots" options={{ title: L('Créneaux', 'Slots') }} />

@@ -39,12 +39,19 @@ export type Cuisine = (typeof CUISINES)[number]['key'];
 export type Ingredient = { name: string; qty: number; unit: string }; // par portion
 export type FulfilMode = 'pickup' | 'delivery';
 
+/** Cuisine maison ou traiteur. Absent = fiche ancienne, affichée comme cuisine maison. */
+export type SellerKind = 'home' | 'caterer';
+
 export type Cook = {
   id: string; name: string; commune: string; npa: string; lat: number; lng: number;
   bio: string; halalKitchen: boolean; languages: string[];
   checklist: Record<string, boolean>; checklistAt?: string;
-  delivers: boolean; // le cuisinier livre-t-il lui-même (sinon retrait uniquement)
+  delivers: boolean; // livraison propre (sinon retrait, ou coursier plus tard)
   avatarColor: string; isMe?: boolean; demo?: boolean; createdAt: string;
+  /** Choix à l’inscription. Non écrit tant que la personne n’enregistre pas. */
+  sellerKind?: SellerKind;
+  /** Minimum de portions, seulement pour un traiteur qui l’a saisi. */
+  minPortions?: number;
   /** Canton du cuisinier. Les inscriptions nouvelles sont limitées à VD. */
   canton?: string;
   /** Absent sur les fiches existantes : aucun badge n'est affiché. */

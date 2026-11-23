@@ -18,9 +18,9 @@ export default function Kitchen() {
   if (!myCook)
     return (
       <Screen>
-        <Empty icon="flame-outline" title={L('Partagez votre cuisine', 'Share your cooking')}
-          text={L('Proposez vos plats faits maison à vos voisins, sur vos créneaux, à vos prix. Vous restez responsable de la conformité de votre cuisine.', 'Offer your home-made dishes to neighbours, on your slots, at your prices. You remain responsible for your kitchen’s compliance.')}
-          action={<Button title={L('Créer mon profil cuisinier', 'Create my cook profile')} icon="arrow-forward" onPress={() => router.push('/studio/profile')} />} />
+        <Empty icon="flame-outline" title={L('Cuisine maison ou traiteur', 'Home kitchen or caterer')}
+          text={L('Proposez vos menus à Lausanne et à Prilly, en retrait ou en livraison. Cuisinier·ère ou traiteur : même checklist, mêmes allergènes, même commission de 10 %.', 'Offer your menus in Lausanne and Prilly, for pickup or delivery. Home cook or caterer: same checklist, same allergens, same 10% commission.')}
+          action={<Button title={L('Créer mon profil', 'Create my profile')} icon="arrow-forward" onPress={() => router.push('/studio/profile')} />} />
         <Notice tone="info" title={L('Comment ça marche', 'How it works')} text={L('1. Profil + checklist hygiène · 2. Plats avec allergènes · 3. Créneaux de retrait/livraison · 4. Vous acceptez ou refusez chaque commande.', '1. Profile + hygiene checklist · 2. Dishes with allergens · 3. Pickup/delivery slots · 4. You accept or refuse each order.')} />
       </Screen>
     );

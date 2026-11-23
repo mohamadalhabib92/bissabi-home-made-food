@@ -10,6 +10,7 @@ import { cookIsOutsideVaud, zoneOf } from '@/lib/geo';
 import { dayLabel, hoursUntil } from '@/lib/dates';
 import { buyerVisibleSlots, launchPayment, prepareLaunchCheckout } from '@/lib/launchCheckout';
 import { saleBlock } from '@/lib/saleGate';
+import { belowMinimum, minPortionsOf } from '@/lib/seller';
 import { slotUsed } from '@/lib/market';
 import { MIN_LEAD_HOURS, quote } from '@/lib/pricing';
 import { Button, Card, DemoBanner, Empty, Field, H2, Muted, Notice, Screen, Spacer, Toggle, haptic, panelStyle, useFeedback } from '@/ui/kit';
@@ -52,6 +53,7 @@ export default function Checkout() {
     zoneOf(prefs.location) === 'outside' && tr('zoneOutsideTitle'),
     cookOutside && tr('cookOutsideOrder'),
     unsellable && L('Un plat du panier n’a pas les 14 allergènes déclarés, ou la checklist hygiène est incomplète.', 'A dish in the cart lacks the 14 allergen declarations, or the hygiene checklist is incomplete.'),
+    belowMinimum(cook, portions) && L(`Ce traiteur demande au moins ${minPortionsOf(cook)} portions.`, `This caterer asks for at least ${minPortionsOf(cook)} portions.`),
     !slot && L('Choisissez un créneau', 'Choose a slot'),
     slot && slot.left < portions && L('Capacité insuffisante sur ce créneau', 'Not enough capacity on this slot'),
     !name.trim() && L('Votre prénom est requis', 'Your first name is required'),

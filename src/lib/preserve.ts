@@ -43,7 +43,7 @@ export const KEY_SHAPE: Record<string, KeyShape> = {
 
 const COOK_FIELDS = [
   'id', 'name', 'commune', 'npa', 'lat', 'lng', 'bio', 'halalKitchen', 'languages', 'checklist', 'checklistAt',
-  'delivers', 'avatarColor', 'isMe', 'demo', 'createdAt', 'canton', 'ofcoStatus', 'schemaVersion',
+  'delivers', 'avatarColor', 'isMe', 'demo', 'createdAt', 'canton', 'ofcoStatus', 'sellerKind', 'minPortions', 'schemaVersion',
 ] as const;
 
 const DISH_FIELDS = [
