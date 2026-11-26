@@ -50,6 +50,7 @@ export default function TabsLayout() {
     };
   const n = cart.lines.reduce((s, l) => s + l.qty, 0);
   const incoming = orders.filter((o) => o.side === 'cook' && o.status === 'requested').length;
+  const showCourier = prefs.mode === 'courier';
   return (
     <Tabs
       screenListeners={{ tabPress: () => haptic('select') }}
@@ -73,6 +74,7 @@ export default function TabsLayout() {
       <Tabs.Screen name="cart" options={{ title: L('Panier', 'Cart'), tabBarIcon: icon('bag-handle-outline'), tabBarBadge: n || undefined, tabBarBadgeStyle: { backgroundColor: t.primary } }} />
       <Tabs.Screen name="orders" options={{ title: L('Commandes', 'Orders'), tabBarIcon: icon('receipt-outline') }} />
       <Tabs.Screen name="kitchen" options={{ title: L('Cuisiner', 'Cook'), tabBarIcon: icon('flame-outline'), tabBarBadge: incoming || undefined, tabBarBadgeStyle: { backgroundColor: t.success } }} />
+      <Tabs.Screen name="courier" options={{ title: L('Livrer', 'Deliver'), href: showCourier ? undefined : null, tabBarIcon: icon('bicycle-outline') }} />
       <Tabs.Screen name="account" options={{ title: L('Compte', 'Account'), tabBarIcon: icon('person-circle-outline') }} />
     </Tabs>
   );

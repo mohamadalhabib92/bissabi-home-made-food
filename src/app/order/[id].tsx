@@ -66,6 +66,13 @@ export default function OrderScreen() {
         </Card>
       ) : null}
       {o.status === 'refused' ? <Notice tone="danger" title={L('Le cuisinier n’a pas pu accepter', 'The cook could not accept')} text={`${o.refuseReason ?? ''} — ${L('remboursement intégral.', 'full refund.')}`} /> : null}
+      {o.delivery ? (
+        <Card>
+          <H2>{L('Livraison', 'Delivery')}</H2>
+          <Body>{o.delivery.state === 'offered' ? L('En attente d’un livreur', 'Waiting for a courier') : o.delivery.state === 'accepted' ? L('Livreur accepté', 'Courier accepted') : o.delivery.state === 'picked_up' ? L('Retiré à la cuisine', 'Picked up') : o.delivery.state === 'en_route' ? L('En route', 'On the way') : L('Livré', 'Delivered')}</Body>
+          {o.delivery.state === 'en_route' ? <Muted>{L('Code à donner au livreur', 'Code to give the courier')} : {o.delivery.proofCode}</Muted> : null}
+        </Card>
+      ) : null}
       {stepIdx >= 0 ? (
         <Card>
           <H2>{L('Suivi', 'Progress')}</H2>

@@ -23,7 +23,7 @@ const KEY_LABEL: Record<string, [string, string]> = {
 };
 
 export default function Privacy() {
-  const { prefs, wipe, preservation } = useData();
+  const { prefs, wipe, deleteAccount, preservation } = useData();
   const { L, lang } = useL();
   const { t } = useI18n();
   const router = useRouter();
@@ -105,7 +105,13 @@ export default function Privacy() {
         await downloadText(`bissabi-home-made-recovery-${new Date().toISOString().slice(0, 10)}.json`, raw, 'application/json');
       }} />
       <Spacer h={10} />
-      <Button variant="danger" icon="trash-outline" title={L('Supprimer mon compte et mes données', 'Delete my account and data')} onPress={() => confirmAsk(L('Effacer la copie de travail de cet appareil ? Une copie de récupération locale est gardée. Action séparée pour l’effacer aussi.', 'Erase the working copy on this device? A local recovery copy is kept. Erasing that copy is a separate action.'), async () => {
+      <Button variant="danger" icon="trash-outline" title={L('Supprimer définitivement le compte de cet appareil', 'Permanently delete the account on this device')} onPress={() => confirmAsk(L('Effacer la copie de travail et la copie de récupération de cet appareil ? Cette suppression est définitive sur cet appareil. Aucun serveur n’est appelé.', 'Erase the working copy and the recovery copy on this device? This deletion is permanent on this device. No server is called.'), async () => {
+        const cleared = await deleteAccount();
+        if (cleared) router.replace('/welcome');
+        else setStatus(L('La suppression n’a pas pu finir. Réessayez.', 'Deletion could not finish. Try again.'));
+      }, L('Supprimer définitivement', 'Delete permanently'))} />
+      <Spacer h={10} />
+      <Button variant="danger" icon="trash-outline" title={L('Effacer la copie de travail (garder la récupération)', 'Erase the working copy (keep recovery)')} onPress={() => confirmAsk(L('Effacer la copie de travail de cet appareil ? Une copie de récupération locale est gardée. Action séparée pour l’effacer aussi.', 'Erase the working copy on this device? A local recovery copy is kept. Erasing that copy is a separate action.'), async () => {
         const cleared = await wipe();
         if (cleared) router.replace('/welcome');
         else setStatus(t('preserveHeldTitle'));

@@ -8,6 +8,7 @@ import { buyerVisibleSlots } from '@/lib/launchCheckout';
 import { openSlotsFor, rating } from '@/lib/market';
 import { HYGIENE_CHECKLIST } from '@/lib/model';
 import { ofcoBadgeVisible, saleBlock } from '@/lib/saleGate';
+import { minPortionsOf, sellerKindOf } from '@/lib/seller';
 import { Body, Button, Card, Empty, H1, H2, IconButton, Muted, Row, Screen, Spacer } from '@/ui/kit';
 
 export default function CookScreen() {
@@ -36,6 +37,8 @@ export default function CookScreen() {
       </Row>
       <Spacer />
       <Row wrap gap={6}>
+        <Pill label={sellerKindOf(cook) === 'caterer' ? L('Traiteur', 'Caterer') : L('Cuisine maison', 'Home kitchen')} tone="gold" />
+        {minPortionsOf(cook) > 1 ? <Pill label={L(`Min. ${minPortionsOf(cook)} portions`, `Min. ${minPortionsOf(cook)} portions`)} /> : null}
         {cook.halalKitchen ? <Pill label={L('Cuisine halal (déclarée)', 'Halal kitchen (declared)')} tone="green" /> : null}
         <Pill label={L('Retrait', 'Pickup')} tone="gold" />
         <Pill label={`${L('Checklist hygiène', 'Hygiene checklist')} ${checked}/${HYGIENE_CHECKLIST.length} (${L('auto-déclarée', 'self-declared')})`} />

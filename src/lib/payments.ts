@@ -8,11 +8,16 @@ import * as Linking from 'expo-linking';
 import { Platform } from 'react-native';
 import type { Order } from './model';
 import { publicEnv } from './publicEnv';
+import { clientMayStartCheckout } from './stripeConnect';
 
 export const STRIPE_PK = publicEnv.stripePublishable;
 export const PAYMENTS_API = publicEnv.paymentsApi;
 export const SUPPORT_EMAIL = publicEnv.supportEmail;
-export const paymentsLive = STRIPE_PK.configured && PAYMENTS_API.configured;
+/**
+ * L’encaissement réel reste fermé tant que Mohamed n’a pas posé EXPO_PUBLIC_LAUNCH_PAYMENTS=1
+ * après validation hygiène, autorités, paiement et sécurité. YOUR_* ne l’ouvre pas.
+ */
+export const paymentsLive = STRIPE_PK.configured && PAYMENTS_API.configured && clientMayStartCheckout(process.env.EXPO_PUBLIC_LAUNCH_PAYMENTS);
 
 export class PaymentError extends Error {}
 

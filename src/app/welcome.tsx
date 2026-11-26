@@ -25,7 +25,7 @@ export default function Welcome() {
       <Text style={{ color: t.text, fontSize: 22, fontWeight: '700', lineHeight: 30 }}>
         {L('Des plats faits maison par vos voisins, commandés à l’avance.', 'Home-cooked dishes from your neighbours, ordered in advance.')}
       </Text>
-      <Muted style={{ marginTop: 6 }}>{L('Pas un service de livraison de restaurants : des cuisinier·ères de quartier, des créneaux planifiés, des allergènes toujours affichés.', 'Not a restaurant delivery app: neighbourhood cooks, planned time slots, allergens always shown.')}</Muted>
+      <Muted style={{ marginTop: 6 }}>{L('Comme une livraison de quartier, pour des cuisines maison et des traiteurs à Lausanne et à Prilly : menus, panier, retrait ou livraison par coursier, suivi. Mêmes allergènes, même hygiène, même commission.', 'Neighbourhood ordering for home kitchens and caterers in Lausanne and Prilly: menus, cart, pickup or courier delivery, tracking. Same allergens, same hygiene, same commission.')}</Muted>
       <Spacer />
       <Segmented label={L('Langue', 'Language')} options={[{ label: 'Français', value: 'fr' as const }, { label: 'English', value: 'en' as const }]} value={prefs.lang} onChange={(v) => setPrefs((p) => ({ ...p, lang: v }))} />
       <Segmented label={L('Je veux…', 'I want to…')} options={[{ label: L('Commander', 'Order food'), value: 'buyer' as const }, { label: L('Cuisiner', 'Cook'), value: 'cook' as const }]} value={mode} onChange={setMode} />
@@ -33,6 +33,7 @@ export default function Welcome() {
         <Toggle label={L('J’accepte les conditions d’utilisation et la politique de confidentialité (obligatoire)', 'I accept the terms of use and privacy policy (required)')} value={terms} onChange={setTerms} />
         <Toggle label={L('Recevoir des nouvelles de Bissabi (facultatif)', 'Receive news from Bissabi (optional)')} value={marketing} onChange={setMarketing} hint={L('Révocable à tout moment dans Compte.', 'You can withdraw anytime in Account.')} />
         <Row wrap>
+          <Button small variant="ghost" title={L('Conditions', 'Terms')} onPress={() => router.push('/terms')} />
           <Button small variant="ghost" title={L('Confidentialité', 'Privacy')} onPress={() => router.push('/privacy')} />
           <Button small variant="ghost" title={L('Mentions légales', 'Legal notice')} onPress={() => router.push('/legal')} />
         </Row>

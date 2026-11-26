@@ -32,6 +32,7 @@ export default function IncomingOrder() {
       {o.demo ? <Notice tone="warning" title={L('Commande de démonstration', 'Demo order')} /> : null}
       <Row style={{ justifyContent: 'space-between' }}><H1>{o.buyerName}</H1><Badge label={st[lang]} tone={st.tone} /></Row>
       <Muted>{o.number} · {dayLabel(o.slotDate, lang)} {o.slotFrom}–{o.slotTo} · {o.mode === 'pickup' ? L('Retrait', 'Pickup') : L('Livraison', 'Delivery')}</Muted>
+      {o.delivery ? <Notice tone="info" title={L('Course', 'Delivery')} text={`${o.delivery.state}${o.delivery.state === 'accepted' ? ` · ${L('code de retrait', 'pickup code')} ${o.delivery.pickupCode}` : ''}`} /> : null}
       {o.address ? <Body>{o.address}</Body> : null}
       <Spacer />
       <Card>
