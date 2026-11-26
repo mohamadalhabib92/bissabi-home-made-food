@@ -66,7 +66,7 @@ const REVIEW_FIELDS = ['id', 'orderId', 'cookId', 'dishId', 'rating', 'text', 'a
 const REPORT_FIELDS = ['id', 'target', 'targetId', 'reason', 'text', 'at', 'schemaVersion'] as const;
 
 export const KNOWN_FIELDS: Record<string, readonly string[]> = {
-  prefs: ['lang', 'onboarded', 'mode', 'consents', 'location', 'radiusKm', 'halalOnly', 'buyerName', 'schemaVersion'],
+  prefs: ['lang', 'onboarded', 'mode', 'consents', 'location', 'radiusKm', 'halalOnly', 'buyerName', 'accountLink', 'schemaVersion'],
   cooks: COOK_FIELDS,
   dishes: DISH_FIELDS,
   slots: SLOT_FIELDS,

@@ -34,6 +34,8 @@ function Nav() {
       <Stack.Screen name="compliance" options={{ title: L('Conformité & prochaines étapes', 'Compliance & next steps') }} />
       <Stack.Screen name="legal" options={{ title: L('Mentions légales', 'Legal notice') }} />
       <Stack.Screen name="terms" options={{ title: L('Conditions', 'Terms') }} />
+      <Stack.Screen name="courier/[id]" options={{ title: L('Course', 'Job') }} />
+      <Stack.Screen name="auth" options={{ title: L('Connexion', 'Sign in') }} />
       <Stack.Screen name="privacy" options={{ title: L('Données personnelles', 'Personal data') }} />
       <Stack.Screen name="report" options={{ title: L('Signaler / support', 'Report / support'), presentation: 'modal' }} />
       <Stack.Screen name="moderation" options={{ title: L('Modération des avis', 'Review moderation') }} />

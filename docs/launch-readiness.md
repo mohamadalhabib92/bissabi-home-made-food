@@ -10,7 +10,7 @@ Légende : **Ready** utilisable pour le pilote tel quel · **Partial** une parti
 |---|---|---|
 | Client : découvrir, plat, panier, créneau, suivi | Partial | `src/app/(tabs)/index.tsx`, `dish/[id].tsx`, `cart.tsx`, `checkout.tsx`, `order/[id].tsx`. Paiement simulé. Bandeau « Lancement bientôt ». |
 | Cuisine familiale : profil, checklist, plats, créneaux, commandes, gains | Partial | `src/app/(tabs)/kitchen.tsx`, `src/app/studio/*`. Pas de compte serveur. |
-| Coursier : mission, remise | Missing | Aucun écran ni rôle coursier. |
+| Coursier : mission, remise | Partial | Profil, zone Lausanne/Prilly, véhicule, disponibilité, validation admin, acceptation, code de retrait, en route, code de preuve (`src/app/(tabs)/courier.tsx`, `src/lib/courierRun.ts`). Tarif par course : « à définir ». Pas de paiement réel tant que le drapeau est fermé. |
 | Admin Bissabi : modération des avis | Partial | `src/app/moderation.tsx` est local à l’appareil, pas un compte admin. |
 | Zone Lausanne + Prilly, CHF | Partial | `src/i18n/fr.ts` (`zoneOutside*`), prix `chf` dans `src/lib/pricing.ts`. Le filtre géographique est le canton de Vaud, pas seulement les deux communes. |
 | Découverte façon commande de quartier | Partial | Accueil : cuisines près de vous, menus, panier, retrait ou livraison, suivi (`src/app/(tabs)/index.tsx`, `cart.tsx`, `orders.tsx`). Pas la marque d’un tiers. |
@@ -35,8 +35,9 @@ Ces points ne sont pas codés, pour ne pas inventer une règle.
 
 | Sujet | État | Preuve |
 |---|---|---|
-| Création de compte, connexion, mot de passe oublié | Missing | Pas d’auth. Données sur l’appareil (`src/lib/storage.ts`). |
-| Suppression de compte dans l’app (Apple 5.1.1(v)) | Partial | `deleteLocalAccount` efface copie de travail et copie de récupération sur cet appareil (`src/lib/storage.ts`, bouton dans `src/app/privacy.tsx`). Sans compte serveur, il n’y a rien à effacer chez un hébergeur. |
+| Création de compte, connexion, mot de passe oublié | Partial | Écran `src/app/auth.tsx` : e-mail, mot de passe, rôle client / cuisine / livreur. Sans variables Supabase, l’app reste sur l’appareil et le dit. Le client Auth est `src/lib/authPort.ts`. Rien n’est déployé. |
+| Liaison des données déjà sur l’appareil | Partial | Opt-in `planAccountLink` : le local n’est jamais effacé, un distant déjà rempli n’est jamais remplacé. L’envoi réel attend un projet approuvé. |
+| Suppression de compte dans l’app (Apple 5.1.1(v)) | Partial | Effacement local complet, plus un appel `delete_own_account` si Supabase est configuré (`supabase/migrations/20261126180000_accounts_couriers_rls.sql`, non appliqué). |
 
 ## Paiement
 
@@ -52,10 +53,10 @@ Ces points ne sont pas codés, pour ne pas inventer une règle.
 | Sujet | État | Preuve |
 |---|---|---|
 | États de commande et annulation | Partial | `src/lib/status.ts` et bouton d’annulation `src/app/order/[id].tsx`. L’annulation est locale. Le remboursement Stripe est décrit dans `buildRefund`, pas appelé. |
-| Attribution coursier | Missing | Pas de modèle coursier. |
+| Attribution coursier | Partial | Le livreur validé et disponible accepte une commande de livraison prête. L’admin local bascule `validated` depuis Compte. Ce n’est pas encore un rôle serveur. |
 | Vérification des cuisines (hygiène, OFCO) | Partial | Checklist locale `src/app/studio/checklist.tsx`. Badge OFCO seulement si `ofco_verified` (`src/lib/saleGate.ts`). Personne ne peut poser ce statut dans l’app. |
 | Allergènes affichés | Ready | 14 allergènes obligatoires avant liste et achat (`src/lib/saleGate.ts`, fiche plat). |
-| Notifications | Missing | Pas d’enregistrement push. |
+| Notifications | Missing | Pas d’enregistrement push. Le suivi de course est visible dans l’app quand on l’ouvre. |
 
 ## États vides, erreurs, hors ligne
 
@@ -75,8 +76,8 @@ Ces points ne sont pas codés, pour ne pas inventer une règle.
 | Manifeste de confidentialité iOS et textes d’autorisation | Partial | `app.json` (`privacyManifests`, chaînes localisation et photos). Les étiquettes App Store sont un brouillon dans `store/ios-metadata.md` (« nous ne collectons pas »), à revoir si un compte ou Stripe est activé. |
 | Langues FR / DE / IT / EN | Partial | FR et EN sont sélectionnables (`src/app/languages.tsx`). DE et IT : paragraphes sur l’écran Conditions seulement. Le reste de l’interface n’est pas traduit. |
 | Accessibilité | Partial | Cibles 44 pt, libellés, Dynamic Type et contraste dans le kit (`src/ui/kit.tsx`, `src/lib/ux-theme.test.ts`). Pas d’audit VoiceOver sur appareil. |
-| Démarrage sans plantage ExpoFont | Partial | Builds 13–14 : symbole `_classTypes` manquant. Correctif puis alignement : `expo` 58.0.26, `expo-font` 58.0.12, `expo-modules-core` 58.1.0 (`src/lib/expoSdk.test.ts`). Aucun plantage signalé sur 15–17. Le binaire du prochain TestFlight doit encore être construit pour embarquer ces versions. |
-| RLS Supabase | Partial | Policies de la passe 1 dans `supabase/migrations/20261102213000_passe1_foundations.sql`. Le grand livre Connect n’ouvre aucune policy à `anon` ni `authenticated`. Rien n’est appliqué à un projet hébergé. |
+| Démarrage sans plantage ExpoFont | Partial | Builds 13–14 : symbole `_classTypes` manquant. Alignement actuel : `expo` 58.1.0, `expo-font` 58.0.12, `expo-modules-core` 58.2.0 (`src/lib/expoSdk.test.ts`). Aucun plantage signalé sur 15–17. Le binaire du prochain TestFlight doit encore être construit pour embarquer ces versions. |
+| RLS Supabase | Partial | Passe 1, grand livre Connect, et comptes/livreurs (`20261126180000_accounts_couriers_rls.sql`) : anon sans droit, un livreur ne se valide pas. Fichiers locaux seulement. Tests de lecture du SQL dans `src/lib/accountLink.test.ts`. |
 | Icône, splash, fiche | Partial | `app.json` (icône, plugin splash). Fiche brouillon `store/ios-metadata.md`. Pas de captures App Store finales. |
 
 ## Ce que seul Mohamed peut faire

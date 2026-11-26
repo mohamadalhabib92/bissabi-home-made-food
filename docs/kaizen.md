@@ -63,3 +63,13 @@ Après : à l’inscription on choisit cuisine maison ou traiteur. Les deux ont 
 Fichiers : `src/lib/seller.ts`, `src/app/studio/profile.tsx`, `src/lib/model.ts`.
 
 Tests : `src/lib/seller.test.ts`.
+
+## 2026-11-26 — livreur et comptes
+
+Avant : pas de coursier. Pas de connexion. La suppression de compte était seulement locale.
+
+Après : profil livreur (identité déclarée, véhicule, zone Lausanne/Prilly, disponibilité), courses prêtes, acceptation, code à la cuisine, en route, code de preuve, gains marqués « à définir ». L’admin local valide avant le travail. Comptes e-mail via le client Supabase si les variables sont là, sinon mode appareil avec un avis clair. Liaison opt-in qui n’écrase rien. RLS dans une migration non appliquée.
+
+Fichiers : `src/lib/courierRun.ts`, `src/app/(tabs)/courier.tsx`, `src/app/auth.tsx`, `src/lib/authPort.ts`, `src/lib/accountLink.ts`, `supabase/migrations/20261126180000_accounts_couriers_rls.sql`.
+
+Tests : `src/lib/courierRun.test.ts`, `src/lib/accountLink.test.ts`.

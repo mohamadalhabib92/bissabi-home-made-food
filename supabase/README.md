@@ -6,4 +6,4 @@ Elle n’a **pas** été appliquée. Aucun projet, aucune URL et aucune clé ne 
 
 Le client Expo ne crée pas de client Supabase et n’appelle pas le réseau au démarrage. La clé `service_role` n’est pas lue par l’app.
 
-`migrations/20261123160000_stripe_connect_ledger.sql` est aussi locale et non appliquée. La fonction `functions/stripe-connect` n’est pas déployée.
+`migrations/20261123160000_stripe_connect_ledger.sql` et `migrations/20261126180000_accounts_couriers_rls.sql` sont locales et non appliquées. La fonction `functions/stripe-connect` n’est pas déployée.

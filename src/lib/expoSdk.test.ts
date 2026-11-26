@@ -8,7 +8,7 @@ test('expo-font et expo-modules-core suivent le SDK installé', () => {
   const lock = JSON.parse(readFileSync(new URL('../../package-lock.json', import.meta.url), 'utf8')) as {
     packages: Record<string, { version?: string }>;
   };
-  assert.equal(pkg.dependencies.expo, '~58.0.26');
+  assert.equal(pkg.dependencies.expo, '~58.1.0');
   assert.equal(pkg.dependencies['expo-font'], '~58.0.12');
   const core = lock.packages['node_modules/expo-modules-core']?.version ?? '';
   const [major, minor, patch] = core.split('.').map(Number);
