@@ -13,6 +13,7 @@ export const STORAGE_KEY = {
   reports: 'reports',
   favorites: 'favorites',
   cart: 'cart',
+  couriers: 'couriers',
 } as const;
 
 export const STORAGE_KEYS = [
@@ -25,6 +26,7 @@ export const STORAGE_KEYS = [
   STORAGE_KEY.reports,
   STORAGE_KEY.favorites,
   STORAGE_KEY.cart,
+  STORAGE_KEY.couriers,
 ] as const;
 
 export type StorageKey = (typeof STORAGE_KEYS)[number];

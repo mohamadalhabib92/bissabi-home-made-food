@@ -75,7 +75,7 @@ test('espacement, typo et cible tactile sont des jetons stables', () => {
 test('les clés de stockage existantes ne changent pas', () => {
   assert.equal(APP_PREFIX, '@bissabi-home-made-food/');
   assert.equal(QUARANTINE_PREFIX, '@bissabi-home-made-food-quarantine/');
-  assert.deepEqual(Object.keys(KEY_SHAPE).sort(), ['cart', 'cooks', 'dishes', 'favorites', 'orders', 'prefs', 'reports', 'reviews', 'slots']);
+  assert.deepEqual(Object.keys(KEY_SHAPE).sort(), ['cart', 'cooks', 'couriers', 'dishes', 'favorites', 'orders', 'prefs', 'reports', 'reviews', 'slots']);
   const access = readFileSync(new URL('../ui/access.ts', import.meta.url), 'utf8');
   assert.match(access, /export const VIBRATIONS_KEY = '@bissabi-home-made-food\/pref\.vibrations'/);
 });

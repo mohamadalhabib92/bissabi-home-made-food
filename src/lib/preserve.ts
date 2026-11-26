@@ -37,6 +37,7 @@ export const KEY_SHAPE: Record<string, KeyShape> = {
   orders: 'array',
   reviews: 'array',
   reports: 'array',
+  couriers: 'array',
   favorites: 'object',
   cart: 'object',
 };
@@ -58,7 +59,7 @@ const SLOT_FIELDS = ['id', 'cookId', 'date', 'from', 'to', 'modes', 'capacity', 
 const ORDER_FIELDS = [
   'id', 'number', 'side', 'cookId', 'buyerName', 'lines', 'slotId', 'slotDate', 'slotFrom', 'slotTo', 'mode',
   'address', 'note', 'subtotal', 'commission', 'deliveryFee', 'total', 'status', 'timeline', 'payment',
-  'refuseReason', 'createdAt', 'demo', 'schemaVersion',
+  'refuseReason', 'createdAt', 'demo', 'delivery', 'schemaVersion',
 ] as const;
 
 const REVIEW_FIELDS = ['id', 'orderId', 'cookId', 'dishId', 'rating', 'text', 'author', 'status', 'at', 'demo', 'schemaVersion'] as const;
@@ -72,6 +73,7 @@ export const KNOWN_FIELDS: Record<string, readonly string[]> = {
   orders: ORDER_FIELDS,
   reviews: REVIEW_FIELDS,
   reports: REPORT_FIELDS,
+  couriers: ['id', 'displayName', 'vehicle', 'zone', 'available', 'validated', 'isMe', 'createdAt', 'schemaVersion'],
   favorites: ['dishes', 'cooks', 'schemaVersion'],
   cart: ['cookId', 'lines', 'schemaVersion'],
 };
