@@ -1,4 +1,5 @@
 import { handleCrmSync } from '../_shared/accounts.ts';
 import { edgeEnv } from '../_shared/env.ts';
+import { withCors } from '../_shared/http.ts';
 
-Deno.serve((req) => handleCrmSync(req, edgeEnv(), fetch));
+Deno.serve(withCors((req) => handleCrmSync(req, edgeEnv(), fetch)));

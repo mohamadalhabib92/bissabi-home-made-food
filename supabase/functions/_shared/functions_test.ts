@@ -3,6 +3,7 @@ import { rowsFromPayment } from './crm.ts';
 import { parseCreateOrder } from './orders.ts';
 import type { EdgeEnv } from './env.ts';
 import { configuredDeliveryCents, paymentIntentForm, platformFeeCents, refundForm } from './money.ts';
+import { withCors } from './http.ts';
 import { handleStripeWebhook } from './webhook.ts';
 
 function assert(condition: unknown, message: string) {
@@ -129,6 +130,37 @@ Deno.test('un upsert de commande n’envoie pas de nom vide', () => {
   assert(encoded.includes('bissabi-food:user:s'), 'seller same scheme');
   assert(parseCreateOrder({ kitchenId: 'not-a-uuid', items: [], delivery: 'pickup' }) === null, 'cart');
   assert(parseCreateOrder({ kitchenId: '11111111-1111-4111-8111-111111111111', items: [{ dishId: '22222222-2222-4222-8222-222222222222', qty: 1, unitPrice: 10 }], delivery: 'pickup' }) === null, 'price from client refused');
+});
+
+Deno.test('le CORS n’ouvre que les origines prévues et répond au preflight', async () => {
+  let called = 0;
+  const wrapped = withCors(async (req) => {
+    called += 1;
+    if (req.method !== 'POST') return new Response(JSON.stringify({ reason: 'method' }), { status: 405 });
+    throw new Error('boom');
+  });
+  const preflight = await wrapped(new Request('https://qizhprlzeiqrngwpxjnd.supabase.co/functions/v1/create-order', {
+    method: 'OPTIONS',
+    headers: { Origin: 'https://food.bissabi.ch' },
+  }));
+  assert(preflight.status === 204, 'options');
+  assert(called === 0, 'options skips handler');
+  assert(preflight.headers.get('Access-Control-Allow-Origin') === 'https://food.bissabi.ch', 'site origin');
+  assert(preflight.headers.get('Vary') === 'Origin', 'vary');
+  assert((preflight.headers.get('Access-Control-Allow-Headers') ?? '').includes('authorization'), 'auth header');
+  assert((preflight.headers.get('Access-Control-Allow-Headers') ?? '').includes('x-client-info'), 'client header');
+  assert((preflight.headers.get('Access-Control-Allow-Methods') ?? '').includes('POST'), 'post');
+  const local = await wrapped(new Request('https://example.test', { method: 'OPTIONS', headers: { Origin: 'http://localhost:8081' } }));
+  assert(local.headers.get('Access-Control-Allow-Origin') === 'http://localhost:8081', 'metro');
+  const expo = await wrapped(new Request('https://example.test', { method: 'OPTIONS', headers: { Origin: 'http://localhost:19006' } }));
+  assert(expo.headers.get('Access-Control-Allow-Origin') === 'http://localhost:19006', 'expo');
+  const foreign = await wrapped(new Request('https://example.test', { method: 'OPTIONS', headers: { Origin: 'https://evil.example' } }));
+  assert(foreign.headers.get('Access-Control-Allow-Origin') === null, 'no echo');
+  const failed = await wrapped(new Request('https://example.test', { method: 'POST', headers: { Origin: 'https://food.bissabi.ch' } }));
+  assert(failed.status === 500, 'error still answered');
+  assert(failed.headers.get('Access-Control-Allow-Origin') === 'https://food.bissabi.ch', 'error cors');
+  const webhook = await handleStripeWebhook(new Request('https://example.test/stripe-webhook', { method: 'OPTIONS' }), env, fetch, 0);
+  assert(webhook.headers.get('Access-Control-Allow-Origin') === null, 'webhook has no cors');
 });
 
 Deno.test('sync-me ne synchronise pas un autre utilisateur', async () => {

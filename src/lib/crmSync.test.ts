@@ -105,6 +105,20 @@ test('livraison cachée tant que le tarif n’est pas un entier', async () => {
   assert.match(sql, /\^\[0-9\]\{6,12\}\$/);
 });
 
+test('le code de retrait se verrouille après cinq essais, et les lignes de commande sont indexées', () => {
+  const sql = readFileSync(new URL('../../supabase/migrations/20261127200000_pickup_attempts.sql', import.meta.url), 'utf8');
+  assert.match(sql, /add column if not exists pickup_attempts/);
+  assert.match(sql, /add column if not exists pickup_locked/);
+  assert.match(sql, /pickup_attempts \+ 1 >= 5/);
+  assert.match(sql, /create index if not exists order_items_order_id_idx/);
+  assert.doesNotMatch(sql, /drop table|delete from|truncate/i);
+  const auth = readFileSync(new URL('./authPort.ts', import.meta.url), 'utf8');
+  assert.match(auth, /emailRedirectTo: authRedirectTo\(\)/);
+  assert.match(auth, /redirectTo: authRedirectTo\(\)/);
+  assert.match(auth, /window\.location\?\.origin/);
+  assert.match(auth, /scheme: 'bissabihomemadefood'/);
+});
+
 test('la migration CRM active la RLS et n’ouvre pas anon', () => {
   const sql = readFileSync(new URL('../../supabase/crm-migrations/20261127120000_bissabi_food_sync.sql', import.meta.url), 'utf8');
   assert.match(sql, /create schema if not exists bissabi_food/);

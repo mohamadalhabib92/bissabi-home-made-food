@@ -1,5 +1,13 @@
+import * as Linking from 'expo-linking';
+import { Platform } from 'react-native';
 import type { AuthRole } from './accountLink';
 import { getSupabase } from './supabase';
+
+/** Web : origine de la page. Natif : schéma de l’app, pour rouvrir Bissabi après le mail. */
+export function authRedirectTo(): string {
+  if (Platform.OS === 'web' && typeof window !== 'undefined' && window.location?.origin) return window.location.origin;
+  return Linking.createURL('/', { scheme: 'bissabihomemadefood' });
+}
 
 export type AuthResult = { ok: true; userId: string } | { ok: false; reason: 'device_only' | 'invalid' | 'remote'; message: string };
 
@@ -7,7 +15,7 @@ export type AuthResult = { ok: true; userId: string } | { ok: false; reason: 'de
 export async function signUpWithEmail(email: string, password: string, role: AuthRole): Promise<AuthResult> {
   const sb = getSupabase();
   if (!sb) return { ok: false, reason: 'device_only', message: 'Mode sur cet appareil' };
-  const { data, error } = await sb.auth.signUp({ email: email.trim(), password, options: { data: { role } } });
+  const { data, error } = await sb.auth.signUp({ email: email.trim(), password, options: { emailRedirectTo: authRedirectTo(), data: { role } } });
   if (error || !data.user) return { ok: false, reason: 'remote', message: error?.message ?? 'inscription refusée' };
   return { ok: true, userId: data.user.id };
 }
@@ -30,7 +38,7 @@ export async function signOutEmail(): Promise<void> {
 export async function sendMagicLink(email: string, role: AuthRole): Promise<AuthResult> {
   const sb = getSupabase();
   if (!sb) return { ok: false, reason: 'device_only', message: 'Mode sur cet appareil' };
-  const { error } = await sb.auth.signInWithOtp({ email: email.trim(), options: { shouldCreateUser: true, data: { role } } });
+  const { error } = await sb.auth.signInWithOtp({ email: email.trim(), options: { emailRedirectTo: authRedirectTo(), shouldCreateUser: true, data: { role } } });
   if (error) return { ok: false, reason: 'remote', message: error.message };
   return { ok: true, userId: '' };
 }
@@ -38,7 +46,7 @@ export async function sendMagicLink(email: string, role: AuthRole): Promise<Auth
 export async function sendPasswordReset(email: string): Promise<AuthResult> {
   const sb = getSupabase();
   if (!sb) return { ok: false, reason: 'device_only', message: 'Réinitialisation indisponible sans serveur' };
-  const { error } = await sb.auth.resetPasswordForEmail(email.trim());
+  const { error } = await sb.auth.resetPasswordForEmail(email.trim(), { redirectTo: authRedirectTo() });
   if (error) return { ok: false, reason: 'remote', message: error.message };
   return { ok: true, userId: '' };
 }
