@@ -73,3 +73,13 @@ Après : profil livreur (identité déclarée, véhicule, zone Lausanne/Prilly, 
 Fichiers : `src/lib/courierRun.ts`, `src/app/(tabs)/courier.tsx`, `src/app/auth.tsx`, `src/lib/authPort.ts`, `src/lib/accountLink.ts`, `supabase/migrations/20261126180000_accounts_couriers_rls.sql`.
 
 Tests : `src/lib/courierRun.test.ts`, `src/lib/accountLink.test.ts`.
+
+## 2026-11-27 — place de marché et CRM
+
+Avant : pas de PaymentIntent, pas de lien magique, pas de rôle traiteur à l’inscription, pas de lien vers Bissabi CRM, l’écran d’erreur affichait `YOUR_SUPPORT_EMAIL`.
+
+Après : le projet food est nommé dans `.env.example` (`qizhprlzeiqrngwpxjnd`, Zurich) sans clé. Commission 10 % en une constante. Fonctions sources `stripe-webhook`, `create-payment-intent`, `delete-account`, `crm-sync`. Le schéma CRM `bissabi_food` est dans `supabase/crm-migrations/` pour le projet `ppeovmfuhtidavdnrwxu`. Les upserts sont idempotents. `docs/go-live.md` dit comment CRM Pro lira ce schéma plus tard. Rien n’est déployé.
+
+Fichiers : `src/lib/crmSync.ts`, `src/lib/stripeWebhook.ts`, `supabase/functions/crm-sync/index.ts`, `supabase/crm-migrations/20261127120000_bissabi_food_sync.sql`, `docs/go-live.md`.
+
+Tests : `src/lib/crmSync.test.ts`, `src/lib/stripeWebhook.test.ts`.

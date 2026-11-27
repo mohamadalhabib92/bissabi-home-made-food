@@ -9,6 +9,7 @@ export async function signUpWithEmail(email: string, password: string, role: Aut
   if (!sb) return { ok: false, reason: 'device_only', message: 'Mode sur cet appareil' };
   const { data, error } = await sb.auth.signUp({ email: email.trim(), password, options: { data: { role } } });
   if (error || !data.user) return { ok: false, reason: 'remote', message: error?.message ?? 'inscription refusée' };
+  void sb.functions.invoke('crm-sync', { body: { kind: 'person', id: data.user.id, role: role === 'client' ? 'buyer' : 'seller', sellerKind: role === 'traiteur' ? 'caterer' : 'home' } }).catch(() => undefined);
   return { ok: true, userId: data.user.id };
 }
 
@@ -26,6 +27,15 @@ export async function signOutEmail(): Promise<void> {
   await sb.auth.signOut();
 }
 
+/** Lien magique. Même rôles que l’inscription : pas de connexion tierce, donc pas de Sign in with Apple. */
+export async function sendMagicLink(email: string, role: AuthRole): Promise<AuthResult> {
+  const sb = getSupabase();
+  if (!sb) return { ok: false, reason: 'device_only', message: 'Mode sur cet appareil' };
+  const { error } = await sb.auth.signInWithOtp({ email: email.trim(), options: { shouldCreateUser: true, data: { role } } });
+  if (error) return { ok: false, reason: 'remote', message: error.message };
+  return { ok: true, userId: '' };
+}
+
 export async function sendPasswordReset(email: string): Promise<AuthResult> {
   const sb = getSupabase();
   if (!sb) return { ok: false, reason: 'device_only', message: 'Réinitialisation indisponible sans serveur' };
@@ -38,6 +48,8 @@ export async function sendPasswordReset(email: string): Promise<AuthResult> {
 export async function deleteRemoteAccount(): Promise<'skipped' | 'ok' | 'failed'> {
   const sb = getSupabase();
   if (!sb) return 'skipped';
+  const fn = await sb.functions.invoke('delete-account', { body: {} });
+  if (!fn.error) return 'ok';
   const { error } = await sb.rpc('delete_own_account');
   return error ? 'failed' : 'ok';
 }

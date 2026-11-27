@@ -28,7 +28,7 @@ export const fr = {
   bootContinue: 'Continuer quand même',
   bootFallback: 'Affichage de secours : les données enregistrées peuvent encore arriver. Rien n’est écrit tant que le chargement n’a pas réussi.',
   crashTitle: 'Une erreur a interrompu cet écran',
-  crashBody: 'Rien n’a été publié. Réessayez. Si cela revient, contactez le support (YOUR_SUPPORT_EMAIL).',
+  crashBody: 'Rien n’a été publié. Réessayez. Si cela revient, écrivez à l’éditeur indiqué dans les mentions légales.',
   crashRetry: 'Réessayer',
   configRequired: 'Configuration requise',
   ownerTodosTitle: 'Conformité — vérifications propriétaire',

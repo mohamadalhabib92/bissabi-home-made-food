@@ -6,5 +6,14 @@ module.exports = ({ config }) => {
     const { baseUrl, ...rest } = config.experiments;
     config.experiments = rest;
   }
+  const webBase = process.env.EXPO_PUBLIC_WEB_BASE;
+  if (webBase !== undefined && config.experiments) {
+    if (webBase === '' || webBase === '/') {
+      const { baseUrl, ...rest } = config.experiments;
+      config.experiments = rest;
+    } else {
+      config.experiments.baseUrl = webBase;
+    }
+  }
   return config;
 };

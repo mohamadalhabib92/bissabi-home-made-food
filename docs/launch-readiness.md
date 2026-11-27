@@ -35,15 +35,15 @@ Ces points ne sont pas codés, pour ne pas inventer une règle.
 
 | Sujet | État | Preuve |
 |---|---|---|
-| Création de compte, connexion, mot de passe oublié | Partial | Écran `src/app/auth.tsx` : e-mail, mot de passe, rôle client / cuisine / livreur. Sans variables Supabase, l’app reste sur l’appareil et le dit. Le client Auth est `src/lib/authPort.ts`. Rien n’est déployé. |
+| Création de compte, connexion, mot de passe oublié | Partial | Écran `src/app/auth.tsx` : e-mail, mot de passe, lien magique, rôles client / cuisine / traiteur / livreur. L’admin n’est pas proposé. Sans clé anon, l’app reste sur l’appareil. Projet cible : `qizhprlzeiqrngwpxjnd` (URL dans `.env.example`, clé non commitée). Rien n’est déployé. |
 | Liaison des données déjà sur l’appareil | Partial | Opt-in `planAccountLink` : le local n’est jamais effacé, un distant déjà rempli n’est jamais remplacé. L’envoi réel attend un projet approuvé. |
-| Suppression de compte dans l’app (Apple 5.1.1(v)) | Partial | Effacement local complet, plus un appel `delete_own_account` si Supabase est configuré (`supabase/migrations/20261126180000_accounts_couriers_rls.sql`, non appliqué). |
+| Suppression de compte dans l’app (Apple 5.1.1(v)) | Partial | Le bouton existe. Si le serveur répond, la fonction `delete-account` (source seulement) efface l’utilisateur Auth, puis l’appareil. Si le serveur est configuré et refuse, l’appareil n’est pas vidé. |
 
 ## Paiement
 
 | Sujet | État | Preuve |
 |---|---|---|
-| Stripe Connect Express : onboarding, encaissement, frais 10 %, remboursement, webhook | Partial | Logique testée dans `src/lib/stripeConnect.ts`. Migration locale non appliquée `supabase/migrations/20261123160000_stripe_connect_ledger.sql`. Entrée non déployée `supabase/functions/stripe-connect/index.ts`. |
+| Stripe Connect Express : onboarding, encaissement, frais 10 %, remboursement, webhook | Partial | Commission unique `COMMISSION_RATE` = 10 % (`src/lib/pricing.ts`), reprise en centimes par `PLATFORM_FEE_BPS`. PaymentIntent, signature de webhook et remboursements sont testés. Fonctions non déployées : `stripe-webhook`, `create-payment-intent`. |
 | Versements réels aux cuisiniers | Missing | Aucun appel Stripe. L’écran gains le dit (`src/app/studio/earnings.tsx`). |
 | TWINT, carte, Apple Pay, Google Pay en mode test | Partial | La session prévue demande `card` et `twint` (`CHECKOUT_PAYMENT_METHOD_TYPES`). Apple Pay et Google Pay sont des portefeuilles de la carte : ils n’apparaissent qu’après réglage Stripe et identifiant marchand. |
 | Pas de vente réelle avant hygiène et validations | Ready | `serverMayCollect` et `clientMayStartCheckout` exigent le drapeau `1` et, côté serveur, hygiène + OFCO. `EXPO_PUBLIC_LAUNCH_PAYMENTS` est vide. La porte de vente (`src/lib/saleGate.ts`) reste en place. |
@@ -73,18 +73,18 @@ Ces points ne sont pas codés, pour ne pas inventer une règle.
 | CGU / CGV | Partial | `src/app/terms.tsx`, liens depuis Compte, Bienvenue et Mentions. Brouillon marqué, pas un texte validé. |
 | Confidentialité nLPD / RGPD | Partial | `src/app/privacy.tsx` décrit le stockage local, l’export et l’effacement. Ce n’est pas une politique relue par un juriste. |
 | Mentions légales | Ready | `src/lib/company.ts` et `src/app/legal.tsx` : Bissabi Drinks - BA, Chemin de la Suettaz 17, 1008 Prilly, UID CHE-332.255.936. |
-| Manifeste de confidentialité iOS et textes d’autorisation | Partial | `app.json` (`privacyManifests`, chaînes localisation et photos). Les étiquettes App Store sont un brouillon dans `store/ios-metadata.md` (« nous ne collectons pas »), à revoir si un compte ou Stripe est activé. |
+| Manifeste de confidentialité iOS et textes d’autorisation | Partial | `app.json` déclare l’e-mail, le nom et l’historique d’achats, liés au compte, sans suivi. Pas de Sign in with Apple : la seule connexion est l’e-mail et le lien magique. La fiche `store/ios-metadata.md` le dit. La position reste sur l’appareil. |
 | Langues FR / DE / IT / EN | Partial | FR et EN sont sélectionnables (`src/app/languages.tsx`). DE et IT : paragraphes sur l’écran Conditions seulement. Le reste de l’interface n’est pas traduit. |
 | Accessibilité | Partial | Cibles 44 pt, libellés, Dynamic Type et contraste dans le kit (`src/ui/kit.tsx`, `src/lib/ux-theme.test.ts`). Pas d’audit VoiceOver sur appareil. |
 | Démarrage sans plantage ExpoFont | Partial | Builds 13–14 : symbole `_classTypes` manquant. Alignement actuel : `expo` 58.1.0, `expo-font` 58.0.12, `expo-modules-core` 58.2.0 (`src/lib/expoSdk.test.ts`). Aucun plantage signalé sur 15–17. Le binaire du prochain TestFlight doit encore être construit pour embarquer ces versions. |
-| RLS Supabase | Partial | Passe 1, grand livre Connect, et comptes/livreurs (`20261126180000_accounts_couriers_rls.sql`) : anon sans droit, un livreur ne se valide pas. Fichiers locaux seulement. Tests de lecture du SQL dans `src/lib/accountLink.test.ts`. |
+| RLS Supabase | Partial | Passe 1, grand livre Connect, comptes, puis `20261127120000_live_marketplace.sql` (kitchens, order_items, payouts, courier_jobs, rôle traiteur). Fichiers locaux seulement. Le schéma CRM est dans `supabase/crm-migrations/`, projet séparé. |
 | Icône, splash, fiche | Partial | `app.json` (icône, plugin splash). Fiche brouillon `store/ios-metadata.md`. Pas de captures App Store finales. |
 
 ## Ce que seul Mohamed peut faire
 
 1. Créer le compte Stripe live et les clés de test, et les poser dans un champ secret (jamais dans le dépôt) : `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET`, clé publique `EXPO_PUBLIC_STRIPE_PUBLISHABLE_KEY`.
 2. Activer TWINT, Apple Pay et Google Pay dans le tableau de bord Stripe, et donner l’identifiant marchand Apple.
-3. Approuver l’application des migrations Supabase sur un projet hébergé, et fournir l’URL et la clé anon.
+3. Après relecture, appliquer les migrations et les fonctions sur le projet déjà créé `qizhprlzeiqrngwpxjnd`, et poser la clé anon. Les commandes sont dans `docs/go-live.md`. Le schéma CRM s’applique sur `ppeovmfuhtidavdnrwxu`, pas sur le projet food.
 4. Faire passer les cuisines (checklist + contrôle) et poser `ofco_verified` seulement après l’autorité.
 5. Faire relire CGU, CGV et la politique de confidentialité.
 6. Dire quand `EXPO_PUBLIC_LAUNCH_PAYMENTS` peut valoir `1`.

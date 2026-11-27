@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useData, useL } from '@/lib/data';
 import type { AuthRole } from '@/lib/accountLink';
 import { planAccountLink, validateCredentials } from '@/lib/accountLink';
-import { sendPasswordReset, signInWithEmail, signOutEmail, signUpWithEmail } from '@/lib/authPort';
+import { sendMagicLink, sendPasswordReset, signInWithEmail, signOutEmail, signUpWithEmail } from '@/lib/authPort';
 import { isDemoMode } from '@/lib/supabase';
 import { Button, Field, H1, Muted, Notice, Screen, Segmented, Spacer } from '@/ui/kit';
 
@@ -19,7 +19,11 @@ export default function AuthScreen() {
 
   const applyRole = (next: AuthRole) => {
     setRole(next);
-    setPrefs((p) => ({ ...p, mode: next === 'client' ? 'buyer' : next === 'cook' ? 'cook' : 'courier' }));
+    setPrefs((p) => ({
+      ...p,
+      mode: next === 'client' ? 'buyer' : next === 'courier' ? 'courier' : 'cook',
+      pendingSellerKind: next === 'traiteur' ? 'caterer' : next === 'cook' ? 'home' : p.pendingSellerKind,
+    }));
   };
 
   const afterSignIn = (userId: string) => {
@@ -62,12 +66,19 @@ export default function AuthScreen() {
     <Screen>
       <H1>{L('Compte', 'Account')}</H1>
       {device ? <Notice tone="info" title={L('Mode sur cet appareil', 'On-device mode')} text={L('Supabase n’est pas configuré. Création, connexion et mot de passe oublié ne quittent pas cet écran. Vos plats et commandes restent ici.', 'Supabase is not configured. Sign-up, sign-in and password reset do not leave this screen. Your dishes and orders stay here.')} /> : null}
-      <Segmented label={L('Rôle', 'Role')} options={[{ label: L('Client·e', 'Customer'), value: 'client' as const }, { label: L('Cuisine / traiteur', 'Kitchen / caterer'), value: 'cook' as const }, { label: L('Livreur·euse', 'Courier'), value: 'courier' as const }]} value={role} onChange={setRole} />
+      <Segmented label={L('Rôle', 'Role')} options={[{ label: L('Client·e', 'Customer'), value: 'client' as const }, { label: L('Cuisine', 'Kitchen'), value: 'cook' as const }, { label: L('Traiteur', 'Caterer'), value: 'traiteur' as const }, { label: L('Livreur·euse', 'Courier'), value: 'courier' as const }]} value={role} onChange={setRole} />
       <Field label={L('E-mail', 'Email')} value={email} onChangeText={setEmail} autoComplete="email" keyboardType="email-address" />
       <Field label={L('Mot de passe', 'Password')} value={password} onChangeText={setPassword} secureTextEntry autoComplete="password" />
       <Button title={L('Créer le compte', 'Create account')} onPress={() => submit('up')} />
       <Spacer h={8} />
       <Button variant="secondary" title={L('Se connecter', 'Sign in')} onPress={() => submit('in')} />
+      <Spacer h={8} />
+      <Button variant="ghost" title={L('Lien magique', 'Magic link')} onPress={async () => {
+        if (!email.includes('@')) { setMsg(L('E-mail invalide', 'Invalid email')); return; }
+        const result = await sendMagicLink(email, role);
+        if (result.ok) applyRole(role);
+        setMsg(result.ok ? L('Lien envoyé si le serveur est là.', 'Link sent if the server is there.') : result.reason === 'device_only' ? L('Mode sur cet appareil : le lien ne part pas.', 'On-device mode: the link is not sent.') : result.message);
+      }} />
       <Spacer h={8} />
       <Button variant="ghost" title={L('Mot de passe oublié', 'Forgot password')} onPress={async () => {
         const result = await sendPasswordReset(email);

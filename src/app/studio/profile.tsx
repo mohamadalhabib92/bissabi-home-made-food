@@ -10,7 +10,7 @@ import { uid } from '@/lib/storage';
 import { Button, Card, Chip, Field, Muted, Notice, Row, Screen, Segmented, Spacer, Toggle } from '@/ui/kit';
 
 export default function CookProfile() {
-  const { myCook, setCooks, setPrefs } = useData();
+  const { myCook, setCooks, setPrefs, prefs } = useData();
   const { L } = useL();
   const { t } = useI18n();
   const router = useRouter();
@@ -21,7 +21,7 @@ export default function CookProfile() {
   const [delivers] = useState(myCook?.delivers ?? false);
   const [langs, setLangs] = useState<string[]>(myCook?.languages ?? ['fr']);
   const [color, setColor] = useState(myCook?.avatarColor ?? AVATAR_COLORS[0]);
-  const [kind, setKind] = useState<SellerKind>(sellerKindOf(myCook));
+  const [kind, setKind] = useState<SellerKind>(myCook ? sellerKindOf(myCook) : prefs.pendingSellerKind === 'caterer' ? 'caterer' : 'home');
   const [minimum, setMinimum] = useState(myCook?.minPortions ? String(myCook.minPortions) : '');
   const place = COMMUNES.find((c) => c.name.toLowerCase() === commune.trim().toLowerCase());
   const inZone = place?.canton === LAUNCH_CANTON;

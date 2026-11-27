@@ -49,9 +49,11 @@ Bissabi Home Made Food connects neighbours with home cooks nearby. Customers dis
 4+ (contenu généré par les utilisateurs modéré : avis) — réponses au questionnaire : aucune violence, aucun contenu sexuel, pas de jeux d'argent, pas de navigation web non filtrée, pas de contenu médical, pas de messagerie entre utilisateurs, avis publics modérés (contenu généré par les utilisateurs : Oui).
 
 ## Confidentialité de l'app (étiquettes « nutrition »)
-- **Collecte de données : « Nous ne collectons pas de données »** (Data Not Collected). Tout est stocké uniquement sur l'appareil et n'est transmis ni à l'éditeur ni à des tiers (au sens d'Apple, il n'y a donc pas de « collecte »).
+- E-mail, nom et historique d'achats : collectés, liés à l'identité, but « fonctionnalité de l'app », pas de suivi. Le manifeste est dans `app.json`.
 - Suivi (tracking) : Non. Pas d'identifiant publicitaire.
-- À revoir si un backend (Supabase, Stripe, API) est activé dans une version future.
+- La position approximative reste dans les préférences de l'appareil et n'est pas envoyée.
+- Connexion : e-mail, mot de passe et lien magique. Aucun bouton Google, Facebook ou Apple. Sign in with Apple n'est donc pas requis (guideline 4.8).
+- Suppression de compte : dans l'app, écran Compte. Le serveur efface l'utilisateur Auth quand la fonction `delete-account` est déployée.
 
 Données stockées localement (pour information) :
 - Votre profil (nom affiché, commune) et, si vous cuisinez, votre profil de cuisinier, vos plats et leurs photos, vos créneaux ;
@@ -63,7 +65,7 @@ Autorisations :
 - Photos : uniquement quand vous ajoutez une photo à un plat (pas d'accès à l'appareil photo).
 
 ## Notes pour l'équipe de révision (App Review)
-Aucun compte requis. VERSION DE DÉMONSTRATION : les paiements sont simulés et clairement indiqués comme tels (aucune carte demandée) ; les cuisiniers et plats d'exemple sont fictifs et étiquetés « démo ». Pour tester : onglet Découvrir > choisir un plat > Commander > Payer (simulé). Côté cuisinier : onglet Cuisiner.
+Compte par e-mail (mot de passe ou lien magique). Pas de connexion sociale. Les plats d'exemple sont étiquetés « démo » et ne sont pas une vente. L'encaissement Stripe reste fermé tant que `EXPO_PUBLIC_LAUNCH_PAYMENTS` n'est pas `1` et que la cuisine n'a pas passé l'hygiène. Ne pas soumettre tant que les clés et ce drapeau ne sont pas en place (`docs/go-live.md`). Pour parcourir : onglet Découvrir. Côté cuisine : onglet Cuisiner. Suppression de compte : Compte.
 
 Contact révision : à compléter (prénom, nom, téléphone, e-mail de Mohamed). Compte de démonstration : non requis.
 
@@ -74,7 +76,7 @@ Contact révision : à compléter (prénom, nom, téléphone, e-mail de Mohamed)
 ## Risques de refus (App Review) et corrections
 | Niveau | Risque | À faire avant soumission |
 |---|---|---|
-| Élevé | 2.1 App incomplète / paiements démo uniquement : une place de marché dont les paiements, cuisiniers et commandes sont simulés sera refusée. | Brancher un vrai backend (comptes, commandes partagées entre client et cuisinier) et Stripe réel avant soumission. Les plats sont des biens physiques : Stripe est autorisé (pas d'achat intégré Apple). |
+| Élevé | 2.1 App incomplète si l'encaissement est encore fermé au moment de la revue. | Suivre `docs/go-live.md` : clés Stripe test puis live, drapeau de lancement, migrations. Les plats sont des biens physiques : Stripe est autorisé (pas d'achat intégré Apple). |
 | Moyen | 1.2 Contenu généré par les utilisateurs : il faut filtrer, signaler, bloquer et publier un contact. | Déjà : avis modérés et signalement. À ajouter : blocage d'un utilisateur et e-mail de contact. |
-| Moyen | 5.1.1 Si des comptes sont ajoutés, la suppression de compte dans l'app devient obligatoire. | Prévoir « Supprimer mon compte » avec le backend. |
+| Moyen | 5.1.1 La suppression doit vraiment effacer le compte serveur. | Le bouton est dans l'app. Déployer `delete-account` avant la soumission, sinon un compte créé en ligne resterait. |
 | Moyen | Réglementation alimentaire (hygiène, allergènes, déclaration cantonale) : Apple peut demander des justificatifs. | Garder la checklist et ajouter les conditions d'utilisation des cuisiniers. |

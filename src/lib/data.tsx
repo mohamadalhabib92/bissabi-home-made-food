@@ -17,6 +17,7 @@ export type Prefs = {
   lang: Lang; onboarded: boolean; mode: 'buyer' | 'cook' | 'courier';
   consents: { terms: boolean; location: boolean; marketing: boolean; at?: string };
   accountLink?: { userId: string; choice: 'skip' | 'link'; at: string };
+  pendingSellerKind?: 'home' | 'caterer';
   location: Loc | null; radiusKm: number; halalOnly: boolean; buyerName: string;
 };
 const DEFAULT_PREFS = neutralValue('prefs') as Prefs;
@@ -156,7 +157,8 @@ export function DataProvider({ children }: { children: ReactNode }) {
       return true;
     };
     const deleteAccount = async () => {
-      await deleteRemoteAccount();
+      const remote = await deleteRemoteAccount();
+      if (remote === 'failed') return false;
       const cleared = await deleteLocalAccount();
       if (!cleared) return false;
       resetMemory();

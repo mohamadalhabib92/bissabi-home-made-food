@@ -1,4 +1,5 @@
-export type AuthRole = 'client' | 'cook' | 'courier';
+/** Rôles proposés à l’inscription. « admin » n’en fait pas partie : il n’est pas auto-attribué. */
+export type AuthRole = 'client' | 'cook' | 'traiteur' | 'courier';
 
 export function validateCredentials(email: string, password: string): string | null {
   const mail = email.trim();
