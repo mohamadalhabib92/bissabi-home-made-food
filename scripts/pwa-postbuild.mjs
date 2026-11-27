@@ -9,11 +9,6 @@ import { pathToFileURL } from 'node:url';
 
 const root = process.cwd();
 const dist = join(root, 'dist');
-if (!existsSync(join(dist, 'index.html'))) {
-  console.error('dist/index.html introuvable — lancez d’abord `npx expo export -p web`.');
-  process.exit(1);
-}
-const app = JSON.parse(readFileSync(join(root, 'app.json'), 'utf8')).expo;
 
 /** '/' ou absent : site à la racine (https://food.bissabi.ch). Une valeur explicite garde GitHub Pages. */
 export function resolveWebBase(raw = process.env.EXPO_PUBLIC_WEB_BASE) {
@@ -35,6 +30,11 @@ const isMain = process.argv[1] && import.meta.url === pathToFileURL(resolve(proc
 if (isMain) run();
 
 function run() {
+if (!existsSync(join(dist, 'index.html'))) {
+  console.error('dist/index.html introuvable — lancez d’abord `npx expo export -p web`.');
+  process.exit(1);
+}
+const app = JSON.parse(readFileSync(join(root, 'app.json'), 'utf8')).expo;
 const base = resolveWebBase();
 for (const file of ['index.html', 'manifest.json']) {
   const path = join(dist, file);
