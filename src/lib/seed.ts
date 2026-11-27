@@ -19,7 +19,7 @@ export function demoMarket() {
   const cooks: Cook[] = [
     ck('demo-c1', 'Aïssatou', 'Renens', '1020', 46.5402, 6.5890, 'Cuisine sénégalaise de famille, mijotée le matin même. Recettes de ma grand-mère de Saint-Louis.', true, true, '#C8152A', ['fr', 'wo']),
     ck('demo-c2', 'Karim', 'Lausanne', '1003', 46.5165, 6.6290, 'Couscous du vendredi et tajines au citron confit, comme à Fès.', true, false, '#1A4D2E', ['fr', 'ar']),
-    ck('demo-c3', 'Marie', 'Le Mont-sur-Lausanne', '1052', 46.5560, 6.6310, 'Terroir vaudois de saison, produits du marché de Lausanne.', false, true, '#C9A84C', ['fr', 'de']),
+    { ...ck('demo-c3', 'Marie', 'Le Mont-sur-Lausanne', '1052', 46.5560, 6.6310, 'Traiteur de terroir vaudois, plateaux et repas de groupe, produits du marché de Lausanne.', false, true, '#C9A84C', ['fr', 'de']), sellerKind: 'caterer' as const, minPortions: 6 },
     ck('demo-c4', 'Mei', 'Écublens', '1024', 46.5270, 6.5600, 'Raviolis faits main et bouillons longs, recettes du Sichuan adoucies.', false, false, '#6B5BA8', ['fr', 'en', 'zh']),
     ck('demo-c5', 'Lina', 'Pully', '1009', 46.5100, 6.6650, 'Mezze libanais généreux et pâtisseries aux fleurs d’oranger.', true, true, '#2F5F8A', ['fr', 'en', 'ar']),
   ];

@@ -1,6 +1,7 @@
 import { useI18n } from '@/i18n';
 import { useL } from '@/lib/data';
-import { COMMISSION_PAID_BY, COMMISSION_RATE, DELIVERY_FEE_CHF, MIN_LEAD_HOURS } from '@/lib/pricing';
+import { courierFeeChf, deliveryChoiceAvailable } from '@/lib/deliveryConfig';
+import { COMMISSION_PAID_BY, COMMISSION_RATE, MIN_LEAD_HOURS } from '@/lib/pricing';
 import { publicEnvList } from '@/lib/publicEnv';
 import { supabaseStatus } from '@/lib/supabase';
 import { Badge, Body, Card, H2, ListItem, Muted, Notice, Screen } from '@/ui/kit';
@@ -40,7 +41,7 @@ export default function AdminNotes() {
       <H2>{L('Règles commerciales (à confirmer)', 'Business rules (to confirm)')}</H2>
       <Card>
         <ListItem title={L('Commission plateforme', 'Platform commission')} right={<Body>{Math.round(COMMISSION_RATE * 100)} % · {COMMISSION_PAID_BY === 'buyer' ? L('payée par le client', 'paid by buyer') : L('payée par le cuisinier', 'paid by cook')}</Body>} />
-        <ListItem title={L('Frais de livraison', 'Delivery fee')} right={<Body>CHF {DELIVERY_FEE_CHF.toFixed(2)}</Body>} />
+        <ListItem title={L('Frais de livraison', 'Delivery fee')} right={<Body>{deliveryChoiceAvailable() && courierFeeChf() !== null ? `CHF ${courierFeeChf()!.toFixed(2)}` : L('à définir', 'to be set')}</Body>} />
         <ListItem title={L('Délai minimum de commande', 'Minimum order notice')} right={<Body>{MIN_LEAD_HOURS} h</Body>} />
         <ListItem title={L('Zone', 'Area')} right={<Body>VD</Body>} />
       </Card>

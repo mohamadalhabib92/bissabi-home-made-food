@@ -1,7 +1,9 @@
 import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, type ReactNode } from 'react';
 import { Platform, useColorScheme, View } from 'react-native';
+import { StripeProvider } from '@stripe/stripe-react-native';
+import { publicEnv } from '@/lib/publicEnv';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { DataProvider, useL } from '@/lib/data';
 import { RebootProvider } from '@/lib/reboot';
@@ -9,6 +11,7 @@ import { prefersReducedTransparency, useReducedTransparency } from '@/ui/access'
 import { AppErrorBoundary } from '@/ui/error-boundary';
 import { FontProvider } from '@/ui/fonts';
 import { Wash } from '@/ui/kit';
+import { OfflineNotice } from '@/ui/offline';
 import { FeedbackProvider } from '@/ui/motion';
 import { applyScheme, theme as t } from '@/ui/theme';
 
@@ -23,7 +26,7 @@ function Nav() {
       <Stack.Screen name="cook/[id]" options={{ title: L('Cuisinier·ère', 'Cook') }} />
       <Stack.Screen name="checkout" options={{ title: L('Commande à l’avance', 'Advance order') }} />
       <Stack.Screen name="order/[id]" options={{ title: L('Commande', 'Order') }} />
-      <Stack.Screen name="studio/profile" options={{ title: L('Mon profil cuisinier', 'My cook profile') }} />
+      <Stack.Screen name="studio/profile" options={{ title: L('Ma cuisine', 'My kitchen') }} />
       <Stack.Screen name="studio/checklist" options={{ title: L('Checklist hygiène', 'Hygiene checklist') }} />
       <Stack.Screen name="studio/dish/[id]" options={{ title: L('Plat', 'Dish') }} />
       <Stack.Screen name="studio/slots" options={{ title: L('Créneaux', 'Slots') }} />
@@ -32,12 +35,25 @@ function Nav() {
       <Stack.Screen name="studio/earnings" options={{ title: L('Gains', 'Earnings') }} />
       <Stack.Screen name="compliance" options={{ title: L('Conformité & prochaines étapes', 'Compliance & next steps') }} />
       <Stack.Screen name="legal" options={{ title: L('Mentions légales', 'Legal notice') }} />
+      <Stack.Screen name="terms" options={{ title: L('Conditions', 'Terms') }} />
+      <Stack.Screen name="courier/[id]" options={{ title: L('Course', 'Job') }} />
+      <Stack.Screen name="auth" options={{ title: L('Connexion', 'Sign in') }} />
       <Stack.Screen name="privacy" options={{ title: L('Données personnelles', 'Personal data') }} />
       <Stack.Screen name="report" options={{ title: L('Signaler / support', 'Report / support'), presentation: 'modal' }} />
       <Stack.Screen name="moderation" options={{ title: L('Modération des avis', 'Review moderation') }} />
       <Stack.Screen name="languages" options={{ title: L('Langues', 'Languages') }} />
       <Stack.Screen name="admin-notes" options={{ title: L('Notes admin', 'Admin notes') }} />
     </Stack>
+  );
+}
+
+function StripeGate({ children }: { children: ReactNode }) {
+  const pk = publicEnv.stripePublishable.value;
+  if (Platform.OS === 'web' || !pk) return children;
+  return (
+    <StripeProvider publishableKey={pk} urlScheme="bissabihomemadefood">
+      <View style={{ flex: 1 }}>{children}</View>
+    </StripeProvider>
   );
 }
 
@@ -58,17 +74,20 @@ export default function Layout() {
     <SafeAreaProvider>
       <AppErrorBoundary onReset={reboot}>
         <FontProvider>
+          <StripeGate>
           <RebootProvider reboot={reboot}>
             <DataProvider key={boot}>
               <View key={`${scheme}:${reduce ? 'solid' : 'glass'}`} style={{ flex: 1, backgroundColor: t.bg }}>
                 <Wash />
                 <FeedbackProvider>
                   <StatusBar style={scheme === 'dark' ? 'light' : 'dark'} />
+                  <OfflineNotice />
                   <Nav />
                 </FeedbackProvider>
               </View>
             </DataProvider>
           </RebootProvider>
+          </StripeGate>
         </FontProvider>
       </AppErrorBoundary>
     </SafeAreaProvider>

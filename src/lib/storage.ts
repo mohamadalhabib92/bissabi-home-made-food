@@ -197,6 +197,16 @@ export function purgeQuarantine(): Promise<boolean> {
   return quarantine.purge();
 }
 
+/**
+ * Suppression de compte sur cet appareil (Apple 5.1.1(v)) : copie de travail puis copie de récupération.
+ * Ne réussit que si les deux sont parties. N’appelle aucun serveur.
+ */
+export async function deleteLocalAccount(): Promise<boolean> {
+  const cleared = await clearAll();
+  if (!cleared) return false;
+  return purgeQuarantine();
+}
+
 /** État React persistant. Aucune écriture tant que la lecture de cette clé n'a pas réussi. */
 export function usePersistentState<T>(key: string, initial: T | (() => T)) {
   const resolve = (input: T | (() => T)): T => (typeof input === 'function' ? (input as () => T)() : input);

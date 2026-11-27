@@ -7,8 +7,8 @@
     <title>Bissabi Home Made Food</title>
     <meta name="description" content="La saveur du partage — cuisine de quartier authentique par Bissabi" />
     <meta name="theme-color" content="#1A4D2E" />
-    <link rel="manifest" href="/bissabi-home-made-food/manifest.json" />
-    <link rel="apple-touch-icon" href="/bissabi-home-made-food/icons/apple-touch-icon.png" />
+    <link rel="manifest" href="/manifest.json" />
+    <link rel="apple-touch-icon" href="/icons/apple-touch-icon.png" />
     <meta name="mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-status-bar-style" content="default" />
@@ -25,7 +25,7 @@
     <script>
       if ('serviceWorker' in navigator && location.hostname !== 'localhost') {
         window.addEventListener('load', function () {
-          navigator.serviceWorker.register('/bissabi-home-made-food/sw.js', { scope: '/bissabi-home-made-food/' }).catch(function (e) { console.warn('SW', e); });
+          navigator.serviceWorker.register('/sw.js', { scope: '/' }).catch(function (e) { console.warn('SW', e); });
         });
       }
     </script>

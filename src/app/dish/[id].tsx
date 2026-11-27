@@ -108,7 +108,7 @@ export default function DishScreen() {
         <Button style={{ flex: 1 }} icon="bag-add-outline" title={`${L('Ajouter', 'Add')} · ${chf(dish.price * qty)}`} disabled={!open.length || outside || !!blocked} onPress={add} />
       </Row>
       {blocked === 'allergens' ? <Notice tone="warning" title={L('Déclaration d’allergènes incomplète', 'Allergen declaration incomplete')} text={L('Les 14 allergènes doivent être Présent, Traces ou Absent avant toute vente. Rien n’est supposé absent.', 'All 14 allergens must be Present, Traces or Absent before a sale. Nothing is assumed absent.')} /> : null}
-      {blocked === 'hygiene' ? <Notice tone="warning" title={L('Checklist hygiène incomplète', 'Hygiene checklist incomplete')} text={L('Ce plat n’est pas en vente tant que le cuisinier n’a pas attesté la checklist.', 'This dish is not for sale until the cook attests the checklist.')} /> : null}
+      {blocked === 'hygiene' ? <Notice tone="warning" title={L('Checklist hygiène incomplète', 'Hygiene checklist incomplete')} text={L('Ce plat n’est pas en vente tant que la cuisine n’a pas attesté la checklist.', 'This dish is not for sale until the kitchen attests the checklist.')} /> : null}
       {outside ? <Notice tone="warning" title={tr('zoneOutsideTitle')} text={tr('zoneOutsideBody')} /> : null}
       {added ? (<><Spacer h={10} /><Notice tone="success" title={L('Ajouté au panier', 'Added to cart')} text={`${cart.lines.reduce((s, l) => s + l.qty, 0)} ${L('portion(s) dans le panier', 'portion(s) in cart')}`} /><Button variant="secondary" title={L('Voir le panier', 'View cart')} onPress={() => router.push('/cart')} /></>) : null}
       <Spacer />

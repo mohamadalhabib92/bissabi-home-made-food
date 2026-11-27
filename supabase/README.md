@@ -1,7 +1,7 @@
 # Supabase — Passe 1
 
-Migration additive : `migrations/20261102213000_passe1_foundations.sql`.
+Projet food : `qizhprlzeiqrngwpxjnd` (Zurich). Projet CRM : `ppeovmfuhtidavdnrwxu`.
 
-Elle n’a **pas** été appliquée. Aucun projet, aucune URL et aucune clé ne sont configurés (`YOUR_SUPABASE_URL`, `YOUR_SUPABASE_ANON_KEY`). Ne pas lancer cette migration contre un projet réel tant que Mohamed n’a pas fourni le projet et validé le schéma.
+Déjà appliqués sur le projet food : passe 1, `stripe_connect_ledger`, `accounts_couriers_rls`, `live_marketplace`. Déjà appliqué sur le CRM : `bissabi_food_sync`.
 
-Le client Expo ne crée pas de client Supabase et n’appelle pas le réseau au démarrage. La clé `service_role` n’est pas lue par l’app.
+Pas encore appliqués : `migrations/20261127170000_rls_and_order_payments.sql` et `crm-migrations/20261127170000_expose_bissabi_food.sql`. Les fonctions dans `functions/` sont déployables (`Deno.serve`) et ne sont pas encore déployées. La clé `service_role` n’est pas lue par l’app. Les commandes sont dans `docs/go-live.md`.

@@ -9,7 +9,7 @@ import { Badge, Button, Card, H2, ListItem, Muted, Notice, Screen, Segmented, Sp
 import { useVibrations } from '@/ui/access';
 
 export default function Account() {
-  const { prefs, setPrefs, hasDemo, removeDemo, loadDemo, reviews, favorites, dishes, cooks, preservation } = useData();
+  const { prefs, setPrefs, hasDemo, removeDemo, loadDemo, reviews, favorites, dishes, cooks, preservation, couriers, setCourierValidated } = useData();
   const { L } = useL();
   const { t } = useI18n();
   const router = useRouter();
@@ -22,6 +22,7 @@ export default function Account() {
       {preservation.some((entry) => entry.heldOriginal) ? <Notice tone="warning" title={t('preserveHeldTitle')} text={t('preserveHeldBody')} /> : null}
       {preservation.some((entry) => entry.unknownCount > 0) ? <Notice tone="info" title={t('preserveUnknownTitle')} text={t('preserveUnknownBody')} /> : null}
       <Segmented label={L('Langue', 'Language')} options={[{ label: 'Français', value: 'fr' as const }, { label: 'English', value: 'en' as const }]} value={prefs.lang} onChange={(v) => setPrefs((p) => ({ ...p, lang: v }))} />
+      <Segmented label={L('Je suis', 'I am')} options={[{ label: L('Client·e', 'Customer'), value: 'buyer' as const }, { label: L('Cuisine', 'Kitchen'), value: 'cook' as const }, { label: L('Livreur·euse', 'Courier'), value: 'courier' as const }]} value={prefs.mode} onChange={(v) => setPrefs((p) => ({ ...p, mode: v }))} />
       <Card>
         <ListItem icon="language-outline" title={L('Autres langues', 'Other languages')} subtitle="DE · IT · ES · de-CH · AR" right={<Badge label={L('à venir', 'coming')} />} onPress={() => router.push('/languages')} />
         <ListItem icon="location-outline" title={L('Lieu', 'Location')} subtitle={prefs.location?.label ?? L('Non défini', 'Not set')} onPress={() => router.push('/location')} />
@@ -40,18 +41,24 @@ export default function Account() {
       <Card>
         <Toggle label={L('Nouvelles de Bissabi (marketing)', 'Bissabi news (marketing)')} value={prefs.consents.marketing} onChange={(v) => setPrefs((p) => ({ ...p, consents: { ...p.consents, marketing: v, at: new Date().toISOString() } }))} />
         <Toggle label={L('Utiliser ma position GPS', 'Use my GPS location')} value={prefs.location?.source === 'gps'} onChange={(v) => (v ? router.push('/location') : setPrefs((p) => ({ ...p, location: null, consents: { ...p.consents, location: false } })))} hint={L('Désactiver efface la position enregistrée.', 'Turning off erases the saved position.')} />
+        <ListItem icon="person-outline" title={L('Connexion e-mail', 'Email sign-in')} subtitle={L('Ou mode sur cet appareil', 'Or on-device mode')} onPress={() => router.push('/auth')} />
         <ListItem icon="shield-outline" title={L('Mes données (export, suppression)', 'My data (export, deletion)')} onPress={() => router.push('/privacy')} />
       </Card>
       <H2>{L('Aide & confiance', 'Help & trust')}</H2>
       <Card>
         <ListItem icon="help-buoy-outline" title={L('Signaler / support', 'Report / support')} onPress={() => router.push('/report')} />
         <ListItem icon="document-text-outline" title={L('Conformité & prochaines étapes', 'Compliance & next steps')} onPress={() => router.push('/compliance')} />
+        <ListItem icon="document-text-outline" title={L('Conditions (CGU et CGV)', 'Terms of use and sale')} onPress={() => router.push('/terms')} />
+        <ListItem icon="shield-outline" title={L('Politique de confidentialité', 'Privacy policy')} onPress={() => router.push('/privacy')} />
         <ListItem icon="business-outline" title={L('Mentions légales', 'Legal notice')} onPress={() => router.push('/legal')} />
       </Card>
       <H2>{L('Administration', 'Administration')}</H2>
       <Card>
         <ListItem icon="chatbubbles-outline" title={L('Modération des avis', 'Review moderation')} right={pendingReviews ? <Badge label={String(pendingReviews)} tone="warning" /> : undefined} onPress={() => router.push('/moderation')} />
         <ListItem icon="construct-outline" title={L('Notes admin & configuration', 'Admin notes & configuration')} right={<Badge label={paymentsLive ? 'Stripe' : L('démo', 'demo')} tone={paymentsLive ? 'success' : 'warning'} />} onPress={() => router.push('/admin-notes')} />
+        {couriers.map((c) => (
+          <ListItem key={c.id} icon="bicycle-outline" title={c.displayName} subtitle={c.validated ? L('Livreur validé', 'Courier validated') : L('En attente', 'Waiting')} right={<Badge label={c.validated ? L('oui', 'yes') : L('non', 'no')} tone={c.validated ? 'success' : 'warning'} />} onPress={() => setCourierValidated(c.id, !c.validated)} />
+        ))}
       </Card>
       {preservation.some((entry) => ['cooks', 'dishes', 'slots', 'orders', 'reviews'].includes(entry.key) && !entry.hydrated)
         ? null

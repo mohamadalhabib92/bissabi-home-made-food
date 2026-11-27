@@ -39,3 +39,55 @@ Tests : `src/lib/pricing.test.ts`.
 ### Bloquant
 
 Le paiement Stripe Connect (PR #8, TWINT et cartes) n’est pas intégré. Le branchement demande le module natif et un serveur. Rien n’est encaissé.
+
+## 2026-11-23 — préparation au lancement
+
+Branche `cursor/launch-readiness-07cc`, à partir de `a7fd0eb`. Pas de fusion dans `main`. Pas de soumission. Pas de migration hébergée.
+
+### Avant / Après
+
+Avant : pas d’audit de lancement, pas de code Connect testable, la suppression « compte » gardait la copie de récupération, pas de page CGU/CGV, pas de bandeau hors ligne ni de pré-inscription.
+
+Après : `docs/launch-readiness.md`. Connect Express (onboarding, frais 10 %, remboursement, webhook) dans `src/lib/stripeConnect.ts`, migration locale et fonction non déployée. Suppression définitive sur l’appareil. Conditions liées depuis Compte. Bandeau « Lancement bientôt » et hors ligne. La porte de vente reste fermée.
+
+Fichiers : `docs/launch-readiness.md`, `src/lib/stripeConnect.ts`, `src/lib/stripeConnect.test.ts`, `src/lib/storage.ts`, `src/lib/payments.ts`, `src/app/terms.tsx`, `src/app/privacy.tsx`, `src/ui/offline.tsx`, `supabase/migrations/20261123160000_stripe_connect_ledger.sql`.
+
+Tests : `src/lib/stripeConnect.test.ts` et la suite existante.
+
+### Vendeurs : cuisine maison et traiteur
+
+Avant : un seul profil, souvent nommé au masculin, sans type.
+
+Après : à l’inscription on choisit cuisine maison ou traiteur. Les deux ont la même checklist, les mêmes 14 allergènes et les 10 %. Un traiteur peut poser un minimum de portions et un délai ou une capacité plus grands. Une fiche déjà enregistrée sans type n’est pas réécrite. Commission ou contrôle différents pour les traiteurs : non décidés, listés dans `docs/launch-readiness.md`.
+
+Fichiers : `src/lib/seller.ts`, `src/app/studio/profile.tsx`, `src/lib/model.ts`.
+
+Tests : `src/lib/seller.test.ts`.
+
+## 2026-11-26 — livreur et comptes
+
+Avant : pas de coursier. Pas de connexion. La suppression de compte était seulement locale.
+
+Après : profil livreur (identité déclarée, véhicule, zone Lausanne/Prilly, disponibilité), courses prêtes, acceptation, code à la cuisine, en route, code de preuve, gains marqués « à définir ». L’admin local valide avant le travail. Comptes e-mail via le client Supabase si les variables sont là, sinon mode appareil avec un avis clair. Liaison opt-in qui n’écrase rien. RLS dans une migration non appliquée.
+
+Fichiers : `src/lib/courierRun.ts`, `src/app/(tabs)/courier.tsx`, `src/app/auth.tsx`, `src/lib/authPort.ts`, `src/lib/accountLink.ts`, `supabase/migrations/20261126180000_accounts_couriers_rls.sql`.
+
+Tests : `src/lib/courierRun.test.ts`, `src/lib/accountLink.test.ts`.
+
+## 2026-11-27 — place de marché et CRM
+
+Avant : pas de PaymentIntent, pas de lien magique, pas de rôle traiteur à l’inscription, pas de lien vers Bissabi CRM, l’écran d’erreur affichait `YOUR_SUPPORT_EMAIL`.
+
+Après : le projet food est nommé dans `.env.example` (`qizhprlzeiqrngwpxjnd`, Zurich) sans clé. Commission 10 % en une constante. Fonctions sources `stripe-webhook`, `create-payment-intent`, `delete-account`, `crm-sync`. Le schéma CRM `bissabi_food` est dans `supabase/crm-migrations/` pour le projet `ppeovmfuhtidavdnrwxu`. Les upserts sont idempotents. `docs/go-live.md` dit comment CRM Pro lira ce schéma plus tard. Rien n’est déployé.
+
+Fichiers : `src/lib/crmSync.ts`, `src/lib/stripeWebhook.ts`, `supabase/functions/crm-sync/index.ts`, `supabase/crm-migrations/20261127120000_bissabi_food_sync.sql`, `docs/go-live.md`.
+
+Tests : `src/lib/crmSync.test.ts`, `src/lib/stripeWebhook.test.ts`.
+
+## 2026-11-27 — fonctions déployables
+
+Avant : les fonctions importaient `src/lib`, portaient `NOT_DEPLOYED`, et `crm-sync` faisait confiance au corps envoyé par l’app. La déduplication du webhook tenait dans un `Set`.
+
+Après : `Deno.serve`, code partagé sous `supabase/functions/_shared`, appels Stripe réels (PaymentIntent 10 %, compte Express, lien d’onboarding, remboursement avec `refund_application_fee` et `reverse_transfer`). Deux secrets de signature. `payment_events.event_id` est la déduplication. `crm-sync` n’accepte que la clé service et un id, puis lit la base. Nouvelle migration food pour les policies cuisine et coursier, et migration CRM pour exposer `bissabi_food`. Rien n’est déployé par ici.
+
+Fichiers : `supabase/functions/*`, `supabase/config.toml`, `supabase/migrations/20261127170000_rls_and_order_payments.sql`, `supabase/crm-migrations/20261127170000_expose_bissabi_food.sql`.

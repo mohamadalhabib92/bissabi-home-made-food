@@ -9,6 +9,8 @@ import { useData, useL } from '@/lib/data';
 import { dayLabel, stamp } from '@/lib/dates';
 import { downloadText } from '@/lib/download';
 import { launchPayment } from '@/lib/launchCheckout';
+import { isServerId } from '@/lib/courierServer';
+import { refreshPaidStatus } from '@/lib/serverCheckout';
 import { ORDER_STEPS } from '@/lib/model';
 import { chf } from '@/lib/pricing';
 import { STATUS_LABEL } from '@/lib/status';
@@ -34,6 +36,16 @@ export default function OrderScreen() {
     if (paid === 'success') setOrderStatus(o.id, 'requested', { payment: { method: 'stripe' } }, 'Paiement Stripe confirmé');
     if (paid === 'cancel') setOrderStatus(o.id, 'payment_failed', { payment: { method: 'stripe', error: 'Paiement annulé' } }, 'Paiement annulé');
   }, [paid, o?.status]); // eslint-disable-line react-hooks/exhaustive-deps
+  useEffect(() => {
+    if (!o || o.status !== 'awaiting_payment' || !isServerId(o.payment.ref)) return;
+    let stop = false;
+    void refreshPaidStatus(o.payment.ref).then((status) => {
+      if (stop || !o) return;
+      if (status === 'paid') setOrderStatus(o.id, 'requested', { payment: { method: 'stripe', ref: o.payment.ref } });
+      if (status === 'failed') setOrderStatus(o.id, 'payment_failed', { payment: { method: 'stripe', ref: o.payment.ref, error: 'Paiement refusé' } });
+    });
+    return () => { stop = true; };
+  }, [o?.id, o?.status]); // eslint-disable-line react-hooks/exhaustive-deps
   if (!o) return <Screen><Empty icon="receipt-outline" title={L('Commande introuvable', 'Order not found')} /></Screen>;
   const cook = cooks.find((c) => c.id === o.cookId);
   const st = STATUS_LABEL[o.status];
@@ -66,6 +78,13 @@ export default function OrderScreen() {
         </Card>
       ) : null}
       {o.status === 'refused' ? <Notice tone="danger" title={L('Le cuisinier n’a pas pu accepter', 'The cook could not accept')} text={`${o.refuseReason ?? ''} — ${L('remboursement intégral.', 'full refund.')}`} /> : null}
+      {o.delivery ? (
+        <Card>
+          <H2>{L('Livraison', 'Delivery')}</H2>
+          <Body>{o.delivery.state === 'offered' ? L('En attente d’un livreur', 'Waiting for a courier') : o.delivery.state === 'accepted' ? L('Livreur accepté', 'Courier accepted') : o.delivery.state === 'picked_up' ? L('Retiré à la cuisine', 'Picked up') : o.delivery.state === 'en_route' ? L('En route', 'On the way') : L('Livré', 'Delivered')}</Body>
+          {o.delivery.state === 'en_route' ? <Muted>{L('Code à donner au livreur', 'Code to give the courier')} : {o.delivery.proofCode}</Muted> : null}
+        </Card>
+      ) : null}
       {stepIdx >= 0 ? (
         <Card>
           <H2>{L('Suivi', 'Progress')}</H2>

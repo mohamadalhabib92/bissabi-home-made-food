@@ -9,6 +9,7 @@ import { useData, useL } from '@/lib/data';
 import { allergensFromStatus, publishIssues, statusFromDish, type AllergenDraft, type PublishIssue } from '@/lib/dishPublish';
 import { ALLERGENS, CUISINES, type Allergen, type AllergenLevel, type AnimalOrigin, type Cuisine, type Dish, type Ingredient } from '@/lib/model';
 import { MIN_LEAD_HOURS } from '@/lib/pricing';
+import { leadHoursMax, sellerKindOf } from '@/lib/seller';
 import { uid } from '@/lib/storage';
 import { Button, Card, Chip, Empty, Field, H2, IconButton, Muted, Notice, Row, Screen, Segmented, Spacer, Toggle, useFeedback } from '@/ui/kit';
 import { theme as ui } from '@/ui/theme';
@@ -67,7 +68,7 @@ export default function DishEditor() {
   const errs = {
     title: title.trim().length < 3 ? L('3 caractères minimum', '3 characters minimum') : undefined,
     price: !(p >= 2 && p <= 200) ? L('Prix par portion entre CHF 2 et 200', 'Price per portion between CHF 2 and 200') : undefined,
-    lead: !(lh >= MIN_LEAD_HOURS && lh <= 168) ? L(`Entre ${MIN_LEAD_HOURS} et 168 h`, `Between ${MIN_LEAD_HOURS} and 168 h`) : undefined,
+    lead: !(lh >= MIN_LEAD_HOURS && lh <= leadHoursMax(sellerKindOf(myCook))) ? L(`Entre ${MIN_LEAD_HOURS} et ${leadHoursMax(sellerKindOf(myCook))} h`, `Between ${MIN_LEAD_HOURS} and ${leadHoursMax(sellerKindOf(myCook))} h`) : undefined,
   };
   const valid = !Object.values(errs).some(Boolean) && description.trim().length >= 10 && allergenOk && (!active || issues.length === 0);
   const levelLabel = (level: AllergenLevel) => (level === 'present' ? t('allergenPresent') : level === 'traces' ? t('allergenTraces') : t('allergenAbsent'));

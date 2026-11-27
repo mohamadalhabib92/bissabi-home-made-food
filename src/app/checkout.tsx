@@ -9,15 +9,19 @@ import { useData, useL } from '@/lib/data';
 import { cookIsOutsideVaud, zoneOf } from '@/lib/geo';
 import { dayLabel, hoursUntil } from '@/lib/dates';
 import { buyerVisibleSlots, launchPayment, prepareLaunchCheckout } from '@/lib/launchCheckout';
+import { courierFeeChf, deliveryChoiceAvailable, handoffOptions } from '@/lib/deliveryConfig';
+import { createServerOrder, holdClientSecret, refreshPaidStatus, serverCartReady } from '@/lib/serverCheckout';
+import { PayOrder } from '@/components/PayOrder';
 import { saleBlock } from '@/lib/saleGate';
+import { belowMinimum, minPortionsOf } from '@/lib/seller';
 import { slotUsed } from '@/lib/market';
 import { MIN_LEAD_HOURS, quote } from '@/lib/pricing';
-import { Button, Card, DemoBanner, Empty, Field, H2, Muted, Notice, Screen, Spacer, Toggle, haptic, panelStyle, useFeedback } from '@/ui/kit';
+import { Button, Card, DemoBanner, Empty, Field, H2, Muted, Notice, Screen, Segmented, Spacer, Toggle, haptic, panelStyle, useFeedback } from '@/ui/kit';
 import { theme as t } from '@/ui/theme';
 
 export default function Checkout() {
   const params = useLocalSearchParams<{ mode?: string }>();
-  const { cart, dishes, cooks, slots, orders, placeOrder, clearCart, prefs, setPrefs } = useData();
+  const { cart, dishes, cooks, slots, orders, placeOrder, setOrderStatus, clearCart, prefs, setPrefs } = useData();
   const { L, lang } = useL();
   const { t: tr } = useI18n();
   const router = useRouter();
@@ -26,12 +30,14 @@ export default function Checkout() {
   const cook = cooks.find((c) => c.id === cart.cookId);
   const requested = Array.isArray(params.mode) ? params.mode[0] : params.mode;
   const launch = prepareLaunchCheckout(orders, cart.lines, requested);
-  const mode = launch.next.mode;
   const [slotId, setSlotId] = useState<string | null>(null);
   const [name, setName] = useState(prefs.buyerName);
   const [note, setNote] = useState('');
   const [ack, setAck] = useState(false);
   const [demoFail, setDemoFail] = useState(false);
+  const [fulfilment, setFulfilment] = useState<'pickup' | 'delivery'>('pickup');
+  const [address, setAddress] = useState('');
+  const [sheet, setSheet] = useState<{ secret: string; serverOrderId: string } | null>(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const lines = cart.lines.map((l) => ({ ...l, dish: dishes.find((d) => d.id === l.dishId)! })).filter((l) => l.dish);
@@ -43,7 +49,8 @@ export default function Checkout() {
     .map((s) => ({ s, left: s.capacity - slotUsed(s.id, orders) }))
     .sort((a, b) => (a.s.date + a.s.from).localeCompare(b.s.date + b.s.from)), [slots, cart.cookId, lead, lines, orders]);
   if (!cook || !lines.length) return <Screen><Empty icon="bag-handle-outline" title={L('Panier vide', 'Empty cart')} action={<Button title={L('Découvrir', 'Discover')} onPress={() => router.replace('/')} />} /></Screen>;
-  const q = quote(lines.map((l) => ({ qty: l.qty, unitPrice: l.dish.price })), mode);
+  const handoff = deliveryChoiceAvailable() && fulfilment === 'delivery' ? 'delivery' as const : 'pickup' as const;
+  const q = quote(lines.map((l) => ({ qty: l.qty, unitPrice: l.dish.price })), handoff, courierFeeChf());
   const slot = options.find((o) => o.s.id === slotId);
   const allergenKeys = [...new Set(lines.flatMap((l) => { const s = splitAllergens(l.dish); return [...s.present, ...s.traces]; }))];
   const cookOutside = cookIsOutsideVaud(cook);
@@ -52,16 +59,43 @@ export default function Checkout() {
     zoneOf(prefs.location) === 'outside' && tr('zoneOutsideTitle'),
     cookOutside && tr('cookOutsideOrder'),
     unsellable && L('Un plat du panier n’a pas les 14 allergènes déclarés, ou la checklist hygiène est incomplète.', 'A dish in the cart lacks the 14 allergen declarations, or the hygiene checklist is incomplete.'),
+    belowMinimum(cook, portions) && L(`Ce traiteur demande au moins ${minPortionsOf(cook)} portions.`, `This caterer asks for at least ${minPortionsOf(cook)} portions.`),
     !slot && L('Choisissez un créneau', 'Choose a slot'),
     slot && slot.left < portions && L('Capacité insuffisante sur ce créneau', 'Not enough capacity on this slot'),
     !name.trim() && L('Votre prénom est requis', 'Your first name is required'),
     !ack && L('Confirmez avoir lu les allergènes', 'Confirm you read the allergens'),
+    handoff === 'delivery' && address.trim().length < 8 && L('Adresse de livraison dans le canton de Vaud', 'Delivery address in canton de Vaud'),
   ].filter(Boolean) as string[];
   const submit = async () => {
     if (problems.length || !slot) return;
     setBusy(true); setError(null);
     setPrefs((p) => ({ ...p, buyerName: name.trim() }));
-    const o = placeOrder({ slot: slot.s, mode: launch.next.mode, address: launch.next.address, note: note.trim() || undefined, buyerName: name.trim() });
+    if (serverCartReady(cook.id, lines.map((l) => l.dishId))) {
+      const remote = await createServerOrder({
+        kitchenId: cook.id,
+        items: lines.map((l) => ({ dishId: l.dishId, qty: l.qty })),
+        slotDate: slot.s.date,
+        delivery: handoff,
+        address: address.trim(),
+      });
+      if (!remote.ok && remote.reason === 'auth') {
+        setBusy(false);
+        setError(L('Connectez-vous pour payer.', 'Sign in to pay.'));
+        return;
+      }
+      if (remote.ok) {
+        setBusy(false);
+        holdClientSecret(remote.orderId, remote.clientSecret);
+        setSheet({ secret: remote.clientSecret, serverOrderId: remote.orderId });
+        return;
+      }
+      if (remote.reason !== 'launch_closed' && remote.reason !== 'device_only') {
+        setBusy(false);
+        setError(L('Le paiement n’a pas pu être ouvert.', 'Payment could not be started.'));
+        return;
+      }
+    }
+    const o = placeOrder({ slot: slot.s, mode: handoff, address: handoff === 'delivery' ? address.trim() : launch.next.address, note: note.trim() || undefined, buyerName: name.trim() });
     if (!o) {
       setBusy(false);
       setError(L('Cette commande ne peut pas être enregistrée.', 'This order cannot be saved.'));
@@ -78,6 +112,27 @@ export default function Checkout() {
       // Moment de réussite : la commande part chez le cuisinier.
       fb.celebrate({ title: L('Commande envoyée', 'Order sent'), subtitle: `${cook.name} · ${dayLabel(slot.s.date, lang)} ${slot.s.from}`, icon: 'restaurant', tone: 'gold' });
     }
+  };
+  const finishSheet = async (result: 'paid' | 'failed' | 'canceled') => {
+    if (!sheet || !slot) return;
+    if (result === 'canceled') {
+      setSheet(null);
+      setError(L('Paiement annulé.', 'Payment canceled.'));
+      return;
+    }
+    const status = result === 'paid' ? await refreshPaidStatus(sheet.serverOrderId) : 'failed';
+    const placed = placeOrder({ slot: slot.s, mode: handoff, address: handoff === 'delivery' ? address.trim() : launch.next.address, note: note.trim() || undefined, buyerName: name.trim() });
+    if (!placed) {
+      setError(L('Cette commande ne peut pas être enregistrée.', 'This order cannot be saved.'));
+      return;
+    }
+    setOrderStatus(placed.id, status === 'paid' ? 'requested' : status === 'failed' ? 'payment_failed' : 'awaiting_payment', {
+      payment: { method: 'stripe', ref: sheet.serverOrderId, error: status === 'failed' ? L('Paiement refusé', 'Payment declined') : undefined },
+    });
+    clearCart();
+    router.replace(`/order/${placed.id}`);
+    if (status === 'paid') fb.celebrate({ title: L('Commande payée', 'Order paid'), subtitle: `${cook.name} · ${dayLabel(slot.s.date, lang)} ${slot.s.from}`, icon: 'restaurant', tone: 'gold' });
+    else if (status === 'failed') haptic('error');
   };
   return (
     <Screen>
@@ -97,6 +152,8 @@ export default function Checkout() {
         );
       }      ) : <Notice tone="warning" title={L('Aucun créneau de retrait', 'No pickup slot')} text={L('Revenez plus tard, ou choisissez un autre plat. Les commandes déjà enregistrées restent en l’état.', 'Come back later, or pick another dish. Orders already saved stay as they are.')} />}
       <Spacer />
+      {deliveryChoiceAvailable() ? <Segmented label={L('Remise', 'Handoff')} options={handoffOptions(L)} value={fulfilment} onChange={setFulfilment} /> : null}
+      {handoff === 'delivery' ? <Field label={L('Adresse dans le canton de Vaud', 'Address in canton de Vaud')} value={address} onChangeText={setAddress} /> : null}
       <Field label={L('Prénom', 'First name')} value={name} onChangeText={setName} autoComplete="given-name" />
       <Muted style={{ marginBottom: 12 }}>{L('L’adresse exacte de retrait vous est communiquée après acceptation.', 'The exact pickup address is shared after acceptance.')}</Muted>
       <Field label={L('Note au cuisinier (facultatif)', 'Note to the cook (optional)')} value={note} onChangeText={setNote} multiline placeholder={L('Allergie, interphone…', 'Allergy, buzzer…')} />
@@ -110,7 +167,7 @@ export default function Checkout() {
       {launchPayment().simulated ? <Toggle label={L('Démo : simuler un refus de carte', 'Demo: simulate a card decline')} value={demoFail} onChange={setDemoFail} hint={L('Pour tester la gestion d’échec de paiement. Aucun débit.', 'To test payment-failure handling. No charge.')} /> : null}
       {problems.length ? <Muted style={{ marginBottom: 8 }}>{problems.join(' · ')}</Muted> : null}
       {error ? <Notice tone="danger" title={error} /> : null}
-      <Button icon="lock-closed-outline" title={`${L('Payer (simulation)', 'Pay (simulation)')} · CHF ${q.total.toFixed(2)}`} disabled={!!problems.length} loading={busy} onPress={submit} />
+      {sheet ? <PayOrder clientSecret={sheet.secret} onDone={finishSheet} /> : <Button icon="lock-closed-outline" title={`${launchPayment().simulated ? L('Payer (simulation)', 'Pay (simulation)') : L('Payer', 'Pay')} · CHF ${q.total.toFixed(2)}`} disabled={!!problems.length} loading={busy} onPress={submit} />}
       <Muted style={{ marginTop: 8, fontSize: 12 }}>{tr('paymentLaunch')}</Muted>
     </Screen>
   );

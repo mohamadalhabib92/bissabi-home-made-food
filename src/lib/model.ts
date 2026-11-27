@@ -39,12 +39,19 @@ export type Cuisine = (typeof CUISINES)[number]['key'];
 export type Ingredient = { name: string; qty: number; unit: string }; // par portion
 export type FulfilMode = 'pickup' | 'delivery';
 
+/** Cuisine maison ou traiteur. Absent = fiche ancienne, affichée comme cuisine maison. */
+export type SellerKind = 'home' | 'caterer';
+
 export type Cook = {
   id: string; name: string; commune: string; npa: string; lat: number; lng: number;
   bio: string; halalKitchen: boolean; languages: string[];
   checklist: Record<string, boolean>; checklistAt?: string;
-  delivers: boolean; // le cuisinier livre-t-il lui-même (sinon retrait uniquement)
+  delivers: boolean; // livraison propre (sinon retrait, ou coursier plus tard)
   avatarColor: string; isMe?: boolean; demo?: boolean; createdAt: string;
+  /** Choix à l’inscription. Non écrit tant que la personne n’enregistre pas. */
+  sellerKind?: SellerKind;
+  /** Minimum de portions, seulement pour un traiteur qui l’a saisi. */
+  minPortions?: number;
   /** Canton du cuisinier. Les inscriptions nouvelles sont limitées à VD. */
   canton?: string;
   /** Absent sur les fiches existantes : aucun badge n'est affiché. */
@@ -88,6 +95,33 @@ export type Order = {
   status: OrderStatus; timeline: { status: OrderStatus; at: string; note?: string }[];
   payment: { method: 'stripe' | 'demo'; ref?: string; error?: string };
   refuseReason?: string; createdAt: string; demo?: boolean;
+  /** Livraison par coursier. Absent sur les commandes déjà enregistrées. */
+  delivery?: DeliveryRun;
+};
+
+export type VehicleType = 'foot' | 'bike' | 'scooter' | 'car';
+export type CourierZone = 'lausanne' | 'prilly' | 'both';
+export type DeliveryState = 'offered' | 'accepted' | 'picked_up' | 'en_route' | 'delivered';
+
+export type DeliveryRun = {
+  state: DeliveryState;
+  courierId?: string;
+  declinedBy: string[];
+  pickupCode: string;
+  proofCode: string;
+  proofAt?: string;
+};
+
+/** Livreur. `validated` ne peut passer à vrai que par l’admin. */
+export type Courier = {
+  id: string;
+  displayName: string;
+  vehicle: VehicleType;
+  zone: CourierZone;
+  available: boolean;
+  validated: boolean;
+  isMe?: boolean;
+  createdAt: string;
 };
 
 export type Review = { id: string; orderId: string; cookId: string; dishId?: string; rating: number; text: string; author: string; status: 'pending' | 'published' | 'rejected'; at: string; demo?: boolean };

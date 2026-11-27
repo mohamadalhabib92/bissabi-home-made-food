@@ -4,6 +4,7 @@ import { useData, useL } from '@/lib/data';
 import { addDays, dayCH, dayLabel, isTime, parseDay, todayISO } from '@/lib/dates';
 import { slotUsed } from '@/lib/market';
 import type { FulfilMode } from '@/lib/model';
+import { sellerKindOf, slotCapacityMax } from '@/lib/seller';
 import { uid } from '@/lib/storage';
 import { Button, Card, Chip, Empty, Field, H2, IconButton, ListItem, Muted, Row, Screen, Spacer } from '@/ui/kit';
 import { View } from 'react-native';
@@ -21,7 +22,8 @@ export default function Slots() {
   const mine = slots.filter((s) => s.cookId === myCook.id && s.date >= todayISO()).sort((a, b) => (a.date + a.from).localeCompare(b.date + b.from));
   const date = parseDay(day);
   const c = Number(cap);
-  const err = !date ? L('Date au format JJ.MM.AAAA', 'Date as DD.MM.YYYY') : date < todayISO() ? L('Date passée', 'Past date') : !isTime(from) || !isTime(to) ? L('Heures au format HH:MM', 'Times as HH:MM') : from >= to ? L('La fin doit suivre le début', 'End must be after start') : !(c >= 1 && c <= 100) ? L('Capacité 1–100 portions', 'Capacity 1–100 portions') : !modes.length ? L('Choisissez au moins un mode', 'Pick at least one mode') : null;
+  const capMax = slotCapacityMax(sellerKindOf(myCook));
+  const err = !date ? L('Date au format JJ.MM.AAAA', 'Date as DD.MM.YYYY') : date < todayISO() ? L('Date passée', 'Past date') : !isTime(from) || !isTime(to) ? L('Heures au format HH:MM', 'Times as HH:MM') : from >= to ? L('La fin doit suivre le début', 'End must be after start') : !(c >= 1 && c <= capMax) ? L(`Capacité 1–${capMax} portions`, `Capacity 1–${capMax} portions`) : !modes.length ? L('Choisissez au moins un mode', 'Pick at least one mode') : null;
   const add = () => {
     if (err || !date) return;
     const n = Array.from({ length: weeks }, (_, i) => ({ id: uid('slot_'), cookId: myCook.id, date: addDays(date, i * 7), from, to, modes, capacity: c, dishIds: [] }));

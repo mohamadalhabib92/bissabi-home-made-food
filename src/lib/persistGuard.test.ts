@@ -32,7 +32,7 @@ test('clearAll est refusé tant qu’une clé parmi les neuf n’est pas chargé
   assert.equal(gate.canClear(), false);
   gate.mark(STORAGE_KEYS[STORAGE_KEYS.length - 1]);
   assert.equal(gate.canClear(), true);
-  assert.deepEqual([...STORAGE_KEYS], ['prefs', 'cooks', 'dishes', 'slots', 'orders', 'reviews', 'reports', 'favorites', 'cart']);
+  assert.deepEqual([...STORAGE_KEYS], ['prefs', 'cooks', 'dishes', 'slots', 'orders', 'reviews', 'reports', 'favorites', 'cart', 'couriers']);
 });
 
 test('Continuer quand même : orders, prefs, favorites et cart ne sont pas écrasés, la lecture tardive gagne', () => {

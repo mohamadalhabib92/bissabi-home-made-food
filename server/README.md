@@ -1,4 +1,8 @@
-# Serveur de paiement (à implémenter — non inclus)
+# Serveur de paiement
+
+Le contrat testé (Connect Express, 10 % retenus sur le cuisinier, carte et TWINT, remboursement, webhook) est dans `src/lib/stripeConnect.ts`. Il n’est pas déployé. L’exemple ci-dessous est un ancien croquis Checkout : ne pas l’utiliser tel quel pour la commission.
+
+# Ancien croquis (non inclus)
 
 L’app n’embarque **que** la clé publique Stripe. La clé secrète vit uniquement sur un petit serveur que vous hébergez
 (Cloudflare Worker, Vercel, Supabase Edge Function…). Tant que ce serveur n’existe pas, l’app reste en **paiement simulé**.

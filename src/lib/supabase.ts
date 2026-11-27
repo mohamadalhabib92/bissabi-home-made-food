@@ -38,6 +38,10 @@ export function getSupabase(): SupabaseClient | null {
         detectSessionInUrl: Platform.OS === 'web' && canPersist,
       },
     });
+    client.auth.onAuthStateChange((event) => {
+      if (event !== 'SIGNED_IN') return;
+      void client?.functions.invoke('sync-me', { body: {} }).then(() => undefined, () => undefined);
+    });
   } catch {
     client = null;
   }

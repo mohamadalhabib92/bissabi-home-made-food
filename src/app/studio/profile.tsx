@@ -4,12 +4,13 @@ import { useI18n } from '@/i18n';
 import { AVATAR_COLORS } from '@/lib/cookutil';
 import { useData, useL } from '@/lib/data';
 import { COMMUNES, LAUNCH_CANTON, cookIsOutsideVaud, findCommune } from '@/lib/geo';
-import type { Cook } from '@/lib/model';
+import type { Cook, SellerKind } from '@/lib/model';
+import { sellerKindOf } from '@/lib/seller';
 import { uid } from '@/lib/storage';
-import { Button, Card, Chip, Field, Muted, Notice, Row, Screen, Spacer, Toggle } from '@/ui/kit';
+import { Button, Card, Chip, Field, Muted, Notice, Row, Screen, Segmented, Spacer, Toggle } from '@/ui/kit';
 
 export default function CookProfile() {
-  const { myCook, setCooks, setPrefs } = useData();
+  const { myCook, setCooks, setPrefs, prefs } = useData();
   const { L } = useL();
   const { t } = useI18n();
   const router = useRouter();
@@ -20,6 +21,8 @@ export default function CookProfile() {
   const [delivers] = useState(myCook?.delivers ?? false);
   const [langs, setLangs] = useState<string[]>(myCook?.languages ?? ['fr']);
   const [color, setColor] = useState(myCook?.avatarColor ?? AVATAR_COLORS[0]);
+  const [kind, setKind] = useState<SellerKind>(myCook ? sellerKindOf(myCook) : prefs.pendingSellerKind === 'caterer' ? 'caterer' : 'home');
+  const [minimum, setMinimum] = useState(myCook?.minPortions ? String(myCook.minPortions) : '');
   const place = COMMUNES.find((c) => c.name.toLowerCase() === commune.trim().toLowerCase());
   const inZone = place?.canton === LAUNCH_CANTON;
   const sugg = !place && commune.trim() ? findCommune(commune).filter((c) => c.canton === LAUNCH_CANTON).slice(0, 5) : [];
@@ -27,7 +30,8 @@ export default function CookProfile() {
   const save = () => {
     if (!place || !inZone) return;
     const base: Cook = myCook ?? { id: uid('cook_'), checklist: {}, isMe: true, createdAt: new Date().toISOString() } as Cook;
-    const next: Cook = { ...base, name: name.trim(), commune: place.name, npa: place.npa, lat: place.lat, lng: place.lng, canton: place.canton, bio: bio.trim(), halalKitchen: halal, delivers, languages: langs, avatarColor: color };
+    const minPortions = kind === 'caterer' && Number(minimum) >= 2 ? Math.floor(Number(minimum)) : undefined;
+    const next: Cook = { ...base, name: name.trim(), commune: place.name, npa: place.npa, lat: place.lat, lng: place.lng, canton: place.canton, bio: bio.trim(), halalKitchen: halal, delivers, languages: langs, avatarColor: color, sellerKind: kind, minPortions };
     setCooks((l) => (myCook ? l.map((c) => (c.id === next.id ? next : c)) : [...l, next]));
     setPrefs((p) => ({ ...p, mode: 'cook' }));
     if (myCook) router.back(); else router.replace('/studio/checklist');
@@ -36,6 +40,19 @@ export default function CookProfile() {
   return (
     <Screen>
       {savedOutside ? <Notice tone="warning" title={t('cookOutside')} text={t('cookOutsideSelf')} /> : null}
+      <Segmented
+        label={L('Vous vendez en tant que', 'You sell as')}
+        options={[
+          { label: L('Cuisine maison', 'Home kitchen'), value: 'home' as const },
+          { label: L('Traiteur', 'Caterer'), value: 'caterer' as const },
+        ]}
+        value={kind}
+        onChange={setKind}
+      />
+      <Muted>{kind === 'caterer'
+        ? L('Même checklist hygiène, mêmes 14 allergènes, même commission de 10 %. Vous pouvez demander plus de portions et un délai plus long.', 'Same hygiene checklist, same 14 allergens, same 10% commission. You can ask for more portions and a longer notice.')
+        : L('Cuisine familiale. Même règles que le traiteur : hygiène, allergènes, 10 %.', 'Family kitchen. Same rules as a caterer: hygiene, allergens, 10%.')}</Muted>
+      {kind === 'caterer' ? <Field label={L('Minimum de portions (facultatif)', 'Minimum portions (optional)')} value={minimum} onChangeText={setMinimum} keyboardType="number-pad" hint={L('Vide = pas de minimum. Le montant minimum en francs n’est pas décidé.', 'Empty = no minimum. A minimum in francs is not decided.')} /> : null}
       <Field label={L('Nom affiché', 'Display name')} value={name} onChangeText={setName} placeholder={L('Prénom + initiale, ex. Awa D.', 'First name + initial, e.g. Awa D.')} hint={L('Évitez votre nom complet : protégez votre vie privée.', 'Avoid your full name: protect your privacy.')} />
       <Field label={L('Commune', 'Town')} value={commune} onChangeText={setCommune} placeholder="Prilly" hint={place && inZone ? `${place.npa} ${place.name} · ${L('adresse exacte partagée seulement après acceptation', 'exact address only shared after acceptance')}` : undefined} error={place && !inZone ? t('cookOutside') : commune && !place && !sugg.length ? L('Commune non couverte pour l’instant', 'Town not covered yet') : undefined} />
       {sugg.length ? <Row wrap>{sugg.map((s) => <Chip key={s.npa + s.name} label={s.name} onPress={() => setCommune(s.name)} />)}</Row> : null}

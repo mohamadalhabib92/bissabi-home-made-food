@@ -1,14 +1,17 @@
+import { useRouter } from 'expo-router';
 import { useI18n } from '@/i18n';
 import { COMPANY } from '@/lib/company';
 import { useL } from '@/lib/data';
 import { DEMO_PHOTO_CREDITS } from '@/lib/dishPhotos';
-import { Body, Card, H2, Muted, Screen } from '@/ui/kit';
+import { Body, Button, Card, H2, Muted, Screen } from '@/ui/kit';
 
 export default function Legal() {
   const { L } = useL();
   const { t } = useI18n();
+  const router = useRouter();
   return (
     <Screen>
+      <Button variant="secondary" title={L('Conditions d’utilisation et de vente', 'Terms of use and sale')} onPress={() => router.push('/terms')} />
       <H2>{L('Éditeur', 'Publisher')}</H2>
       <Card>
         <Body>{COMPANY.name}</Body>

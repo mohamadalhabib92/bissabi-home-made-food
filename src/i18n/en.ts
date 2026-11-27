@@ -28,7 +28,7 @@ export const en: Record<MsgKey, string> = {
   bootContinue: 'Continue anyway',
   bootFallback: 'Fallback display: saved data may still arrive. Nothing is written until loading succeeds.',
   crashTitle: 'Something interrupted this screen',
-  crashBody: 'Nothing was published. Try again. If it keeps happening, contact support (YOUR_SUPPORT_EMAIL).',
+  crashBody: 'Nothing was published. Try again. If it keeps happening, write to the publisher named in the legal notice.',
   crashRetry: 'Try again',
   configRequired: 'Configuration required',
   ownerTodosTitle: 'Compliance — owner checks',
