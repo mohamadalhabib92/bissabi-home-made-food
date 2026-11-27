@@ -78,15 +78,15 @@ export function crmRowsFromStripe(type: string, object: { amount?: number; appli
   });
 }
 
-export function rowsFromCrmRequest(body: unknown): CrmRow[] | null {
-  if (!body || typeof body !== 'object') return null;
-  const b = body as { kind?: string; id?: string; role?: string; name?: string; email?: string; sellerKind?: string; orderId?: string; buyerId?: string; sellerId?: string; status?: string; subtotalCents?: number; commissionCents?: number; totalCents?: number };
-  if (b.kind === 'person' && b.id && (b.role === 'buyer' || b.role === 'seller')) {
-    return crmRowsForPerson({ id: b.id, role: b.role, name: b.name, email: b.email, sellerKind: b.sellerKind });
-  }
-  if (b.kind === 'order' && b.orderId && b.buyerId && b.sellerId && (b.status === 'paid' || b.status === 'refunded')) {
-    return crmRowsForOrder({ id: b.orderId, buyerId: b.buyerId, sellerId: b.sellerId, status: b.status, subtotalCents: b.subtotalCents ?? 0, commissionCents: b.commissionCents ?? 0, totalCents: b.totalCents ?? 0 });
-  }
+/** L’appel HTTP n’accepte qu’un identifiant. Les montants et les noms viennent de la base. */
+export function crmSyncTarget(body: unknown): { kind: 'order'; orderId: string } | { kind: 'user'; userId: string } | null {
+  if (!body || typeof body !== 'object' || Array.isArray(body)) return null;
+  const entries = Object.entries(body as Record<string, unknown>);
+  if (entries.length !== 1) return null;
+  const [key, value] = entries[0];
+  if (typeof value !== 'string' || !value.trim()) return null;
+  if (key === 'orderId') return { kind: 'order', orderId: value.trim() };
+  if (key === 'userId') return { kind: 'user', userId: value.trim() };
   return null;
 }
 

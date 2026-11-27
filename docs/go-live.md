@@ -27,22 +27,26 @@ Serveur, fonctions food (jamais `EXPO_PUBLIC_`) :
 - `SUPABASE_URL` = `https://qizhprlzeiqrngwpxjnd.supabase.co`
 - `SUPABASE_SERVICE_ROLE_KEY`
 - `STRIPE_SECRET_KEY`
-- `STRIPE_WEBHOOK_SECRET`
+- `STRIPE_WEBHOOK_SECRET` (endpoint plateforme : paiements et remboursements)
+- `STRIPE_CONNECT_WEBHOOK_SECRET` (endpoint Connect : `account.updated`, `payout.paid`, `payout.failed`)
 - `CRM_SUPABASE_URL` = `https://ppeovmfuhtidavdnrwxu.supabase.co`
 - `CRM_SERVICE_ROLE_KEY` = clé service du projet CRM, pas celle du projet food
+- `LAUNCH_PAYMENTS` = `1` seulement à l’étape 6, sur les fonctions
+
+`SUPABASE_URL`, `SUPABASE_ANON_KEY` et `SUPABASE_SERVICE_ROLE_KEY` sont injectés par Supabase dans les fonctions du projet food. Les poser aussi si l’injection n’est pas là. Pour le déclencheur d’inscription, enregistrer la clé service food dans le Vault sous le nom `food_service_role_key` (tableau de bord → Vault, ou `select vault.create_secret('<clé>', 'food_service_role_key');`).
 
 Site public à la racine du domaine : `EXPO_PUBLIC_WEB_BASE=/`. Sans elle, l’export web garde le préfixe GitHub Pages.
 
 ## 2. Schéma food (projet qizhprlzeiqrngwpxjnd)
 
-À lancer depuis ce dépôt, une fois le CLI Supabase connecté au compte qui possède le projet.
+Déjà appliqués : `stripe_connect_ledger`, `accounts_couriers_rls`, `live_marketplace`. Il reste le correctif :
 
 ```bash
 npx supabase link --project-ref qizhprlzeiqrngwpxjnd
 npx supabase db push
 ```
 
-`db push` applique `supabase/migrations/`, dont `20261127120000_live_marketplace.sql` (kitchens, order_items, payouts, courier_jobs, rôle traiteur). Il n’applique pas `supabase/crm-migrations/`.
+Ça applique `supabase/migrations/20261127170000_rls_and_order_payments.sql` : vue `courier_jobs_open` sans codes, mises à jour cuisine et course, table `order_payments`, déclencheur d’inscription vers `crm-sync`. Ça n’applique pas `supabase/crm-migrations/`.
 
 L’admin n’est pas un rôle d’inscription. Pour un compte déjà créé :
 
@@ -52,16 +56,18 @@ insert into public.user_roles (user_id, role) values ('<uuid>', 'admin');
 
 ## 3. Schéma CRM (projet ppeovmfuhtidavdnrwxu)
 
-Fichier unique : `supabase/crm-migrations/20261127120000_bissabi_food_sync.sql`.
+Déjà appliqué : `supabase/crm-migrations/20261127120000_bissabi_food_sync.sql` (schéma `bissabi_food`, RLS, aucun droit pour `anon`).
 
-Il crée le schéma `bissabi_food` et les tables `contacts`, `sellers`, `orders`. La RLS est activée. `anon` et `authenticated` n’ont aucun droit. La clé service contourne la RLS : c’est elle que `crm-sync` utilise.
-
-À coller dans le SQL editor du projet CRM, ou :
+Il reste l’exposition Data API, sinon PostgREST ne voit pas le schéma et `crm-sync` ne peut pas écrire :
 
 ```bash
 npx supabase link --project-ref ppeovmfuhtidavdnrwxu
-npx supabase db query --linked -f supabase/crm-migrations/20261127120000_bissabi_food_sync.sql
+npx supabase db query --linked -f supabase/crm-migrations/20261127170000_expose_bissabi_food.sql
 ```
+
+Le SQL donne l’usage à `service_role` et ajoute `bissabi_food` aux schémas exposés (`pgrst.db_schemas`). Si l’`alter role` est refusé, l’ajouter à la main : projet CRM → Data API → Exposed schemas → `bissabi_food`. Ne pas donner de droit de table à `anon`.
+
+`crm-sync` envoie `Accept-Profile` et `Content-Profile: bissabi_food`, le même choix que `createClient(url, key, { db: { schema: 'bissabi_food' } })`.
 
 Revenir ensuite au projet food (`supabase link --project-ref qizhprlzeiqrngwpxjnd`) avant de déployer les fonctions.
 
@@ -70,22 +76,30 @@ Revenir ensuite au projet food (`supabase link --project-ref qizhprlzeiqrngwpxjn
 ```bash
 npx supabase functions deploy stripe-webhook --project-ref qizhprlzeiqrngwpxjnd
 npx supabase functions deploy create-payment-intent --project-ref qizhprlzeiqrngwpxjnd
+npx supabase functions deploy connect-onboarding --project-ref qizhprlzeiqrngwpxjnd
+npx supabase functions deploy create-refund --project-ref qizhprlzeiqrngwpxjnd
 npx supabase functions deploy delete-account --project-ref qizhprlzeiqrngwpxjnd
 npx supabase functions deploy crm-sync --project-ref qizhprlzeiqrngwpxjnd
 npx supabase secrets set --project-ref qizhprlzeiqrngwpxjnd \
-  STRIPE_SECRET_KEY=… STRIPE_WEBHOOK_SECRET=… \
-  SUPABASE_SERVICE_ROLE_KEY=… \
+  STRIPE_SECRET_KEY=… \
+  STRIPE_WEBHOOK_SECRET=… \
+  STRIPE_CONNECT_WEBHOOK_SECRET=… \
   CRM_SUPABASE_URL=https://ppeovmfuhtidavdnrwxu.supabase.co \
   CRM_SERVICE_ROLE_KEY=…
 ```
 
-Dans Stripe (mode test), l’endpoint webhook est :
+`supabase/config.toml` pose `verify_jwt = false` pour `stripe-webhook` seulement. Le déploiement de cette fonction doit lire ce fichier. Les autres fonctions gardent la vérification JWT.
+
+Deux endpoints Stripe, mode test, même URL :
 
 `https://qizhprlzeiqrngwpxjnd.supabase.co/functions/v1/stripe-webhook`
 
-Événements : `payment_intent.succeeded`, `checkout.session.completed`, `charge.refunded`, `account.updated`, `payout.paid`, `payout.failed`.
+- Endpoint plateforme, secret `STRIPE_WEBHOOK_SECRET` : `payment_intent.succeeded`, `checkout.session.completed`, `charge.refunded`, `refund.created`.
+- Endpoint Connect, secret `STRIPE_CONNECT_WEBHOOK_SECRET` : `account.updated`, `payout.paid`, `payout.failed`.
 
-`crm-sync` upsert `contacts`, `sellers` et `orders` avec un `external_id` stable (`bissabi-food:buyer:…`, `bissabi-food:seller:…`, `bissabi-food:order:…`). Un second envoi du même id met à jour la ligne. Déclencheurs : inscription acheteur ou vendeur, commande payée, commande remboursée. La commission est la colonne `commission_cents`.
+Chaque `event.id` est inséré dans `payment_events`. Un doublon répond 200 sans réécrire.
+
+`crm-sync` n’accepte que la clé service, et seulement `{ "orderId" }` ou `{ "userId" }`. Il reconstruit les lignes depuis `order_payments`, `profiles`, `account_profiles`, `cooks` et `kitchens`. Le webhook l’appelle après un paiement ou un remboursement. Le déclencheur SQL l’appelle après une nouvelle fiche, si `food_service_role_key` est dans le Vault. Un corps fourni par l’app (nom, montant, rôle) est refusé.
 
 ## 5. Site et App Store, ensemble
 

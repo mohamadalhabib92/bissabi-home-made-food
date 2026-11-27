@@ -83,3 +83,11 @@ Après : le projet food est nommé dans `.env.example` (`qizhprlzeiqrngwpxjnd`, 
 Fichiers : `src/lib/crmSync.ts`, `src/lib/stripeWebhook.ts`, `supabase/functions/crm-sync/index.ts`, `supabase/crm-migrations/20261127120000_bissabi_food_sync.sql`, `docs/go-live.md`.
 
 Tests : `src/lib/crmSync.test.ts`, `src/lib/stripeWebhook.test.ts`.
+
+## 2026-11-27 — fonctions déployables
+
+Avant : les fonctions importaient `src/lib`, portaient `NOT_DEPLOYED`, et `crm-sync` faisait confiance au corps envoyé par l’app. La déduplication du webhook tenait dans un `Set`.
+
+Après : `Deno.serve`, code partagé sous `supabase/functions/_shared`, appels Stripe réels (PaymentIntent 10 %, compte Express, lien d’onboarding, remboursement avec `refund_application_fee` et `reverse_transfer`). Deux secrets de signature. `payment_events.event_id` est la déduplication. `crm-sync` n’accepte que la clé service et un id, puis lit la base. Nouvelle migration food pour les policies cuisine et coursier, et migration CRM pour exposer `bissabi_food`. Rien n’est déployé par ici.
+
+Fichiers : `supabase/functions/*`, `supabase/config.toml`, `supabase/migrations/20261127170000_rls_and_order_payments.sql`, `supabase/crm-migrations/20261127170000_expose_bissabi_food.sql`.

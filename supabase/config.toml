@@ -1,0 +1,6 @@
+# Seule la fonction appelée par Stripe n’a pas de JWT Supabase.
+# `functions deploy` lit ce bloc pour cette fonction. Ne pas pousser le reste
+# de la config hébergée avec un fichier aussi court.
+
+[functions.stripe-webhook]
+verify_jwt = false

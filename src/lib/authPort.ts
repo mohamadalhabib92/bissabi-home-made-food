@@ -9,7 +9,6 @@ export async function signUpWithEmail(email: string, password: string, role: Aut
   if (!sb) return { ok: false, reason: 'device_only', message: 'Mode sur cet appareil' };
   const { data, error } = await sb.auth.signUp({ email: email.trim(), password, options: { data: { role } } });
   if (error || !data.user) return { ok: false, reason: 'remote', message: error?.message ?? 'inscription refusée' };
-  void sb.functions.invoke('crm-sync', { body: { kind: 'person', id: data.user.id, role: role === 'client' ? 'buyer' : 'seller', sellerKind: role === 'traiteur' ? 'caterer' : 'home' } }).catch(() => undefined);
   return { ok: true, userId: data.user.id };
 }
 

@@ -1,8 +1,8 @@
 import assert from 'node:assert/strict';
-import { readFileSync } from 'node:fs';
+import { readdirSync, readFileSync } from 'node:fs';
+import { join } from 'node:path';
 import { test } from 'node:test';
-import { handleCrmSync } from '../../supabase/functions/crm-sync/index';
-import { crmRowsForOrder, crmRowsForPerson, crmRowsFromStripe, pushCrmRows, rowsFromCrmRequest } from './crmSync';
+import { crmRowsForOrder, crmRowsForPerson, crmRowsFromStripe, crmSyncTarget, pushCrmRows } from './crmSync';
 
 test('les upserts CRM réutilisent le même identifiant externe', () => {
   const person = crmRowsForPerson({ id: 'cook_1', role: 'seller', name: 'Awa', sellerKind: 'caterer' });
@@ -32,18 +32,9 @@ test('un paiement et un remboursement partagent l’identifiant de commande', ()
   const refunded = crmRowsFromStripe('charge.refunded', { amount: 2000, metadata: { orderId: 'ord_9', buyerId: 'b', sellerId: 's', feeCents: '200' } });
   assert.equal(paid[0].external_id, refunded[0].external_id);
   assert.equal(refunded[0].values.status, 'refunded');
-  assert.equal(rowsFromCrmRequest({ kind: 'person', id: 'b', role: 'buyer' })?.[0].external_id, 'bissabi-food:buyer:b');
-  assert.equal(rowsFromCrmRequest({ kind: 'person', id: 'x', role: 'admin' }), null);
-});
-
-test('crm-sync sans secret ne contacte pas le CRM', async () => {
-  let calls = 0;
-  const result = await handleCrmSync({ kind: 'person', id: 'b', role: 'buyer' }, async () => {
-    calls += 1;
-    return new Response(null, { status: 201 });
-  });
-  assert.equal(result.status, 202);
-  assert.equal(calls, 0);
+  assert.deepEqual(crmSyncTarget({ orderId: 'ord_9' }), { kind: 'order', orderId: 'ord_9' });
+  assert.equal(crmSyncTarget({ orderId: 'ord_9', totalCents: 2000 }), null);
+  assert.equal(crmSyncTarget({ kind: 'person', id: 'b', role: 'buyer' }), null);
 });
 
 test('la migration food ajoute les tables et refuse l’hygiène posée par le vendeur', () => {
@@ -55,6 +46,35 @@ test('la migration food ajoute les tables et refuse l’hygiène posée par le v
   assert.match(sql, /hygiene_passed = false/);
   assert.match(sql, /'traiteur'/);
   assert.doesNotMatch(sql, /grant .* to anon/i);
+});
+
+test('le correctif RLS cache les codes et fige l’hygiène', () => {
+  const sql = readFileSync(new URL('../../supabase/migrations/20261127170000_rls_and_order_payments.sql', import.meta.url), 'utf8');
+  const view = sql.slice(sql.indexOf('create or replace view public.courier_jobs_open'), sql.indexOf('revoke all on public.courier_jobs_open'));
+  assert.match(view, /select j.id, j.order_id, j.state/);
+  assert.doesNotMatch(view, /pickup_code|proof_code/);
+  assert.match(sql, /role = 'courier'/);
+  assert.match(sql, /kitchens_update_own/);
+  assert.match(sql, /courier_jobs_update_assigned/);
+  assert.match(sql, /courier_jobs_update_admin/);
+  assert.match(sql, /kitchen_hygiene_frozen/);
+  assert.match(sql, /create table if not exists public.order_payments/);
+  assert.match(sql, /revoke all on public.order_payments from anon, authenticated/);
+});
+
+test('les fonctions Edge n’importent pas l’app et seul le webhook est sans JWT', () => {
+  const root = new URL('../../supabase/functions/', import.meta.url);
+  const walk = (dir: string): string[] => readdirSync(dir, { withFileTypes: true }).flatMap((entry) => {
+    const path = join(dir, entry.name);
+    return entry.isDirectory() ? walk(path) : path.endsWith('.ts') ? [path] : [];
+  });
+  const sources = walk(root.pathname).map((path) => readFileSync(path, 'utf8')).join('\n');
+  assert.doesNotMatch(sources, /from ['"][^'"]*src\/lib/);
+  assert.doesNotMatch(sources, /NOT_DEPLOYED/);
+  assert.match(sources, /Deno\.serve/);
+  const config = readFileSync(new URL('../../supabase/config.toml', import.meta.url), 'utf8');
+  assert.match(config, /\[functions\.stripe-webhook\]\s+verify_jwt = false/);
+  assert.equal(config.match(/verify_jwt = false/g)?.length, 1);
 });
 
 test('la migration CRM active la RLS et n’ouvre pas anon', () => {
