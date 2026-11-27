@@ -2,21 +2,21 @@ import { authUserId, restDelete, restGet, restInsert } from './db.ts';
 import type { EdgeEnv } from './env.ts';
 import { bearer } from './env.ts';
 import { json, readJson } from './http.ts';
-import { platformFeeCents } from './money.ts';
+import { configuredDeliveryCents, platformFeeCents } from './money.ts';
 import { createPaymentIntent } from './stripe.ts';
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 type DishRow = { id: string; cook_id: string; title: string; price_chf: number | string; active: boolean };
-type KitchenRow = { id: string; cook_id: string; hygiene_passed: boolean; kind: string };
+type KitchenRow = { id: string; cook_id: string; hygiene_passed: boolean; kind: string; canton: string };
 type CookRow = { user_id: string; ofco_status: string };
 type AccountRow = { stripe_account_id: string | null };
 type AllergenRow = { dish_id: string; allergen: string };
 
-export function parseCreateOrder(body: unknown): { kitchenId: string; items: { dishId: string; qty: number }[]; delivery: string; slotDate: string } | null {
+export function parseCreateOrder(body: unknown): { kitchenId: string; items: { dishId: string; qty: number }[]; delivery: string; slotDate: string; address: string } | null {
   if (!body || typeof body !== 'object' || Array.isArray(body)) return null;
   const record = body as Record<string, unknown>;
-  if (Object.keys(record).some((key) => !['kitchenId', 'items', 'delivery', 'slotDate'].includes(key))) return null;
+  if (Object.keys(record).some((key) => !['kitchenId', 'items', 'delivery', 'slotDate', 'address'].includes(key))) return null;
   if (typeof record.kitchenId !== 'string' || !UUID.test(record.kitchenId)) return null;
   if (record.delivery !== 'pickup' && record.delivery !== 'delivery') return null;
   if (!Array.isArray(record.items) || record.items.length === 0 || record.items.length > 40) return null;
@@ -34,7 +34,8 @@ export function parseCreateOrder(body: unknown): { kitchenId: string; items: { d
   const slotDate = typeof record.slotDate === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(record.slotDate)
     ? record.slotDate
     : new Intl.DateTimeFormat('en-CA', { timeZone: 'Europe/Zurich' }).format(new Date());
-  return { kitchenId: record.kitchenId, items, delivery: record.delivery, slotDate };
+  const address = typeof record.address === 'string' ? record.address.trim() : '';
+  return { kitchenId: record.kitchenId, items, delivery: record.delivery, slotDate, address };
 }
 
 function centsFromChf(value: number | string): number | null {
@@ -50,18 +51,20 @@ export async function handleCreateOrder(req: Request, env: EdgeEnv, fetchImpl: t
   if (!env.supabaseUrl || !env.serviceKey || !env.stripeKey) return json({ reason: 'unconfigured' }, 503);
   const cart = parseCreateOrder(await readJson(req));
   if (!cart) return json({ reason: 'cart' }, 400);
-  if (cart.delivery !== 'pickup') return json({ reason: 'delivery_undefined' }, 403);
+  const deliveryCents = cart.delivery === 'delivery' ? configuredDeliveryCents(env.deliveryEnabled, env.courierFeeRaw) : 0;
+  if (cart.delivery === 'delivery' && (deliveryCents === null || cart.address.length < 8)) return json({ reason: 'delivery_undefined' }, 403);
   const userId = await authUserId(env.supabaseUrl, env.serviceKey, bearer(req.headers.get('authorization')), fetchImpl);
   if (!userId) return json({ reason: 'auth' }, 401);
   const base = env.supabaseUrl;
   const key = env.serviceKey;
-  let kitchens = await restGet<KitchenRow>(base, key, `kitchens?id=eq.${cart.kitchenId}&select=id,cook_id,hygiene_passed,kind`, fetchImpl);
+  let kitchens = await restGet<KitchenRow>(base, key, `kitchens?id=eq.${cart.kitchenId}&select=id,cook_id,hygiene_passed,kind,canton`, fetchImpl);
   if (kitchens && kitchens.length === 0) {
-    kitchens = await restGet<KitchenRow>(base, key, `kitchens?cook_id=eq.${cart.kitchenId}&select=id,cook_id,hygiene_passed,kind`, fetchImpl);
+    kitchens = await restGet<KitchenRow>(base, key, `kitchens?cook_id=eq.${cart.kitchenId}&select=id,cook_id,hygiene_passed,kind,canton`, fetchImpl);
   }
   const kitchen = kitchens?.[0];
   if (!kitchens) return json({ reason: 'db' }, 500);
   if (!kitchen) return json({ reason: 'kitchen' }, 404);
+  if (cart.delivery === 'delivery' && kitchen.canton !== 'VD') return json({ reason: 'delivery_undefined' }, 403);
   const ids = cart.items.map((item) => item.dishId).join(',');
   const [dishes, allergens, cooks, accounts] = await Promise.all([
     restGet<DishRow>(base, key, `dishes?id=in.(${ids})&select=id,cook_id,title,price_chf,active`, fetchImpl),
@@ -91,6 +94,7 @@ export async function handleCreateOrder(req: Request, env: EdgeEnv, fetchImpl: t
     cook_id: kitchen.cook_id,
     status: 'sent',
     slot_date: cart.slotDate,
+    fulfilment: cart.delivery === 'delivery' ? 'delivery' : 'pickup',
   }, fetchImpl);
   const orderId = created?.[0]?.id;
   if (!orderId) return json({ reason: 'db' }, 500);
@@ -106,9 +110,18 @@ export async function handleCreateOrder(req: Request, env: EdgeEnv, fetchImpl: t
     await restDelete(base, key, `orders?id=eq.${orderId}`, fetchImpl);
     return json({ reason: 'db' }, 500);
   }
+  if (cart.delivery === 'delivery') {
+    const addressed = await restInsert<{ order_id: string }>(base, key, 'order_addresses', { order_id: orderId, address: cart.address }, fetchImpl);
+    if (!addressed) {
+      await restDelete(base, key, `order_items?order_id=eq.${orderId}`, fetchImpl);
+      await restDelete(base, key, `orders?id=eq.${orderId}`, fetchImpl);
+      return json({ reason: 'db' }, 500);
+    }
+  }
   const fee = platformFeeCents(subtotal);
+  const carried = deliveryCents ?? 0;
   const payment = await createPaymentIntent(env.stripeKey, {
-    amountCents: subtotal,
+    amountCents: subtotal + carried,
     feeCents: fee,
     destination,
     orderId,
@@ -116,6 +129,8 @@ export async function handleCreateOrder(req: Request, env: EdgeEnv, fetchImpl: t
     sellerId: cook.user_id,
     sellerKind: kitchen.kind === 'caterer' ? 'caterer' : 'home',
     subtotalCents: subtotal,
+    deliveryCents: carried,
+    fulfilment: cart.delivery === 'delivery' ? 'delivery' : 'pickup',
   }, `pi_${orderId}`, fetchImpl);
   if (!payment.ok) {
     await restDelete(base, key, `order_items?order_id=eq.${orderId}`, fetchImpl);

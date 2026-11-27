@@ -13,7 +13,7 @@ function codes(id: string): { pickupCode: string; proofCode: string } {
   const n = (salt: string) => {
     let h = 0;
     for (const c of salt + id) h = (h * 33 + c.charCodeAt(0)) >>> 0;
-    return String(h % 10000).padStart(4, '0');
+    return String(h % 1_000_000).padStart(6, '0');
   };
   return { pickupCode: n('pickup'), proofCode: n('proof') };
 }

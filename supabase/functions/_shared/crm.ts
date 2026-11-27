@@ -3,10 +3,10 @@ import { restGet } from './db.ts';
 
 export const CRM_SCHEMA = 'bissabi_food';
 
-export type CrmRow = { table: 'contacts' | 'sellers' | 'orders'; values: Record<string, string | number | null> };
+export type CrmValue = string | number | null | string[];
+export type CrmRow = { table: 'contacts' | 'sellers' | 'orders'; values: Record<string, CrmValue> };
 
-const buyer = (id: string) => `bissabi-food:buyer:${id}`;
-const seller = (id: string) => `bissabi-food:seller:${id}`;
+export const personId = (id: string) => `bissabi-food:user:${id}`;
 const order = (id: string) => `bissabi-food:order:${id}`;
 
 /** Seuls `orderId` ou `userId`. Tout autre champ, même avec la clé service, est refusé. */
@@ -33,8 +33,8 @@ type PaymentRow = {
 };
 
 /** N’envoie pas les champs vides : un upsert ne doit pas effacer un nom déjà en CRM. */
-export function withoutNulls(values: Record<string, string | number | null>): Record<string, string | number> {
-  const out: Record<string, string | number> = {};
+export function withoutNulls(values: Record<string, CrmValue>): Record<string, Exclude<CrmValue, null>> {
+  const out: Record<string, Exclude<CrmValue, null>> = {};
   for (const [key, value] of Object.entries(values)) {
     if (value !== null) out[key] = value;
   }
@@ -42,10 +42,10 @@ export function withoutNulls(values: Record<string, string | number | null>): Re
 }
 
 export function rowsFromPayment(row: PaymentRow): CrmRow[] {
-  const sellerId = seller(row.seller_id);
+  const sellerId = personId(row.seller_id);
   return [
-    { table: 'contacts', values: { external_id: buyer(row.buyer_id), kind: 'buyer' } },
-    { table: 'contacts', values: { external_id: sellerId, kind: 'seller' } },
+    { table: 'contacts', values: { external_id: personId(row.buyer_id), kind: 'buyer', roles: ['buyer'] } },
+    { table: 'contacts', values: { external_id: sellerId, kind: 'seller', roles: ['seller'] } },
     { table: 'sellers', values: { external_id: sellerId, kind: row.seller_kind === 'caterer' ? 'caterer' : 'home' } },
     {
       table: 'orders',
@@ -53,7 +53,7 @@ export function rowsFromPayment(row: PaymentRow): CrmRow[] {
         external_id: order(row.order_id),
         status: row.status,
         currency: 'CHF',
-        buyer_external_id: buyer(row.buyer_id),
+        buyer_external_id: personId(row.buyer_id),
         seller_external_id: sellerId,
         subtotal_cents: row.subtotal_cents,
         commission_cents: row.commission_cents,
@@ -91,16 +91,16 @@ export async function loadUserRows(env: EdgeEnv, userId: string, fetchImpl: type
   if (!sellerRole && role !== 'client' && !profiles[0] && !cook) return null;
   const name = cook?.display_name ?? profiles[0]?.display_name ?? null;
   if (!sellerRole) {
-    return [{ table: 'contacts', values: { external_id: buyer(userId), kind: 'buyer', display_name: name, email: null } }];
+    return [{ table: 'contacts', values: { external_id: personId(userId), kind: 'buyer', roles: ['buyer'], display_name: name, email: null } }];
   }
   let kind = 'home';
   if (cook) {
     const kitchens = await restGet<Kitchen>(env.supabaseUrl, env.serviceKey, `kitchens?cook_id=eq.${encodeURIComponent(cook.id)}&select=kind`, fetchImpl);
     if (kitchens?.[0]?.kind === 'caterer' || role === 'traiteur') kind = 'caterer';
   } else if (role === 'traiteur') kind = 'caterer';
-  const external = seller(userId);
+  const external = personId(userId);
   return [
-    { table: 'contacts', values: { external_id: external, kind: 'seller', display_name: name, email: null } },
+    { table: 'contacts', values: { external_id: external, kind: 'seller', roles: ['seller'], display_name: name, email: null } },
     { table: 'sellers', values: { external_id: external, kind, display_name: name } },
   ];
 }
@@ -108,6 +108,17 @@ export async function loadUserRows(env: EdgeEnv, userId: string, fetchImpl: type
 export async function pushCrmRows(env: EdgeEnv, rows: CrmRow[], fetchImpl: typeof fetch): Promise<{ ok: true; skipped: boolean } | { ok: false; status: number }> {
   if (!env.crmUrl || !env.crmKey) return { ok: true, skipped: true };
   for (const row of rows) {
+    if (row.table === 'contacts' && Array.isArray(row.values.roles)) {
+      const current = await fetchImpl(`${env.crmUrl.replace(/\/$/, '')}/rest/v1/contacts?external_id=eq.${encodeURIComponent(String(row.values.external_id))}&select=roles`, {
+        headers: { apikey: env.crmKey, Authorization: `Bearer ${env.crmKey}`, 'Accept-Profile': CRM_SCHEMA },
+      });
+      const found = current.ok ? await current.json().catch(() => []) as { roles?: string[] }[] : [];
+      const previous = Array.isArray(found?.[0]?.roles) ? found[0].roles : [];
+      const roles = [...new Set([...previous, ...row.values.roles])];
+      row.values.roles = roles;
+      if (roles.includes('seller')) row.values.kind = 'seller';
+      else if (roles.includes('buyer')) row.values.kind = 'buyer';
+    }
     const response = await fetchImpl(`${env.crmUrl.replace(/\/$/, '')}/rest/v1/${row.table}?on_conflict=external_id`, {
       method: 'POST',
       headers: {

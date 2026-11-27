@@ -32,6 +32,7 @@ Serveur, fonctions food (jamais `EXPO_PUBLIC_`) :
 - `CRM_SUPABASE_URL` = `https://ppeovmfuhtidavdnrwxu.supabase.co`
 - `CRM_SERVICE_ROLE_KEY` = clé service du projet CRM, pas celle du projet food
 - `LAUNCH_PAYMENTS` = `1` seulement à l’étape 6, sur les fonctions
+- `DELIVERY_ENABLED` = `1` et `COURIER_FEE_CENTS` = un entier (centimes, 0 compris) pour montrer la livraison dans le canton de Vaud. Tant que le tarif est vide, le choix reste caché et `create-order` refuse `delivery`. Les mêmes noms préfixés `EXPO_PUBLIC_` pilotent l’écran.
 
 `SUPABASE_URL`, `SUPABASE_ANON_KEY` et `SUPABASE_SERVICE_ROLE_KEY` sont injectés par Supabase dans les fonctions du projet food. Les poser aussi si l’injection n’est pas là. L’inscription ne dépend plus de pg_net ni du Vault : après connexion, l’app appelle `sync-me`, qui ne synchronise que l’utilisateur du jeton.
 

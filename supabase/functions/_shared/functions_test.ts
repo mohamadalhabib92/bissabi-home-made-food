@@ -2,7 +2,7 @@ import { handleCrmSync, handleSyncMe } from './accounts.ts';
 import { rowsFromPayment } from './crm.ts';
 import { parseCreateOrder } from './orders.ts';
 import type { EdgeEnv } from './env.ts';
-import { paymentIntentForm, platformFeeCents, refundForm } from './money.ts';
+import { configuredDeliveryCents, paymentIntentForm, platformFeeCents, refundForm } from './money.ts';
 import { handleStripeWebhook } from './webhook.ts';
 
 function assert(condition: unknown, message: string) {
@@ -31,6 +31,9 @@ Deno.test('PaymentIntent et remboursement portent la commission et l’inversion
     amountCents: 2000, feeCents: 200, destination: 'acct_test', orderId: 'ord_1', buyerId: 'b', sellerId: 's', sellerKind: 'home', subtotalCents: 2000,
   });
   assert(form.get('application_fee_amount') === '200', 'application fee');
+  assert(configuredDeliveryCents('1', '') === null, 'fee unset');
+  assert(configuredDeliveryCents('', '600') === null, 'flag off');
+  assert(configuredDeliveryCents('1', '600') === 600, 'fee set');
   assert(form.get('transfer_data[destination]') === 'acct_test', 'destination');
   assert(form.get('currency') === 'chf', 'chf');
   assert(form.getAll('payment_method_types[]').join(',') === 'card,twint', 'methods');
@@ -82,8 +85,10 @@ Deno.test('crm-sync refuse le client et ne lit que la base', async () => {
   const fetchImpl: typeof fetch = async (input, init) => {
     const url = String(input);
     if (url.includes('ppeovmfuhtidavdnrwxu')) {
-      crmCalls += 1;
-      crmBodies.push(String(init?.body ?? ''));
+      if ((init?.method ?? 'GET') === 'POST') {
+        crmCalls += 1;
+        crmBodies.push(String(init?.body ?? ''));
+      }
       return new Response(null, { status: 201 });
     }
     if ((init?.method ?? 'GET') === 'GET' && url.includes('order_payments')) {
@@ -120,6 +125,8 @@ Deno.test('un upsert de commande n’envoie pas de nom vide', () => {
   const encoded = JSON.stringify(rows);
   assert(!encoded.includes('display_name'), 'display_name omitted');
   assert(!encoded.includes('email'), 'email omitted');
+  assert(encoded.includes('bissabi-food:user:b'), 'one id per user');
+  assert(encoded.includes('bissabi-food:user:s'), 'seller same scheme');
   assert(parseCreateOrder({ kitchenId: 'not-a-uuid', items: [], delivery: 'pickup' }) === null, 'cart');
   assert(parseCreateOrder({ kitchenId: '11111111-1111-4111-8111-111111111111', items: [{ dishId: '22222222-2222-4222-8222-222222222222', qty: 1, unitPrice: 10 }], delivery: 'pickup' }) === null, 'price from client refused');
 });

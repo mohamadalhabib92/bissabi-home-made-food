@@ -1,7 +1,9 @@
 import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, type ReactNode } from 'react';
 import { Platform, useColorScheme, View } from 'react-native';
+import { StripeProvider } from '@stripe/stripe-react-native';
+import { publicEnv } from '@/lib/publicEnv';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { DataProvider, useL } from '@/lib/data';
 import { RebootProvider } from '@/lib/reboot';
@@ -45,6 +47,16 @@ function Nav() {
   );
 }
 
+function StripeGate({ children }: { children: ReactNode }) {
+  const pk = publicEnv.stripePublishable.value;
+  if (Platform.OS === 'web' || !pk) return children;
+  return (
+    <StripeProvider publishableKey={pk} urlScheme="bissabihomemadefood">
+      <View style={{ flex: 1 }}>{children}</View>
+    </StripeProvider>
+  );
+}
+
 export default function Layout() {
   // Apparence système : appliquée avant le rendu des enfants. Le remontage se fait
   // sous DataProvider (clé = schéma), donc les données et le panier ne bougent pas.
@@ -62,6 +74,7 @@ export default function Layout() {
     <SafeAreaProvider>
       <AppErrorBoundary onReset={reboot}>
         <FontProvider>
+          <StripeGate>
           <RebootProvider reboot={reboot}>
             <DataProvider key={boot}>
               <View key={`${scheme}:${reduce ? 'solid' : 'glass'}`} style={{ flex: 1, backgroundColor: t.bg }}>
@@ -74,6 +87,7 @@ export default function Layout() {
               </View>
             </DataProvider>
           </RebootProvider>
+          </StripeGate>
         </FontProvider>
       </AppErrorBoundary>
     </SafeAreaProvider>

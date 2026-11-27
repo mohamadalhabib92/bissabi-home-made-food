@@ -16,6 +16,12 @@ function meta(object: StripeObject): Record<string, string> {
   return out;
 }
 
+function digits(length: number): string {
+  const bytes = new Uint32Array(1);
+  crypto.getRandomValues(bytes);
+  return String(bytes[0] % 10 ** length).padStart(length, '0');
+}
+
 function num(value: unknown): number | null {
   return typeof value === 'number' && Number.isInteger(value) ? value : null;
 }
@@ -60,8 +66,9 @@ async function applyEvent(env: EdgeEnv, eventId: string, type: string, object: S
   if (type === 'payment_intent.succeeded' || type === 'checkout.session.completed') {
     if (!info.orderId || !info.buyerId || !info.sellerId) return true;
     const total = num(object.amount) ?? num(object.amount_total) ?? 0;
-    const fee = num(object.application_fee_amount) ?? Number(info.feeCents ?? '0');
+    const fee = info.feeCents !== undefined ? Number(info.feeCents) : (num(object.application_fee_amount) ?? 0);
     const subtotal = Number(info.subtotalCents ?? total);
+    const deliveryCents = Number(info.deliveryCents ?? '0');
     const pi = typeof object.id === 'string' && object.id.startsWith('pi_')
       ? object.id
       : typeof object.payment_intent === 'string' ? object.payment_intent : null;
@@ -74,9 +81,19 @@ async function applyEvent(env: EdgeEnv, eventId: string, type: string, object: S
       subtotal_cents: subtotal,
       commission_cents: fee,
       total_cents: total,
+      delivery_cents: Number.isInteger(deliveryCents) ? deliveryCents : 0,
       stripe_payment_intent_id: pi,
     }, fetchImpl, 'resolution=merge-duplicates');
     if (!wrote) return false;
+    await restWrite(base, key, `orders?id=eq.${encodeURIComponent(info.orderId)}`, 'PATCH', { status: 'paid' }, fetchImpl);
+    if (info.fulfilment === 'delivery') {
+      await restWrite(base, key, 'courier_jobs?on_conflict=order_id', 'POST', {
+        order_id: info.orderId,
+        state: 'offered',
+        pickup_code: digits(4),
+        proof_code: digits(6),
+      }, fetchImpl, 'resolution=ignore-duplicates');
+    }
     const rows = await loadOrderRows(env, info.orderId, fetchImpl);
     if (!rows) return false;
     const pushed = await pushCrmRows(env, rows, fetchImpl);
@@ -85,6 +102,7 @@ async function applyEvent(env: EdgeEnv, eventId: string, type: string, object: S
   if (type === 'charge.refunded' || type === 'refund.created') {
     if (!info.orderId) return true;
     const updated = await restWrite(base, key, `order_payments?order_id=eq.${encodeURIComponent(info.orderId)}`, 'PATCH', { status: 'refunded' }, fetchImpl);
+    await restWrite(base, key, `orders?id=eq.${encodeURIComponent(info.orderId)}`, 'PATCH', { status: 'refunded' }, fetchImpl);
     if (!updated) return false;
     if (typeof object.id === 'string') {
       await restWrite(base, key, 'refunds?on_conflict=refund_id', 'POST', {

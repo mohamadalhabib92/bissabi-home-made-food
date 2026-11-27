@@ -1,6 +1,7 @@
 import { useLocalSearchParams } from 'expo-router';
 import { useState } from 'react';
 import { useData, useL } from '@/lib/data';
+import { serverCourierStep } from '@/lib/courierServer';
 import { paymentsLive } from '@/lib/payments';
 import { Body, Button, Card, Empty, Field, H1, Muted, Notice, Screen, Spacer } from '@/ui/kit';
 
@@ -12,9 +13,14 @@ export default function CourierJob() {
   const [msg, setMsg] = useState<string | null>(null);
   const o = orders.find((x) => x.id === id);
   if (!o || !o.delivery) return <Screen><Empty title={L('Course introuvable', 'Job not found')} /></Screen>;
-  const act = (action: 'accept' | 'decline' | 'pickup' | 'en_route' | 'deliver') => {
+  const act = async (action: 'accept' | 'decline' | 'pickup' | 'en_route' | 'deliver') => {
+    const remote = action === 'decline' ? null : await serverCourierStep(o.id, action, code);
+    if (remote === false) {
+      setMsg(L('Étape refusée. Vérifiez le code, la validation et la disponibilité.', 'Step refused. Check the code, validation and availability.'));
+      return;
+    }
     const result = courierAct(o.id, action, code);
-    setMsg(result === 'ok' ? L('Étape enregistrée', 'Step saved') : L('Étape refusée. Vérifiez le code, la validation et la disponibilité.', 'Step refused. Check the code, validation and availability.'));
+    setMsg(remote === true || result === 'ok' ? L('Étape enregistrée', 'Step saved') : L('Étape refusée. Vérifiez le code, la validation et la disponibilité.', 'Step refused. Check the code, validation and availability.'));
   };
   return (
     <Screen>

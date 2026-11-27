@@ -15,11 +15,13 @@ export function paymentIntentForm(input: {
   sellerId: string;
   sellerKind: string;
   subtotalCents: number;
+  deliveryCents?: number;
+  fulfilment?: 'pickup' | 'delivery';
 }): URLSearchParams {
   const body = new URLSearchParams();
   body.set('amount', String(input.amountCents));
   body.set('currency', 'chf');
-  body.set('application_fee_amount', String(input.feeCents));
+  body.set('application_fee_amount', String(input.feeCents + (input.deliveryCents ?? 0)));
   body.set('transfer_data[destination]', input.destination);
   body.append('payment_method_types[]', 'card');
   body.append('payment_method_types[]', 'twint');
@@ -29,7 +31,17 @@ export function paymentIntentForm(input: {
   body.set('metadata[sellerKind]', input.sellerKind === 'caterer' ? 'caterer' : 'home');
   body.set('metadata[feeCents]', String(input.feeCents));
   body.set('metadata[subtotalCents]', String(input.subtotalCents));
+  body.set('metadata[deliveryCents]', String(input.deliveryCents ?? 0));
+  body.set('metadata[fulfilment]', input.fulfilment ?? 'pickup');
   return body;
+}
+
+/** Livraison seulement si le drapeau est 1 et que le tarif est un entier de centimes (0 compris). */
+export function configuredDeliveryCents(enabled: string | undefined, raw: string | undefined): number | null {
+  if ((enabled ?? '').trim() !== '1') return null;
+  const text = (raw ?? '').trim();
+  if (!/^\d+$/.test(text)) return null;
+  return Number(text);
 }
 
 export function expressAccountForm(): URLSearchParams {

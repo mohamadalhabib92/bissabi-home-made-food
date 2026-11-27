@@ -90,6 +90,21 @@ test('la migration suivante cache le code de preuve et retire pg_net', () => {
   assert.match(sql, /drop trigger if exists notify_crm_profile/);
 });
 
+test('livraison cachée tant que le tarif n’est pas un entier', async () => {
+  const { parseCourierFeeCents } = await import('./deliveryConfig');
+  assert.equal(parseCourierFeeCents('1', ''), null);
+  assert.equal(parseCourierFeeCents('', '500'), null);
+  assert.equal(parseCourierFeeCents('1', '500'), 500);
+  assert.equal(parseCourierFeeCents('1', '0'), 0);
+  const sql = readFileSync(new URL('../../supabase/migrations/20261127190000_delivery_courier_hygiene.sql', import.meta.url), 'utf8');
+  assert.match(sql, /auth\.uid\(\)\) is not null/);
+  assert.match(sql, /accept_courier_job/);
+  assert.match(sql, /mark_picked_up/);
+  assert.match(sql, /mark_en_route/);
+  assert.match(sql, /proof_attempts \+ 1 >= 5/);
+  assert.match(sql, /\^\[0-9\]\{6,12\}\$/);
+});
+
 test('la migration CRM active la RLS et n’ouvre pas anon', () => {
   const sql = readFileSync(new URL('../../supabase/crm-migrations/20261127120000_bissabi_food_sync.sql', import.meta.url), 'utf8');
   assert.match(sql, /create schema if not exists bissabi_food/);

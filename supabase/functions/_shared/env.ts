@@ -9,6 +9,8 @@ export type EdgeEnv = {
   crmUrl?: string;
   crmKey?: string;
   launch?: string;
+  deliveryEnabled?: string;
+  courierFeeRaw?: string;
 };
 
 export function readEnv(name: string): string | undefined {
@@ -28,6 +30,8 @@ export function edgeEnv(get: (name: string) => string | undefined = readEnv): Ed
     crmUrl: clean(get('CRM_SUPABASE_URL')),
     crmKey: clean(get('CRM_SERVICE_ROLE_KEY')),
     launch: get('LAUNCH_PAYMENTS')?.trim() ?? '',
+    deliveryEnabled: get('DELIVERY_ENABLED')?.trim() ?? '',
+    courierFeeRaw: get('COURIER_FEE_CENTS')?.trim() ?? '',
   };
 }
 

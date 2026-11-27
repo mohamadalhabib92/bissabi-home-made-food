@@ -17,6 +17,7 @@ test('le tarif livreur n’est pas un montant inventé', () => {
 test('parcours : proposer, accepter, code cuisine, en route, code de preuve', () => {
   const offered = offerIfReady(ready);
   assert.equal(offered.delivery?.state, 'offered');
+  assert.match(offered.delivery?.proofCode ?? '', /^\d{6}$/);
   assert.equal(offerIfReady({ ...ready, mode: 'pickup' }).delivery, undefined);
   const accepted = acceptDelivery(offered, me);
   assert.equal(accepted.ok, true);

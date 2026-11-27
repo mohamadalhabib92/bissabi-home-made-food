@@ -9,6 +9,8 @@ import { useData, useL } from '@/lib/data';
 import { dayLabel, stamp } from '@/lib/dates';
 import { downloadText } from '@/lib/download';
 import { launchPayment } from '@/lib/launchCheckout';
+import { isServerId } from '@/lib/courierServer';
+import { refreshPaidStatus } from '@/lib/serverCheckout';
 import { ORDER_STEPS } from '@/lib/model';
 import { chf } from '@/lib/pricing';
 import { STATUS_LABEL } from '@/lib/status';
@@ -34,6 +36,16 @@ export default function OrderScreen() {
     if (paid === 'success') setOrderStatus(o.id, 'requested', { payment: { method: 'stripe' } }, 'Paiement Stripe confirmé');
     if (paid === 'cancel') setOrderStatus(o.id, 'payment_failed', { payment: { method: 'stripe', error: 'Paiement annulé' } }, 'Paiement annulé');
   }, [paid, o?.status]); // eslint-disable-line react-hooks/exhaustive-deps
+  useEffect(() => {
+    if (!o || o.status !== 'awaiting_payment' || !isServerId(o.payment.ref)) return;
+    let stop = false;
+    void refreshPaidStatus(o.payment.ref).then((status) => {
+      if (stop || !o) return;
+      if (status === 'paid') setOrderStatus(o.id, 'requested', { payment: { method: 'stripe', ref: o.payment.ref } });
+      if (status === 'failed') setOrderStatus(o.id, 'payment_failed', { payment: { method: 'stripe', ref: o.payment.ref, error: 'Paiement refusé' } });
+    });
+    return () => { stop = true; };
+  }, [o?.id, o?.status]); // eslint-disable-line react-hooks/exhaustive-deps
   if (!o) return <Screen><Empty icon="receipt-outline" title={L('Commande introuvable', 'Order not found')} /></Screen>;
   const cook = cooks.find((c) => c.id === o.cookId);
   const st = STATUS_LABEL[o.status];

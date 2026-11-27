@@ -2,7 +2,7 @@ import { authUserId } from './db.ts';
 import type { EdgeEnv } from './env.ts';
 import { bearer, isServiceRole } from './env.ts';
 import { json, readJson } from './http.ts';
-import { crmSyncTarget, loadOrderRows, loadUserRows, pushCrmRows, type CrmRow } from './crm.ts';
+import { crmSyncTarget, loadOrderRows, loadUserRows, personId, pushCrmRows, type CrmRow } from './crm.ts';
 
 export async function handleDeleteAccount(req: Request, env: EdgeEnv, fetchImpl: typeof fetch): Promise<Response> {
   if (req.method !== 'POST') return json({ reason: 'method' }, 405);
@@ -55,7 +55,7 @@ export async function handleSyncMe(req: Request, env: EdgeEnv, fetchImpl: typeof
       headers: { Authorization: `Bearer ${jwt}`, apikey: env.serviceKey },
     });
     const profile = me.ok ? await me.json() as { email?: string } : {};
-    const values: CrmRow['values'] = { external_id: `bissabi-food:buyer:${userId}`, kind: 'buyer' };
+    const values: CrmRow['values'] = { external_id: personId(userId), kind: 'buyer', roles: ['buyer'] };
     if (typeof profile.email === 'string' && profile.email) values.email = profile.email;
     rows = [{ table: 'contacts', values }];
   }

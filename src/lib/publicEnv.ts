@@ -30,6 +30,8 @@ export const publicEnv = {
   appleMerchantId: publicVar('EXPO_PUBLIC_APPLE_MERCHANT_ID', process.env.EXPO_PUBLIC_APPLE_MERCHANT_ID),
   paymentsApi: publicVar('EXPO_PUBLIC_PAYMENTS_API_URL', process.env.EXPO_PUBLIC_PAYMENTS_API_URL),
   supportEmail: publicVar('EXPO_PUBLIC_SUPPORT_EMAIL', process.env.EXPO_PUBLIC_SUPPORT_EMAIL),
+  deliveryEnabled: publicVar('EXPO_PUBLIC_DELIVERY_ENABLED', process.env.EXPO_PUBLIC_DELIVERY_ENABLED),
+  courierFeeCents: publicVar('EXPO_PUBLIC_COURIER_FEE_CENTS', process.env.EXPO_PUBLIC_COURIER_FEE_CENTS),
 } as const;
 
 export const publicEnvList: PublicVar[] = Object.values(publicEnv);
