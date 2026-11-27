@@ -32,12 +32,21 @@ type PaymentRow = {
   total_cents: number;
 };
 
+/** N’envoie pas les champs vides : un upsert ne doit pas effacer un nom déjà en CRM. */
+export function withoutNulls(values: Record<string, string | number | null>): Record<string, string | number> {
+  const out: Record<string, string | number> = {};
+  for (const [key, value] of Object.entries(values)) {
+    if (value !== null) out[key] = value;
+  }
+  return out;
+}
+
 export function rowsFromPayment(row: PaymentRow): CrmRow[] {
   const sellerId = seller(row.seller_id);
   return [
-    { table: 'contacts', values: { external_id: buyer(row.buyer_id), kind: 'buyer', display_name: null, email: null } },
-    { table: 'contacts', values: { external_id: sellerId, kind: 'seller', display_name: null, email: null } },
-    { table: 'sellers', values: { external_id: sellerId, kind: row.seller_kind === 'caterer' ? 'caterer' : 'home', display_name: null } },
+    { table: 'contacts', values: { external_id: buyer(row.buyer_id), kind: 'buyer' } },
+    { table: 'contacts', values: { external_id: sellerId, kind: 'seller' } },
+    { table: 'sellers', values: { external_id: sellerId, kind: row.seller_kind === 'caterer' ? 'caterer' : 'home' } },
     {
       table: 'orders',
       values: {
@@ -109,7 +118,7 @@ export async function pushCrmRows(env: EdgeEnv, rows: CrmRow[], fetchImpl: typeo
         'Accept-Profile': CRM_SCHEMA,
         'Content-Profile': CRM_SCHEMA,
       },
-      body: JSON.stringify(row.values),
+        body: JSON.stringify(withoutNulls(row.values)),
     });
     if (!response.ok) return { ok: false, status: response.status };
   }

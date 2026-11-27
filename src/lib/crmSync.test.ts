@@ -77,6 +77,19 @@ test('les fonctions Edge n’importent pas l’app et seul le webhook est sans J
   assert.equal(config.match(/verify_jwt = false/g)?.length, 1);
 });
 
+test('la migration suivante cache le code de preuve et retire pg_net', () => {
+  const sql = readFileSync(new URL('../../supabase/migrations/20261127180000_proof_checkout_sync.sql', import.meta.url), 'utf8');
+  const view = sql.slice(sql.indexOf('create or replace view public.courier_jobs_assigned'), sql.indexOf('revoke all on public.courier_jobs_assigned'));
+  assert.match(view, /j.pickup_code/);
+  assert.doesNotMatch(view, /proof_code/);
+  assert.match(sql, /confirm_delivery_proof/);
+  assert.match(sql, /revoke execute on function public.notify_crm_person\(\) from public, anon, authenticated/);
+  assert.match(sql, /revoke execute on function public.courier_job_codes_unchanged\(uuid, text, text\) from public, anon, authenticated/);
+  assert.match(sql, /revoke execute on function public.kitchen_hygiene_frozen\(uuid, boolean\) from public, anon, authenticated/);
+  assert.match(sql, /revoke insert on public.order_items from anon, authenticated/);
+  assert.match(sql, /drop trigger if exists notify_crm_profile/);
+});
+
 test('la migration CRM active la RLS et n’ouvre pas anon', () => {
   const sql = readFileSync(new URL('../../supabase/crm-migrations/20261127120000_bissabi_food_sync.sql', import.meta.url), 'utf8');
   assert.match(sql, /create schema if not exists bissabi_food/);

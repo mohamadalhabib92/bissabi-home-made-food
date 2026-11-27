@@ -39,6 +39,17 @@ export async function restWrite(base: string, serviceKey: string, path: string, 
   return response.ok;
 }
 
+export async function restInsert<T>(base: string, serviceKey: string, path: string, row: unknown, fetchImpl: typeof fetch): Promise<T[] | null> {
+  const response = await fetchImpl(restUrl(base, path), {
+    method: 'POST',
+    headers: serviceHeaders(serviceKey, { Prefer: 'return=representation' }),
+    body: JSON.stringify(row),
+  });
+  if (!response.ok) return null;
+  const body = await response.json().catch(() => null) as T[] | null;
+  return Array.isArray(body) ? body : null;
+}
+
 export async function restDelete(base: string, serviceKey: string, path: string, fetchImpl: typeof fetch): Promise<void> {
   await fetchImpl(restUrl(base, path), { method: 'DELETE', headers: serviceHeaders(serviceKey) });
 }

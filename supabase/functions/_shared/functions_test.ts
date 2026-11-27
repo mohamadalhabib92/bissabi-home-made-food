@@ -1,4 +1,6 @@
-import { handleCrmSync } from './accounts.ts';
+import { handleCrmSync, handleSyncMe } from './accounts.ts';
+import { rowsFromPayment } from './crm.ts';
+import { parseCreateOrder } from './orders.ts';
 import type { EdgeEnv } from './env.ts';
 import { paymentIntentForm, platformFeeCents, refundForm } from './money.ts';
 import { handleStripeWebhook } from './webhook.ts';
@@ -76,10 +78,12 @@ Deno.test('le webhook déduplique dans payment_events et sépare les secrets', a
 
 Deno.test('crm-sync refuse le client et ne lit que la base', async () => {
   let crmCalls = 0;
+  const crmBodies: string[] = [];
   const fetchImpl: typeof fetch = async (input, init) => {
     const url = String(input);
     if (url.includes('ppeovmfuhtidavdnrwxu')) {
       crmCalls += 1;
+      crmBodies.push(String(init?.body ?? ''));
       return new Response(null, { status: 201 });
     }
     if ((init?.method ?? 'GET') === 'GET' && url.includes('order_payments')) {
@@ -106,4 +110,26 @@ Deno.test('crm-sync refuse le client et ne lit que la base', async () => {
   }), { ...env, crmUrl: 'https://ppeovmfuhtidavdnrwxu.supabase.co', crmKey: 'crm_service' }, fetchImpl);
   assert(ok.status === 200, 'service sync');
   assert(crmCalls === 4, 'rows from db');
+  assert(crmBodies.every((body) => !body.includes('display_name') && !body.includes('email')), 'no null names');
+});
+
+Deno.test('un upsert de commande n’envoie pas de nom vide', () => {
+  const rows = rowsFromPayment({
+    order_id: 'ord_1', buyer_id: 'b', seller_id: 's', seller_kind: 'home', status: 'paid', subtotal_cents: 2000, commission_cents: 200, total_cents: 2000,
+  });
+  const encoded = JSON.stringify(rows);
+  assert(!encoded.includes('display_name'), 'display_name omitted');
+  assert(!encoded.includes('email'), 'email omitted');
+  assert(parseCreateOrder({ kitchenId: 'not-a-uuid', items: [], delivery: 'pickup' }) === null, 'cart');
+  assert(parseCreateOrder({ kitchenId: '11111111-1111-4111-8111-111111111111', items: [{ dishId: '22222222-2222-4222-8222-222222222222', qty: 1, unitPrice: 10 }], delivery: 'pickup' }) === null, 'price from client refused');
+});
+
+Deno.test('sync-me ne synchronise pas un autre utilisateur', async () => {
+  const fetchImpl: typeof fetch = async () => Response.json({ id: 'user_1', email: 'a@b.c' });
+  const refused = await handleSyncMe(new Request('https://example.test/sync-me', {
+    method: 'POST',
+    headers: { Authorization: 'Bearer user_jwt' },
+    body: JSON.stringify({ userId: 'someone-else' }),
+  }), env, fetchImpl);
+  assert(refused.status === 400, 'foreign id');
 });

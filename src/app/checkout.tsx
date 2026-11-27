@@ -10,6 +10,7 @@ import { cookIsOutsideVaud, zoneOf } from '@/lib/geo';
 import { dayLabel, hoursUntil } from '@/lib/dates';
 import { buyerVisibleSlots, launchPayment, prepareLaunchCheckout } from '@/lib/launchCheckout';
 import { saleBlock } from '@/lib/saleGate';
+import { createServerOrder, holdClientSecret, serverCartReady } from '@/lib/serverCheckout';
 import { belowMinimum, minPortionsOf } from '@/lib/seller';
 import { slotUsed } from '@/lib/market';
 import { MIN_LEAD_HOURS, quote } from '@/lib/pricing';
@@ -18,7 +19,7 @@ import { theme as t } from '@/ui/theme';
 
 export default function Checkout() {
   const params = useLocalSearchParams<{ mode?: string }>();
-  const { cart, dishes, cooks, slots, orders, placeOrder, clearCart, prefs, setPrefs } = useData();
+  const { cart, dishes, cooks, slots, orders, placeOrder, setOrderStatus, clearCart, prefs, setPrefs } = useData();
   const { L, lang } = useL();
   const { t: tr } = useI18n();
   const router = useRouter();
@@ -63,6 +64,37 @@ export default function Checkout() {
     if (problems.length || !slot) return;
     setBusy(true); setError(null);
     setPrefs((p) => ({ ...p, buyerName: name.trim() }));
+    if (serverCartReady(cook.id, lines.map((l) => l.dishId))) {
+      const remote = await createServerOrder({
+        kitchenId: cook.id,
+        items: lines.map((l) => ({ dishId: l.dishId, qty: l.qty })),
+        slotDate: slot.s.date,
+      });
+      if (!remote.ok && remote.reason === 'auth') {
+        setBusy(false);
+        setError(L('Connectez-vous pour payer.', 'Sign in to pay.'));
+        return;
+      }
+      if (remote.ok) {
+        const placed = placeOrder({ slot: slot.s, mode: launch.next.mode, address: launch.next.address, note: note.trim() || undefined, buyerName: name.trim() });
+        setBusy(false);
+        if (!placed) {
+          setError(L('Cette commande ne peut pas être enregistrée.', 'This order cannot be saved.'));
+          return;
+        }
+        holdClientSecret(placed.id, remote.clientSecret);
+        setOrderStatus(placed.id, 'awaiting_payment', { payment: { method: 'stripe', ref: remote.paymentIntentId ?? remote.orderId } });
+        clearCart();
+        router.replace(`/order/${placed.id}`);
+        fb.celebrate({ title: L('Paiement ouvert', 'Payment started'), subtitle: `${cook.name} · ${dayLabel(slot.s.date, lang)} ${slot.s.from}`, icon: 'restaurant', tone: 'gold' });
+        return;
+      }
+      if (remote.reason !== 'launch_closed' && remote.reason !== 'device_only') {
+        setBusy(false);
+        setError(L('Le paiement n’a pas pu être ouvert.', 'Payment could not be started.'));
+        return;
+      }
+    }
     const o = placeOrder({ slot: slot.s, mode: launch.next.mode, address: launch.next.address, note: note.trim() || undefined, buyerName: name.trim() });
     if (!o) {
       setBusy(false);

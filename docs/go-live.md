@@ -33,7 +33,7 @@ Serveur, fonctions food (jamais `EXPO_PUBLIC_`) :
 - `CRM_SERVICE_ROLE_KEY` = clé service du projet CRM, pas celle du projet food
 - `LAUNCH_PAYMENTS` = `1` seulement à l’étape 6, sur les fonctions
 
-`SUPABASE_URL`, `SUPABASE_ANON_KEY` et `SUPABASE_SERVICE_ROLE_KEY` sont injectés par Supabase dans les fonctions du projet food. Les poser aussi si l’injection n’est pas là. Pour le déclencheur d’inscription, enregistrer la clé service food dans le Vault sous le nom `food_service_role_key` (tableau de bord → Vault, ou `select vault.create_secret('<clé>', 'food_service_role_key');`).
+`SUPABASE_URL`, `SUPABASE_ANON_KEY` et `SUPABASE_SERVICE_ROLE_KEY` sont injectés par Supabase dans les fonctions du projet food. Les poser aussi si l’injection n’est pas là. L’inscription ne dépend plus de pg_net ni du Vault : après connexion, l’app appelle `sync-me`, qui ne synchronise que l’utilisateur du jeton.
 
 Site public à la racine du domaine : `EXPO_PUBLIC_WEB_BASE=/`. Sans elle, l’export web garde le préfixe GitHub Pages.
 
@@ -80,6 +80,8 @@ npx supabase functions deploy connect-onboarding --project-ref qizhprlzeiqrngwpx
 npx supabase functions deploy create-refund --project-ref qizhprlzeiqrngwpxjnd
 npx supabase functions deploy delete-account --project-ref qizhprlzeiqrngwpxjnd
 npx supabase functions deploy crm-sync --project-ref qizhprlzeiqrngwpxjnd
+npx supabase functions deploy create-order --project-ref qizhprlzeiqrngwpxjnd
+npx supabase functions deploy sync-me --project-ref qizhprlzeiqrngwpxjnd
 npx supabase secrets set --project-ref qizhprlzeiqrngwpxjnd \
   STRIPE_SECRET_KEY=… \
   STRIPE_WEBHOOK_SECRET=… \
@@ -99,7 +101,11 @@ Deux endpoints Stripe, mode test, même URL :
 
 Chaque `event.id` est inséré dans `payment_events`. Un doublon répond 200 sans réécrire.
 
-`crm-sync` n’accepte que la clé service, et seulement `{ "orderId" }` ou `{ "userId" }`. Il reconstruit les lignes depuis `order_payments`, `profiles`, `account_profiles`, `cooks` et `kitchens`. Le webhook l’appelle après un paiement ou un remboursement. Le déclencheur SQL l’appelle après une nouvelle fiche, si `food_service_role_key` est dans le Vault. Un corps fourni par l’app (nom, montant, rôle) est refusé.
+`crm-sync` n’accepte que la clé service, et seulement `{ "orderId" }` ou `{ "userId" }`. Il reconstruit les lignes depuis `order_payments`, `profiles`, `account_profiles`, `cooks` et `kitchens`. Le webhook l’appelle après un paiement ou un remboursement. Un corps fourni par l’app (nom, montant, rôle) est refusé. Les champs `display_name` et `email` vides ne sont pas envoyés, pour ne pas effacer un nom déjà présent.
+
+`sync-me` est appelée par l’app à chaque connexion (`SIGNED_IN`). Elle ignore le corps et ne pousse que l’appelant. `create-order` recalcule les prix, insère la commande avec la clé service, puis renvoie `clientSecret`. Le retrait seul est accepté : le tarif de livraison n’est pas défini.
+
+La migration `20261127180000_proof_checkout_sync.sql` retire les déclencheurs pg_net, révoque l’exécution de `notify_crm_person`, `courier_job_codes_unchanged` et `kitchen_hygiene_frozen`, et cache `proof_code` au coursier. Il le soumet à `confirm_delivery_proof`.
 
 ## 5. Site et App Store, ensemble
 
