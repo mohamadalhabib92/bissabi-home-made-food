@@ -4,7 +4,8 @@
 //  - ajoute .nojekyll (GitHub Pages ignore sinon le dossier _expo)
 import { createHash } from 'node:crypto';
 import { readFileSync, readdirSync, statSync, writeFileSync, copyFileSync, existsSync } from 'node:fs';
-import { join, relative } from 'node:path';
+import { join, relative, resolve } from 'node:path';
+import { pathToFileURL } from 'node:url';
 
 const root = process.cwd();
 const dist = join(root, 'dist');
@@ -13,7 +14,33 @@ if (!existsSync(join(dist, 'index.html'))) {
   process.exit(1);
 }
 const app = JSON.parse(readFileSync(join(root, 'app.json'), 'utf8')).expo;
-const base = (app.experiments?.baseUrl ?? '').replace(/\/$/, '');
+
+/** '/' ou absent : site à la racine (https://food.bissabi.ch). Une valeur explicite garde GitHub Pages. */
+export function resolveWebBase(raw = process.env.EXPO_PUBLIC_WEB_BASE) {
+  if (raw === undefined || raw.trim() === '' || raw.trim() === '/') return '';
+  const trimmed = raw.trim();
+  const withSlash = trimmed.startsWith('/') ? trimmed : `/${trimmed}`;
+  return withSlash.replace(/\/$/, '');
+}
+
+function prefixRootPaths(text, base) {
+  if (!base) return text;
+  return text.replace(/(["'])(\/(?!\/)[^"']*)\1/g, (match, quote, path) => {
+    if (path === base || path.startsWith(`${base}/`)) return match;
+    return `${quote}${base}${path === '/' ? '/' : path}${quote}`;
+  });
+}
+
+const isMain = process.argv[1] && import.meta.url === pathToFileURL(resolve(process.argv[1])).href;
+if (isMain) run();
+
+function run() {
+const base = resolveWebBase();
+for (const file of ['index.html', 'manifest.json']) {
+  const path = join(dist, file);
+  if (!existsSync(path)) continue;
+  writeFileSync(path, prefixRootPaths(readFileSync(path, 'utf8'), base));
+}
 
 const files = [];
 (function walk(dir) {
@@ -62,3 +89,4 @@ writeFileSync(join(dist, 'sw.js'), sw);
 copyFileSync(join(dist, 'index.html'), join(dist, '404.html'));
 writeFileSync(join(dist, '.nojekyll'), '');
 console.log(`PWA prête : ${precache.length} fichiers pré-cachés (version ${version}), base « ${base || '/'} ».`);
+}

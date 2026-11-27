@@ -36,7 +36,7 @@ Serveur, fonctions food (jamais `EXPO_PUBLIC_`) :
 
 `SUPABASE_URL`, `SUPABASE_ANON_KEY` et `SUPABASE_SERVICE_ROLE_KEY` sont injectés par Supabase dans les fonctions du projet food. Les poser aussi si l’injection n’est pas là. L’inscription ne dépend plus de pg_net ni du Vault : après connexion, l’app appelle `sync-me`, qui ne synchronise que l’utilisateur du jeton.
 
-Site public à la racine du domaine : `EXPO_PUBLIC_WEB_BASE=/`. Sans elle, l’export web garde le préfixe GitHub Pages.
+Site public à la racine : `EXPO_PUBLIC_WEB_BASE` absent ou `/` sert https://food.bissabi.ch. GitHub Pages pose `EXPO_PUBLIC_WEB_BASE=/bissabi-home-made-food` dans son workflow.
 
 ## 2. Schéma food (projet qizhprlzeiqrngwpxjnd)
 
@@ -117,6 +117,8 @@ EXPO_PUBLIC_WEB_BASE=/ npx expo export --platform web
 ```
 
 Le dossier `dist/` est le site. Le workflow GitHub Pages de `main` n’est pas le lancement : ne pas fusionner cette branche dans `main` pour publier.
+
+`sw.js` ne doit pas rester en cache chez l’hébergeur. Sur https://food.bissabi.ch, une règle `Cache-Control: no-cache` (ou `max-age=0, must-revalidate`) pour `/sw.js`. Sans elle, un nouveau déploiement laisse l’ancien service worker en place.
 
 iOS, quand les clés client sont dans EAS :
 
